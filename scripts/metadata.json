@@ -1,0 +1,23 @@
+{
+  "title": "audioshape: Sealed-Box Loudspeaker Driver Selection Criteria",
+  "summary": "Frequency- and time-domain excursion/power headroom limits for sealed direct-radiator loudspeakers, with a motor-materials bound separating sub and attack drivers",
+  "repository": "luchp/audioshape",
+  "author_given_names": "Luc",
+  "author_family_names": "Holtkamp",
+  "affiliation": "SenseMagic, Netherlands",
+  "website": "www.sensemagic.nl",
+  "email": "luc@sensemagic.nl",
+  "copyright": "Luc Holtkamp (SenseMagic), 2013--2026",
+  "keywords": [
+    "loudspeaker design",
+    "sealed enclosure",
+    "excursion limit",
+    "power compression",
+    "distortion",
+    "vented enclosure",
+    "driver selection"
+  ],
+  "license": "MIT",
+  "message": "If you use this software, please cite as in CITATION.cff.",
+  "version": "3.0"
+}

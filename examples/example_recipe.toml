@@ -1,0 +1,19 @@
+db = "../data/VituixCAD_driver_db.txt"
+
+[scenario]
+v_room = 60.0
+l_max = 6.0
+r_listen = 3.0
+target_spl = 110.0
+distortion_budget = 0.03
+qtc = 0.55
+f_low = 15.0
+f_split = 80.0
+f_high = 250.0
+
+[pair]
+sub_units = 2
+attack_units = 1
+sub_size_min = 15
+attack_size_max = 10
+top_k_each = 15

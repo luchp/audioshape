@@ -1,0 +1,40 @@
+% Branded preprint title page (SenseMagic identity).
+% Used when \ELSVIERBUILD = 0 (the default / preprint build).
+%=============================================================================================================================
+\begin{titlepage}
+%=============================================================================================================================
+
+%Make our own title on an empty page (without footer and header)
+%See fancyhdr.pdf
+\fancypagestyle{empty}
+\lhead{}
+\chead{}
+\rhead{}
+\lfoot{}
+\lfoot{}
+\cfoot{}
+\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\begin{center}
+	
+	{\Huge \PaperTitle \par}
+	
+	\vspace{1em}
+	
+	{\Large \PaperSummary \par}
+	
+	\vspace{1.5em}
+	
+	{\large \PaperAuthor \par}
+	{\normalsize \PaperAfiliation \par}
+	{\normalsize \texttt{\PaperEmail} \par}
+	
+	\vspace{5cm}
+	
+\end{center}
+
+%=============================================================================================================================
+\end{titlepage}
+%=============================================================================================================================

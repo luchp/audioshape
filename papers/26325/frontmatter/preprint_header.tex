@@ -1,0 +1,21 @@
+% Branded running header/footer for the preprint build (copyright, license,
+% version, filename). Used when \ELSVIERBUILD = 0 (the default / preprint
+% build).
+\pagestyle{fancy}
+\lhead{}
+\chead{}
+\rhead{\Large \PaperTitle \vspace{1mm}}
+\lfoot{\parbox[t]{0.6\textwidth}{ \footnotesize
+        \textcopyright\ \PaperCopyright \\
+        Licensed under \PaperLicense  \\
+        Contact: \texttt{\PaperEmail} \textbullet\ \texttt{\PaperWebsite} }}
+\cfoot{}
+\rfoot{\parbox[t]{0.3\textwidth} {\footnotesize
+		\hfill 
+    \begin{tabular}[t]{l l}
+        Page:    & \thepage\ of \pageref{LastPage} \\
+        File:    &  \jobname \\
+        Version: & \PaperVersion
+    \end{tabular} }}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}

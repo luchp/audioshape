@@ -1,0 +1,1 @@
+uv run --extra examples scripts/make_figures.py %*

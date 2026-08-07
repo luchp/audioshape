@@ -1,0 +1,6 @@
+% Thin build driver for the journal submission variant. No manuscript
+% content lives here -- this only sets the build flag before including the
+% single source of truth, sealed_driver_criteria.tex, so the preprint and
+% journal builds never drift.
+\newcommand{\ELSVIERBUILD}{1}
+\input{sealed_driver_criteria.tex}

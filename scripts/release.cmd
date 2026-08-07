@@ -1,0 +1,1 @@
+uv run --extra examples --extra release scripts/publish_release.py %*

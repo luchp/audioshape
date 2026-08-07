@@ -1,0 +1,34 @@
+% Plain journal-submission title page: title, author, affiliation,
+% corresponding author -- no cover art, no copyright/license/version branding
+% (those belong to the preprint only; a journal captures license/affiliation
+% via its submission system, and typesets its own running headers/footers).
+% Used when \ELSVIERBUILD = 1.
+%=============================================================================================================================
+\begin{titlepage}
+%=============================================================================================================================
+\thispagestyle{empty}
+
+\begin{center}
+
+	{\Huge \PaperTitle \par}
+
+	\vspace{1.5em}
+
+	{\large \PaperAuthor$^{a,\ast}$ \par}
+
+	\vspace{0.5em}
+
+	{\normalsize $^{a}$\PaperAfiliation \par}
+
+	\vspace{2em}
+
+	{\normalsize
+		$^\ast$Corresponding author. \\
+		\textit{Email address:} \texttt{\PaperEmail} (\PaperAuthor)
+		\par}
+
+\end{center}
+
+%=============================================================================================================================
+\end{titlepage}
+%=============================================================================================================================
