@@ -1,0 +1,44 @@
+\section{Room closure: pressure zone, required $\Vd$, and the choice of $F_s$}
+\label{sec:roomclose}
+
+A real listening room changes the low-frequency boundary condition once
+wavelength exceeds room dimensions, for any driver, sealed or vented alike.
+Lumping the room below its first axial mode as an acoustic compliance with
+leakage \cite{beranek2012}, source volume velocity $U=\Sd\dot x$:
+\begin{equation}
+p_{\mathrm{room}}\ \xrightarrow[\ \omega\gg\omega_\ell\ ]{}\
+\frac{\rho_0c^2\,\Sd x}{V_{\mathrm{room}}},
+\qquad
+f_{\mathrm{pz}}\simeq\frac{c}{2L_{\max}} .
+\label{eq:pzdyn}
+\end{equation}
+Below $f_{\mathrm{pz}}$, $p\propto x$ (not $\omega^2x$): the excursion demand
+is frequency-independent, giving a demand curve that rises at 12\,dB/oct
+down to $f_{\mathrm{pz}}$ and is flat below it. A sealed system with
+$F_c\simeq f_{\mathrm{pz}}$ is therefore flat in-room to the leakage corner
+\emph{without any EQ} --- the exact form of ``taper-off compensated by room
+gain.'' \Cref{app:vented} shows a vented system does not enjoy the same
+rescue.
+
+Combining the demand curve with the distortion cap $\xi^\ast$
+(\cref{sec:distortion}) gives the sizing rule
+\begin{equation}
+\boxed{\
+\Vd\ \ge\ \frac{1}{\xi^\ast}\,\max\!\left\{
+\frac{\sqrt2\,p_t\,V_{\mathrm{room}}}{\rho_0c^2},\ \
+C\,\frac{\sqrt2\,p_t\,2\pi r}{\rho_0\,\omega_{\mathrm{pz}}^{2}}\right\}
+\ }
+\label{eq:Vdreq}
+\end{equation}
+with the pressure-zone branch the robust one (A11), and the corner
+criterion, from the alignment line \eqref{eq:alignment},
+\begin{equation}
+\boxed{\ F_c\simeq f_{\mathrm{pz}}=\frac{c}{2L_{\max}}
+\quad\Longleftrightarrow\quad
+\frac{F_s}{\Qts}\simeq\frac{f_{\mathrm{pz}}}{\Qtc^\ast}\ }.
+\label{eq:Fsrule}
+\end{equation}
+$F_c$ below $f_{\mathrm{pz}}$ wastes only box volume; $F_c$ above it leaves
+a correctable sag taxed by \eqref{eq:EQtax}. Real rooms leak below a
+construction-dependent $f_\ell$ (often $10$--$20$\,Hz), below which
+\eqref{eq:Vdreq}'s pressure-zone branch is an upper bound rather than exact.

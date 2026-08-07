@@ -1,0 +1,127 @@
+% JAES condensed manuscript for paper 26325.
+% Companion to the explanatory preprint sealed_driver_criteria.tex; shares
+% figures, tables, and refs.bib, but sections_jaes/*.tex are independently
+% written condensed prose (not \input-shared with the preprint).
+\documentclass[fleqn]{jaes}
+
+\jyear{2026}
+%\jmonth{}
+%\jvol{}
+%\jnum{}
+
+\usepackage{amsmath}\setlength{\mathindent}{10pt}
+\usepackage{bm}
+\usepackage{siunitx}
+\usepackage{graphicx,booktabs,array}
+
+\usepackage[capitalise]{cleveref}
+  \crefformat{section}{\textsc{Sec.~#2#1#3}}
+  \Crefformat{section}{\textsc{Sec.~#2#1#3}}
+  \crefformat{figure}{{Fig.~#2#1#3}}
+  \Crefformat{figure}{{Fig.~#2#1#3}}
+  \crefformat{table}{{Table~#2#1#3}}
+  \Crefformat{table}{{Table~#2#1#3}}
+
+% jaes.cls defines \theoremname/\theoremfont/\theoremheadfont but leaves the
+% \newtheorem for "theorem" itself commented out; enable it here.
+\newtheorem{theorem}{\theoremname}[section]
+
+\numberwithin{equation}{section}
+
+\newcommand{\Sd}{S_{\mathrm{d}}}
+\newcommand{\Xmax}{X_{\mathrm{max}}}
+\newcommand{\Vd}{V_{\mathrm{d}}}
+\newcommand{\Mms}{M}
+\renewcommand{\Re}{R_{\mathrm{e}}}
+\newcommand{\Le}{L_{\mathrm{e}}}
+\newcommand{\Rms}{R_{\mathrm{m}}}
+\newcommand{\Cms}{C_{\mathrm{m}}}
+\newcommand{\Bl}{Bl}
+\newcommand{\Qes}{Q_{\mathrm{es}}}
+\newcommand{\Qms}{Q_{\mathrm{ms}}}
+\newcommand{\Qts}{Q_{\mathrm{ts}}}
+\newcommand{\Qtc}{Q_{\mathrm{tc}}}
+\newcommand{\Qmc}{Q_{\mathrm{mc}}}
+\newcommand{\Vas}{V_{\mathrm{as}}}
+\newcommand{\Vb}{V_{\mathrm{b}}}
+\newcommand{\Pmax}{P_{\mathrm{max}}}
+\newcommand{\ws}{\omega_{\mathrm{s}}}
+\newcommand{\wc}{\omega_{\mathrm{c}}}
+\newcommand{\se}{\sigma_{\mathrm{e}}}
+\newcommand{\sm}{\sigma_{\mathrm{m}}}
+\newcommand{\dd}{\mathrm{d}}
+
+\begin{document}
+
+% Title portion
+\title{Sealed-Box Loudspeaker Driver Selection Criteria}
+
+\markboth{HOLTKAMP}{SEALED-BOX DRIVER SELECTION CRITERIA}
+
+\authorgroup{
+\author{LUC HOLTKAMP\thanks{To whom correspondence should be addressed, email: luc@sensemagic.nl.}}
+\email{(luc@sensemagic.nl)}
+\affil{SenseMagic, Netherlands}
+}
+
+\abstract{%
+Selecting a sealed-box bass driver for a given room and level target is
+usually done by heuristics such as the efficiency-bandwidth product (EBP).
+We derive, from the lumped electromechanical model of a sealed
+direct-radiator loudspeaker, the maximum acoustic output as a function of
+frequency subject to linear excursion and continuous coil dissipation, with
+an unconstrained amplifier. Frequency-domain and time-domain (burst)
+analyses are shown to yield the same two figures of merit. The complete
+sealed-box selection problem reduces to four datasheet-computable
+invariants -- displacement volume, acoustic power, a corner-placement
+parameter, and an upper validity frequency -- plus one regime-boundary
+frequency. We show EBP is a legitimate enclosure-type screen but not an
+absolute ranking, and that a motor-materials bound forbids one driver from
+maximizing both the excursion and dissipation figures of merit at once. We
+further show that every non-linearly-correctable distortion mechanism --
+motor/suspension nonlinearity, Doppler frequency modulation, and box-spring
+distortion -- is monotone in the same headroom ratios, so
+distortion-referenced selection reduces to headroom maximization. Closing
+the low end with the room's own pressure-zone gain gives an explicit
+displacement-volume sizing rule and corner-frequency target, and we show
+why, under this paper's DSP-corrected, room-integrated premise, sealed is
+the stronger enclosure choice over vented. A worked numerical
+example and an open-source, unit-tested reference implementation
+accompany the results.}
+\maketitle
+
+\begin{keywords}
+distortion, loudspeaker design, room acoustics, sealed enclosure, transducer modeling
+\end{keywords}
+
+\input{../sections_jaes/sec_intro.tex}
+\input{../sections_jaes/sec_prevwork.tex}
+\input{../sections_jaes/sec_scope.tex}
+\input{../sections_jaes/sec_model.tex}
+\input{../sections_jaes/sec_freqdomain.tex}
+\input{../sections_jaes/sec_timedomain.tex}
+\input{../sections_jaes/sec_distortion.tex}
+\input{../sections_jaes/sec_roomclosure.tex}
+\input{../sections_jaes/sec_procedure.tex}
+\input{../sections_jaes/sec_conclusion.tex}
+
+\section*{Acknowledgment}
+Driver parameters used throughout this paper and its worked example are
+drawn from the VituixCAD driver database; we thank its maintainers for
+making this data publicly available. An interactive web application
+implementing the selection procedure of \cref{sec:procedure} is available
+from SenseMagic. A complete, unit-tested reference implementation,
+figure/table generation scripts, and the companion explanatory preprint are
+open-sourced at \url{https://github.com/luchp/audioshape}.
+
+\appendix
+\input{../sections_jaes/appx_vented.tex}
+\input{../sections_jaes/appx_example.tex}
+
+\bibliography{../refs}
+\bibliographystyle{jaes}
+
+\clearpage
+\biography{Luc Holtkamp}{no-photo}{Luc Holtkamp is the founder of SenseMagic, Netherlands, where he develops signal-processing tools for loudspeaker system design.}
+
+\end{document}

@@ -1,0 +1,30 @@
+\section{Previous work}
+\label{sec:prevwork}
+
+Thiele/Small alignment theory and the sealed-box alignment line
+\eqref{eq:alignment} \cite{small1972} are the common starting point;
+nothing here revisits that theory. The efficiency-bandwidth product
+$EBP\equiv F_s/\Qes$ is a widely used single number for sealed-vs-vented
+screening, $EBP\lesssim50$ suggesting sealed, $\gtrsim100$ vented
+\cite{dickason2006}. As \cref{sec:invariants} shows, $EBP$ is a genuine
+motor/mass ratio \eqref{eq:sebound}: a legitimate enclosure-\emph{type}
+screen, but it says nothing about \emph{how much} SPL or how little
+distortion either choice delivers once the type is fixed. Below, $EBP$
+enters only through the regime-boundary frequency $f_x$ \eqref{eq:fx} and
+the corner rate \eqref{eq:cornerrate}, never as a standalone ranking.
+
+A few related shorthands are corrected in passing, since later sections
+rely on the corrected versions silently. Overshoot rules of thumb quote
+$1$--$2\%$ for $\Qtc=0.55$; the exact value is $M_p=0.11\%$,
+and $M_p\le1\%$ holds up to $\Qtc\le0.61$.
+``Excursion grows as $1/f^2$ going down'' holds only above the sealed
+corner $F_c$; below it, excursion at fixed drive saturates
+\eqref{eq:PL}. Finally, ``given $\Qtc$ and a frequency, what SPL can this
+driver make'' is ill-posed: the excursion-limited ceiling \eqref{eq:SPLL}
+does not depend on $\Qtc$ (\cref{cor:onlyVd}); $\Qtc$ governs corner
+placement and settling only.
+
+Neither the $EBP$ screen nor these shorthands produces a datasheet-computable
+ranking that is (a)~derived rather than guessed, (b)~referenced to
+non-correctable distortion, and (c)~accounts for room gain. Supplying that
+ranking is the subject of the rest of this paper.

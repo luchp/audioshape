@@ -1,0 +1,88 @@
+\section{Frequency domain: the two ceilings}
+\label{sec:freq}
+
+Solve \eqref{eq:ode} in steady sine; ask which driver limit ($\Xmax$ or
+$\Pmax$) binds first under an unconstrained amplifier (A6).
+
+\begin{proposition}[Excursion-limited SPL]
+\label{prop:xceiling}
+With $\hat{p}_{\mathrm{L}}(\omega)=\rho_0\,\omega^2 \Vd/(2\pi r)$ and
+$\Vd\equiv\Sd\Xmax$:
+\begin{equation}
+\boxed{\ \mathrm{SPL}_{\mathrm{L}}(f)=108.5+20\log_{10}\!\big(f^2\,\Vd\big)\ \mathrm{dB}\ }
+\label{eq:SPLL}
+\end{equation}
+($+12$\,dB/oct; rms at $r=\SI{1}{\meter}$).
+\end{proposition}
+
+\begin{corollary}[Irrelevance of everything else]
+\label{cor:onlyVd}
+$\mathrm{SPL}_{\mathrm{L}}$ is independent of $\Qtc$, $F_c$, $\Bl$, $\Re$,
+$\Mms$, $\Pmax$: in the excursion regime the complete ranking is the single
+number $\Vd$.
+\end{corollary}
+
+The drive required to sit at the ceiling (from \eqref{eq:iofx},
+$\hat{x}=\Xmax$) is a ``bathtub'' in $\omega$, minimum near $\wc$ and finite
+at DC:
+\begin{align}
+P_{\mathrm{L}}(\omega)&=\frac{\Mms \Qes \Xmax^2}{4\pi F_s}
+\Big[(\wc^2-\omega^2)^2+\sm^2\omega^2\Big],
+\label{eq:PL}\\
+P_{\mathrm{L}}(0)&=\frac{\Mms\Qes\Xmax^2\,\wc^4}{4\pi F_s}.
+\label{eq:PL0}
+\end{align}
+More generally, holding a flat target pressure $p_t$ below the corner costs
+an EQ tax of $(\wc/\omega)^4$ in power (12\,dB/oct):
+\begin{equation}
+P_{\mathrm{req}}(\omega)=P_{\mathrm{pb}}\cdot
+\frac{(\wc^2-\omega^2)^2+\sm^2\omega^2}{\omega^4}.
+\label{eq:EQtax}
+\end{equation}
+Here $P_{\mathrm{pb}}\equiv 2\pi r^2 p_t^2/(\rho_0 c\,\eta_0)$ is the
+passband power at the target pressure $p_t$. FIR/DSP correction is free in
+fidelity but pays \eqref{eq:EQtax} in heat and \eqref{eq:SPLL} in
+excursion. Sustained EQ-tax drive also heats the coil enough to shift $\Re$
+well before $\Pmax$ itself is approached; this thermal compression detunes
+$\Qtc$ and $F_c$ mid-program, a real, if slow, violation of the LTI
+assumption (A1) that the static rating $\Pmax$ alone does not capture
+(quantified as a thermal AM in \cref{sec:distortion}).
+
+\begin{proposition}[Thermally limited SPL]
+\label{prop:thermal}
+At coil dissipation $P$, with
+\begin{equation}
+\eta_0=\frac{\rho_0}{2\pi c}\,\frac{\Bl^2\Sd^2}{\Re\Mms^2}
+=9.78\times10^{-7}\ \frac{F_s^3\,\Vas[\mathrm{m^3}]}{\Qes},
+\label{eq:eta0}
+\end{equation}
+the passband ceiling is
+\begin{equation}
+\boxed{\ \mathrm{SPL}_{\mathrm{T}}=112.2+10\log_{10}\!\big(\eta_0\Pmax\big)\ \mathrm{dB}\ }.
+\label{eq:SPLT}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Insert $\hat\imath=\sqrt{2P/\Re}$ into \eqref{eq:iofx}, then \eqref{eq:pofx};
+\eqref{eq:eta0} follows from $\Qes=\ws\Mms\Re/\Bl^2$, $\ws^2=1/(\Mms\Cms)$,
+$\Vas=\rho_0c^2\Cms\Sd^2$.
+\end{proof}
+
+The dissipation-regime ranking is the single number $\eta_0\Pmax$. Both
+ceilings combine as
+\begin{equation}
+p_{\max}(\omega)=\frac{\rho_0\Sd\,\omega^2}{2\pi r}\;
+\min\!\Big\{\Xmax,\ X_{\mathrm{T}}(\omega)\Big\},
+\label{eq:master}
+\end{equation}
+crossing at
+\begin{equation}
+\boxed{\
+f_x=\frac{1}{2\pi}\left(\frac{4\pi c\,\eta_0\Pmax}{\rho_0\,\Vd^{2}}\right)^{1/4}
+\ }.
+\label{eq:fx}
+\end{equation}
+Below $f_x$ improve $\Vd$; above it improve $\eta_0\Pmax$. Note this ranks
+\emph{ceilings}; whether a driver is adequate is decided at the target
+level, so a driver ``thermally limited above 33\,Hz'' at its ceiling can
+still be far from its thermal limit at a modest home target.

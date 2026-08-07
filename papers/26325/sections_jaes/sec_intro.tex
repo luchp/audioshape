@@ -1,0 +1,28 @@
+\section{Introduction}
+\label{sec:intro}
+
+The problem is deliberately narrow: given a room, one fixed listening
+position, a target SPL, a driver database, and unlimited-complexity DSP
+between amplifier and driver, select sealed bass driver(s) that reach the
+target with least \emph{non-correctable} distortion (correctable made
+precise below). All drivers radiate into half space from a common baffle;
+every ceiling below is a \emph{single}-channel quantity.
+
+Two facts drive the argument. (i)~\emph{Room gain}: below a room-set corner
+$f_{\mathrm{pz}}$, pressure at the listening position tracks cone
+displacement rather than acceleration, so a sealed system with $F_c\simeq
+f_{\mathrm{pz}}$ tapers off below its corner for free. (ii)~\emph{Two
+regimes, two jobs}: near $F_s$ a sealed driver is displacement-limited
+($\Vd=\Sd\Xmax$); an octave or more above, it is dissipation-limited
+($\eta_0\Pmax$). We prove (\cref{thm:bound}) no single motor maximizes both,
+so the two roles want physically different drivers.
+
+We review the $EBP$ heuristic (\cref{sec:prevwork}), derive the two
+ceilings and their crossover (\cref{sec:freq,sec:time}), collect the
+resulting invariants and the motor-materials bound (\cref{sec:invariants}),
+show three independent non-correctable distortion mechanisms all reduce to
+the same headroom ranking (\cref{sec:distortion}), close the low end with
+the room (\cref{sec:roomclose}), and assemble an ordered, datasheet-only
+selection procedure (\cref{sec:procedure}). \Cref{app:vented} proves, rather
+than assumes, why the paper restricts itself to sealed enclosures, and
+\cref{app:example} works a full numerical example.

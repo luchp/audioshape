@@ -1,0 +1,33 @@
+\section{Selection procedure}
+\label{sec:procedure}
+
+Given room ($V_{\mathrm{room}}$, $L_{\max}$), band top $f_2$,
+peak-equivalent target $L_t$, distortion budgets $D^\ast$ (HD) and
+$D^\ast_{\mathrm{IM}}$ (Doppler), damping target $\Qtc^\ast$ (e.g.\ $0.55$),
+burst factor $C$ (\cref{lem:shape}, take 2), burst headroom $\kappa$:
+
+\begin{enumerate}
+\item[0.] \textbf{Room closure:} $f_{\mathrm{pz}}=c/(2L_{\max})$; band
+bottom $f_1\to f_{\mathrm{pz}}$; $\xi^\ast=D^\ast/0.1$ (or $\sqrt{D^\ast/0.1}$
+if odd-order dominated).
+\item \textbf{Displacement/distortion:} $\Vd\ge$~\eqref{eq:Vdreq}; predicted
+$D\approx d_2\xi_x+d_3\xi_x^2$ \eqref{eq:HDscale}.
+\item \textbf{Dissipation:} $\eta_0\Pmax\ge10^{(L_t-112.2)/10}$; thermal AM
+$\approx0.034\,\xi_P\Delta T_{\mathrm{rated}}$\,dB.
+\item \textbf{Split (Doppler):} choose $f_{\mathrm{sp}}$ with $\pi
+f_{\mathrm{sp}}X_1^{\max}/c\le D^\ast_{\mathrm{IM}}$ \eqref{eq:doppler}.
+\item \textbf{Corner/settling/box:} $\Qts\le\Qtc^\ast$;
+$F_s/\Qts\simeq f_{\mathrm{pz}}/\Qtc^\ast$ (sub) resp.\ $F_c\lesssim
+f_{\mathrm{sp}}$ (attack); $\Vb=\Vas/((\Qtc^\ast/\Qts)^2-1)$; box distortion
+\eqref{eq:boxHD} within budget.
+\item \textbf{Regime map:} verify $f_x$ \eqref{eq:fx} and $p_{\max}(\omega)$
+\eqref{eq:master} $\ge$ target across the band.
+\item \textbf{Validity:} $f_2\ll f_L$; $ka(f_2)\lesssim1$; consistent
+$\Xmax$/power-rating standards across candidates.
+\end{enumerate}
+
+Ranking within one role: lexicographic on predicted non-correctable
+distortion (\cref{prop:equivdist}) --- sub role maximizes $\Vd$, tie-break
+on $\Sd$ and $\eta_0\Pmax$; attack role maximizes $\eta_0\Pmax$ subject to
+its own utilization and Doppler index, tie-break on $f_L$ and shorting
+rings.

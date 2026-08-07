@@ -17,12 +17,13 @@ from __future__ import annotations
 
 import json
 import math
+import statistics
 import sys
 import time
 from dataclasses import replace
 from pathlib import Path
 
-from audioshape import physics, plots, vented
+from audioshape import database, physics, plots, vented
 from audioshape.driver import BoxedDriver, Driver
 from audioshape.ranking import evaluate
 from audioshape.scenario import Scenario
@@ -108,6 +109,17 @@ SC_ROOM = replace(_BASE, r_listen=3.0)  # couch distance, room-facing content
 def _fmt_pct(v: float) -> str:
     """2 significant figures, matching the table's '0.43\\%'/'2.0\\%' style."""
     return f"{v:.2f}" if v < 1.0 else f"{v:.1f}"
+
+
+def _latex_escape(text: str) -> str:
+    """Escape LaTeX special characters in plain-text data (e.g. database
+    manufacturer/model names like 'B&C Speakers', 'JBL 2118J_HE')."""
+    replacements = {
+        "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#",
+        "_": r"\_", "{": r"\{", "}": r"\}", "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+    }
+    return "".join(replacements.get(ch, ch) for ch in text)
 
 
 def _ev_s():
@@ -230,7 +242,11 @@ def table_worked_example() -> None:
     ]
 
     lines = [
-        r"\begin{center}",
+        r"\begin{table*}[htbp]",
+        r"\centering",
+        r"\caption{Worked example: datasheet and derived quantities for "
+        r"S (long-throw 18'') and M (high-efficiency 12'').}",
+        r"\label{tab:worked-example}",
         r"\begin{tabular}{lcc}",
         r"\toprule",
         r" & S: long-throw 18'' & M: high-efficiency 12''\\",
@@ -243,7 +259,7 @@ def table_worked_example() -> None:
             lines.append(r"\midrule")
             continue
         lines.append(f"{label} & {vs} & {vm}\\\\")
-    lines += [r"\bottomrule", r"\end{tabular}", r"\end{center}"]
+    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table*}"]
 
     write_text_checked(TABLES_DIR / "table_worked_example.tex",
                        "\n".join(lines) + "\n")
@@ -289,7 +305,11 @@ def table_port_velocity() -> None:
     v_typical = vented.port_velocity(p_t, sc.r_listen, fb, typical_area)
 
     lines = [
-        r"\begin{center}",
+        r"\begin{table*}[htbp]",
+        r"\centering",
+        r"\caption{Port air velocity at the running $60$\,m$^3$/$110$\,dB/"
+        r"$F_b{=}23$\,Hz example target.}",
+        r"\label{tab:port-velocity}",
         r"\begin{tabular}{lc}",
         r"\toprule",
         r"quantity & value\\",
@@ -304,9 +324,77 @@ def table_port_velocity() -> None:
          rf"{v_typical:.1f} m/s ($\approx${v_typical/vented.TURBULENCE_VELOCITY_MAX:.0f}$\times v_{{\max}}$)\\"),
         r"\bottomrule",
         r"\end{tabular}",
-        r"\end{center}",
+        r"\end{table*}",
     ]
     write_text_checked(TABLES_DIR / "table_port_velocity.tex",
+                       "\n".join(lines) + "\n")
+
+
+# ----------------------------------------------------------------------
+# Table: EBP / coil-mass-fraction census (Sec. "driver invariants",
+# empirical check on Theorem 6.1's beta_max ceiling)
+# ----------------------------------------------------------------------
+
+def table_ebp_census() -> None:
+    """Lower-bound coil-mass-fraction census over the bundled VituixCAD
+    database (Type in {S, W, WM} -- bass-relevant drivers only).
+
+    Method: Theorem 6.1's equality EBP*u^2 = K_mat(B)*beta holds for a real
+    driver's own (unknown) u, B. Since u>=1, taking u=1 in
+    physics.implied_coil_mass_fraction gives a genuine LOWER bound on the
+    driver's real coil-mass fraction beta, computable from EBP alone given
+    an assumed B and coil material -- see docs/plans/review1_response.md
+    and dev/ebp_census.py (scratch derivation/cross-check).
+    """
+    db_path = BASEDIR / "data" / "VituixCAD_driver_db.txt"
+    result = database.parse_database(db_path)
+    drivers = [d for d in result.drivers if d.type_code in ("S", "W", "WM")]
+    n = len(drivers)
+
+    def betas_for(k_mat_per_b2: float, b_field: float) -> list[float]:
+        return sorted(
+            physics.implied_coil_mass_fraction(d.ebp, u=1.0, b_field=b_field,
+                                               k_mat_per_b2=k_mat_per_b2)
+            for d in drivers
+        )
+
+    def pct(values: list[float], p: float) -> float:
+        return values[min(n - 1, int(p / 100.0 * n))]
+
+    cu10 = betas_for(physics.K_MAT_CU_PER_B2, 1.0)
+    al10 = betas_for(physics.K_MAT_AL_PER_B2, 1.0)
+    frac_al_over = sum(1 for b in al10 if b > 0.35) / n * 100.0
+
+    worst = max(drivers, key=lambda d: d.ebp)
+    worst_label = _latex_escape(worst.label())
+    b_needed = (worst.ebp / (physics.K_MAT_CU_PER_B2 * 0.35)) ** 0.5
+
+    lines = [
+        r"\begin{table*}[htbp]",
+        r"\centering",
+        rf"\caption{{Lower-bound coil-mass fraction $\beta_{{\min}}=EBP/"
+        rf"K_{{\mathrm{{mat}}}}(B)$ (\cref{{thm:bound}} at $u{{=}}1$) over "
+        rf"$N{{=}}{n}$ bass-relevant drivers (Type S/W/WM) in the bundled "
+        r"VituixCAD database, vs.\ $\beta_{\max}\approx0.35$.}",
+        r"\label{tab:ebp-census}",
+        r"\begin{tabular}{lc}",
+        r"\toprule",
+        r"quantity & value\\",
+        r"\midrule",
+        rf"$N$ & {n}\\",
+        rf"median $\beta_{{\min}}$ (Cu, $B{{=}}1.0$\,T) & {statistics.median(cu10):.2f}\\",
+        rf"$p_{{90}}$ / $p_{{99}}$ / $p_{{99.5}}$ (Cu, $B{{=}}1.0$\,T) & "
+        rf"{pct(cu10, 90):.2f} / {pct(cu10, 99):.2f} / {pct(cu10, 99.5):.2f}\\",
+        rf"max (Cu, $B{{=}}1.0$\,T) & {cu10[-1]:.2f} "
+        rf"({worst_label}, needs $B{{\approx}}{b_needed:.2f}$\,T for "
+        rf"$\beta_{{\min}}{{=}}0.35$)\\",
+        rf"pct.\ exceeding $\beta_{{\max}}$, material-agnostic "
+        rf"(Al, $B{{=}}1.0$\,T) & {frac_al_over:.1f}\%\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table*}",
+    ]
+    write_text_checked(TABLES_DIR / "table_ebp_census.tex",
                        "\n".join(lines) + "\n")
 
 
@@ -372,6 +460,7 @@ def main() -> None:
         table_worked_example,
         table_room_sizing,
         table_port_velocity,
+        table_ebp_census,
         print_narrative_numbers,
     ]
     if len(sys.argv) > 1:

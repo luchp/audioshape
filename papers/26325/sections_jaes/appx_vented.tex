@@ -1,0 +1,83 @@
+\section{Why sealed, not vented}
+\label{app:vented}
+
+A vented (ported) box promises to extend flat output roughly an octave
+lower than a sealed box of the same volume, with one driver instead of two.
+Repackaging the box stiffness as an acoustic compliance $C_{ab}=\Vb/(\rho_0c^2)$
+and adding a port of acoustic mass/resistance $M_{ap},R_{ap}$ driven by box
+pressure $P_b$ gives the classical 4th-order vented alignment
+\cite{small1973vented} in \eqref{eq:ode}'s own notation, so every sealed-box
+quantity ($\sigma$, $\ws$, $\Cms$) transfers unchanged. As
+$M_{ap},R_{ap}\to\infty$ this specializes exactly to the sealed operator
+\eqref{eq:ode} (a shut port is a sealed box) --- the vented model adds
+physics rather than replacing it.
+
+\begin{proposition}[$24$\,dB/octave, not $12$]
+\label{prop:vented24}
+For an ideal port, low-frequency output falls as $\omega^4$: vented slope is
+$24$\,dB/oct, vs.\ sealed's $12$. A real port ($R_{ap}>0$) crosses from
+$18$ to $24$\,dB/oct well below tuning for any reasonably low-loss port, so
+this steeper roll-off governs essentially the whole sub-tuning band of
+interest.
+\end{proposition}
+
+\begin{proposition}[Excursion is not box-limited]
+\label{prop:ventedxmax}
+Below tuning, cone excursion relaxes to the driver's own free-air DC limit,
+independent of box or port sizing: the box supplies \emph{no} restoring
+force below $F_b$, unlike sealed, where $\wc^2$ bounds $x$ at every
+frequency down to DC. At fixed drive and box volume, vented moves
+$(1+\alpha)=(F_c/F_s)^2$ times farther than the same driver sealed in the
+same box --- more than double for the worked example's $\Qtc=0.71$ box.
+\end{proposition}
+
+Standard practice counters this with a steep high-pass filter just below
+$F_b$; but that filter necessarily removes the same sub-tuning output
+whose room-gain rescue (\cref{sec:roomclose}) is sealed's chief
+low-frequency advantage, so the fix and the case for choosing vented pull
+in opposite directions.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{../figures/fig_vented_comparison}
+\caption{Driver S, identical $246$~L box, sealed ($\Qtc=0.71$) vs.\ vented
+($F_b=23$~Hz), both scaled to the same on-target level at $80$~Hz. Vented
+gains almost an octave of flat output below the sealed $F_c$, at the cost
+of the cone-excursion null at $F_b$ and the unbounded excursion rise below
+it.}
+\label{fig:vented}
+\end{figure}
+
+The sealed room-gain match of \cref{sec:roomclose} ($F_c\simeq
+f_{\mathrm{pz}}$, $-12$\,dB/oct meeting the room's flat pressure-zone term)
+has no vented analogue: $-24$\,dB/oct is twice as steep, and closing the
+gap with FIR would drive an already excursion-unbounded cone harder, with
+no $\Xmax$-derived ceiling to say when to stop.
+
+Near tuning the cone nulls and essentially all output passes through the
+port; port air velocity at the target is
+\begin{equation}
+\boxed{\ v_{\mathrm{port}}\approx\frac{2\pi r\,p_t}{\rho_0\,\omega_b\,
+S_{\mathrm{port}}}\ }.
+\label{eq:vport}
+\end{equation}
+Turbulence (``chuffing'') onset is empirically $v_{\max}\approx17$\,m/s
+\cite{dickason2006}. For the running $60$\,m$^3$/$110$\,dB/$F_b=23$\,Hz
+example:
+
+\input{../tables/table_port_velocity}
+
+A single $10$\,cm round port already runs at $\sim5\times$ the
+turbulence-onset velocity; holding $v\le v_{\max}$ needs a
+$\approx23$\,cm port --- a real, level-dependent, compressive,
+un-equalizable distortion and noise mechanism with no sealed-box analogue.
+
+Three independent, first-principles reasons therefore support the sealed
+choice: a steeper low-frequency asymptote (\cref{prop:vented24}), an
+excursion no longer bounded by the box at all below tuning
+(\cref{prop:ventedxmax}), and a room-gain mechanism (\cref{sec:roomclose})
+that has no vented equivalent, on top of the port-velocity liability above.
+These hold within this paper's DSP-corrected, room-integrated premise
+(A6); where amplifier headroom, not distortion or room gain, is the
+binding constraint, a vented alignment's higher passband sensitivity
+remains a legitimate, narrower-purpose choice.

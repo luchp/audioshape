@@ -1,0 +1,55 @@
+\section{Scope, conventions, assumptions}
+\label{sec:assumptions}
+
+SI units throughout. SPLs are rms re $p_0=\SI{20}{\micro\pascal}$, on axis,
+at $r=\SI{1}{\meter}$, half-space radiation; $\rho_0=\SI{1.204}{\kilogram\per\cubic\meter}$,
+$c=\SI{343}{\meter\per\second}$. This driver-intrinsic $r=\SI{1}{\meter}$ is
+kept distinct throughout from the room's own listening distance
+$r_{\mathrm{listen}}$, introduced only from \cref{sec:roomclose} on; the two
+are never interchangeable.
+
+\begin{center}
+\small
+\begin{tabular}{llll}
+\toprule
+$F_s$ & free-air resonance & $\Mms$ & moving mass\\
+$\Qes,\Qms,\Qts$ & Q factors & $\Re$ & DC resistance\\
+$\Vas$ & compliance vol. & $\Bl$ & force factor\\
+$\Sd$ & piston area & $\Le$ & coil inductance\\
+$\Xmax$ & linear excursion & $\Pmax$ & rated power\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Key assumptions (A1--A11, abbreviated; full statements and justification in
+the companion preprint \cite{audioshape-preprint}): lumped-parameter LTI
+model with $|x|\le\Xmax$ (A1); coil inductance neglected below
+$f_L=\Re/(2\pi\Le)$, retained as a validity criterion (A2); baffled rigid
+piston, $ka\lesssim1$ (A3); lossless sealed box (A4); $\Pmax$ is continuous
+coil dissipation per AES2/IEC~62458 \cite{aes2}, with short-term headroom
+factor $\kappa\in[2,4]$ (A5); unconstrained amplifier (A6); $\Xmax$ is
+distortion-defined at $10\%$ equivalent input distortion, per IEC~62458 /
+Klippel \cite{iec62458,klippel2006} (A7); room effects excluded from
+free-field ceilings (A8); $N$ identical common-signal drivers in a compact
+array sum volume velocity linearly ($\Vd\to N\Vd$) and power as $N^2$ (A9);
+distortion analysis is leading-order in $x/\Xmax$, a ranking law rather than
+a $\pm1$\,dB THD predictor (A10); targets are peak-equivalent levels at the
+listening position, with the pressure-zone relation as the robust demand
+basis near and below $f_{\mathrm{pz}}$ (A11).
+
+Four of these are load-bearing enough to justify directly here (full
+statements and derivations in \cite{audioshape-preprint}). \textbf{A1}:
+breakup is a $ka\gtrsim1$ phenomenon, well above the bass band addressed
+here, so a rigid-piston LTI model is the same premise every T/S parameter
+set already presumes, not an extra restriction. \textbf{A6}: treating the
+amplifier as unconstrained isolates the driver's own ceilings from a
+separate, system-level one; where amplifier headroom is itself the binding
+constraint, \cref{app:vented}'s vented alternative remains legitimate.
+\textbf{A9}: for $N$ identical sources much closer together than a
+wavelength, driven at the same per-driver level, far-field pressure sums
+linearly while radiated acoustic power sums as $N^2$ --- the standard
+mutual-coupling gain of a coherent compact array. \textbf{A11}: below
+$f_{\mathrm{pz}}$ the room's own transfer function is flat
+(\cref{sec:roomclose}), so a peak-equivalent target at the listening
+position is a room-independent, driver-side demand curve, not an
+assumption about program material.
