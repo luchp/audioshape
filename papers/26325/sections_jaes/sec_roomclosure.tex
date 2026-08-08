@@ -39,6 +39,13 @@ criterion, from the alignment line \eqref{eq:alignment},
 \label{eq:Fsrule}
 \end{equation}
 $F_c$ below $f_{\mathrm{pz}}$ wastes only box volume; $F_c$ above it leaves
-a correctable sag taxed by \eqref{eq:EQtax}. Real rooms leak below a
+a correctable sag taxed by \eqref{eq:EQtax}. The two mistunings are not
+equally cheap: undershoot's shelf, $20\log_{10}(f_{\mathrm{pz}}/F_c)$\,dB,
+comes out with a free EQ \emph{cut}, while overshoot's sag needs a taxed
+\emph{boost} that also eats excursion headroom --- so where
+\eqref{eq:Fsrule}'s exact match would push $\Qtc^\ast$ past a comfortable
+ringing budget (\cref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
+the better choice is to fix $\Qtc$ there and let $F_c$ undershoot
+$f_{\mathrm{pz}}$ rather than chase exact alignment. Real rooms leak below a
 construction-dependent $f_\ell$ (often $10$--$20$\,Hz), below which
 \eqref{eq:Vdreq}'s pressure-zone branch is an upper bound rather than exact.

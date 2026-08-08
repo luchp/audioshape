@@ -12,9 +12,10 @@ datasheet rows alone.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\columnwidth]{../figures/fig_spl_sub}
-\caption{Driver S, two units in $246$~L each ($\Qtc=0.71$, $F_c=29.7$~Hz):
-sine and burst excursion ceilings and the thermal ceiling, at $r=1$~m
-against the $110$~dB target.}
+\caption{Driver S, two units in $473$~L each ($\Qtc=0.61$, $F_c=25.5$~Hz):
+sine and burst excursion ceilings and the thermal ceiling, at
+$r_{\mathrm{listen}}=3$~m (\cref{sec:roomclose}) against the $110$~dB
+target.}
 \label{fig:spl-sub}
 \end{figure}
 
@@ -33,26 +34,31 @@ bound at $\beta\approx0.3$ (\cref{thm:bound}): two ends of one Pareto front.
 
 Room $V_{\mathrm{room}}=60$\,m$^3$, $L_{\max}=6$\,m
 $\Rightarrow f_{\mathrm{pz}}=28.6$\,Hz; target 110\,dB at the listening
-position; split $f_{\mathrm{sp}}=80$\,Hz; pressure-zone demand
-$V_{\mathrm{dem}}=3.80$\,L, flat for $f\le f_{\mathrm{pz}}$.
+position $r_{\mathrm{listen}}=3$\,m; split $f_{\mathrm{sp}}=80$\,Hz;
+pressure-zone demand $V_{\mathrm{dem}}=4.36$\,L, flat for
+$f\le f_{\mathrm{pz}}$.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\columnwidth]{../figures/fig_distortion_sub}
 \caption{Driver S: motor/suspension HD, Doppler IM onto 80\,Hz, box
-air-spring HD2, and their sum, at the 110\,dB target.}
+air-spring HD2, and their sum, at the 110\,dB target
+($r_{\mathrm{listen}}=3$~m).}
 \label{fig:distortion-sub}
 \end{figure}
 
-One S gives utilization $\xi_x=3.80/2.30=1.65$: infeasible even before
-distortion. Two S: $\xi_x=0.83\Rightarrow D\approx7$--$8\%$. At budget
-$D^\ast=3\%$, $\xi^\ast=0.3$--$0.55$ requires $6.9$--$12.7$\,L, i.e.\
-\textbf{3--6 units of S}: the distortion budget, not the SPL ceiling,
-multiplies driver count by $1.5$--$3\times$. Doppler: two S carrying their
-own band to 80\,Hz costs $1.2\%$ IM, versus $3.8\%$ for a hypothetical
-single full-range cone; the split buys $\sim5\times$ lower FM distortion.
-Box spring: two S in 246\,L each gives $\mathrm{HD}_2^{\mathrm{box}}
-\approx0.25\%$, an order below the motor terms. Thermal: $\xi_P\approx0.2\%$,
-negligible. The $F_s$ rule requires $F_s/\Qts\le52$\,Hz; S has 42\,Hz ---
-compliant, with $F_c=29.7$\,Hz$\approx f_{\mathrm{pz}}$: flat in-room to the
-leakage corner with no EQ.
+One S gives utilization $\xi_x=4.36/2.30=1.89$: infeasible even before
+distortion. Two S: $\xi_x=0.95\Rightarrow D\approx9.0$--$9.5\%$. At budget
+$D^\ast=3\%$, $\xi^\ast=0.3$--$0.55$ requires $7.95$--$14.52$\,L, i.e.\
+\textbf{4--7 units of S}: the distortion budget, not the SPL ceiling,
+multiplies driver count by $2$--$3.5\times$. Doppler: two S carrying their
+own band to 80\,Hz costs $1.4\%$ IM, versus $4.3\%$ for a hypothetical
+single full-range cone covering to 250\,Hz; the split buys $\sim3\times$
+lower FM distortion. Box spring: two S in 473\,L each gives
+$\mathrm{HD}_2^{\mathrm{box}}\approx0.11\%$, roughly two orders below the
+motor terms. Thermal: $\xi_P\approx3.8\%$, still comfortably small next to
+the driver's rating. The $F_s$ rule requires $F_s/\Qts\le52$\,Hz; S has
+42\,Hz --- compliant, with $F_c=25.5$\,Hz undershooting $f_{\mathrm{pz}}$ by
+$3.1$\,Hz at $\Qtc=0.61$ ($M_p\le1\%$, \cref{prop:decay}): a $0.99$\,dB
+in-room shelf, trimmed by a free EQ cut rather than chasing exact alignment
+at a less comfortable $\Qtc$.

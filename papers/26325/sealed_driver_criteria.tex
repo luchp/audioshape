@@ -877,7 +877,7 @@ $\alpha/(1+\alpha)=1-(\Qts/\Qtc)^2$ (Prop.~\ref{prop:invariance}):
 Stuffing helps twice: $\gamma_{\mathrm{eff}}\to1$ lowers the prefactor and raises
 the effective volume by up to $\gamma=1.4$. A sealed spring at
 $V_{\mathrm{dem}}/\Vb\sim1\%$ distorts at the $0.1$--$0.3\%$ level
-\eqref{eq:boxHD} (worked example, Sec.~\ref{sec:example}: $0.25\%$); the vented
+\eqref{eq:boxHD} (worked example, Sec.~\ref{sec:example}: $0.11\%$); the vented
 port's own, considerably larger, air-velocity-driven distortion is quantified
 separately in App.~\ref{sec:vented} rather than asserted here.
 
@@ -1009,9 +1009,10 @@ listening position: $110$\,dB target, $r_{\mathrm{listen}}=3$\,m, the $60$\,m$^3
 $L_{\max}=6$\,m room of this section. The $12$\,dB/oct free-field branch and the
 flat pressure-zone floor meet smoothly at $f_{\mathrm{pz}}=28.6$\,Hz -- the
 graphical form of the matching condition $V_{\mathrm{room}}\approx2rL_{\max}^2/\pi$
-noted below \eqref{eq:demand} (contrast the driver-comparison $r=1$\,m ceilings
-of Figs.~\ref{fig:spl-sub}--\ref{fig:spl-attack}, which do not satisfy this
-relation and so show a visible kink at $f_{\mathrm{pz}}$ instead).}
+noted below \eqref{eq:demand} (contrast the driver-comparison $r=1$\,m ceiling of
+Fig.~\ref{fig:spl-attack}, which does not satisfy this relation and so still
+shows a visible kink at $f_{\mathrm{pz}}$; Fig.~\ref{fig:spl-sub} avoids it by
+plotting at this section's self-consistent $r_{\mathrm{listen}}=3$\,m instead).}
 \label{fig:demand}
 \end{figure}
 
@@ -1064,7 +1065,15 @@ middle row is the $60$ m$^3$ running example above):
 (6 m room, $\Qtc^\ast=0.55$: $F_s/\Qts\le52$ Hz; the corner rate is now selected by
 the \emph{room}, not by taste). $F_c$ below $f_{\mathrm{pz}}$ wastes nothing but
 box volume; $F_c$ above it leaves a correctable sag $[f_{\mathrm{pz}},F_c]$ taxed
-by \eqref{eq:EQtax} --- bounded and often acceptable, per \eqref{eq:PL0}.
+by \eqref{eq:EQtax} --- bounded and often acceptable, per \eqref{eq:PL0}. The two
+mistunings are not equally cheap: undershoot's shelf,
+$20\log_{10}(f_{\mathrm{pz}}/F_c)$ dB, comes out with a free EQ \emph{cut};
+overshoot's sag needs a taxed \emph{boost} that also eats excursion headroom.
+Since \eqref{eq:Fsrule}'s exact match can force $\Qtc^\ast$ past a comfortable
+ringing budget (Prop.~\ref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
+the practical rule is to fix $\Qtc$ from that budget first and let $F_c$
+undershoot $f_{\mathrm{pz}}$ rather than chase exact alignment
+(Sec.~\ref{sec:example}).
 
 \emph{Caveats.} Real rooms leak: below $f_\ell=\omega_\ell/2\pi$ (construction
 dependent, often 10--20 Hz in masonry rooms, higher in lightweight ones) the
@@ -1132,11 +1141,13 @@ than taken on faith.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig_spl_sub}
-\caption{Driver S, two units in $246$~L each ($\Qtc=0.71$, $F_c=29.7$~Hz):
+\caption{Driver S, two units in $473$~L each ($\Qtc=0.61$, $F_c=25.5$~Hz):
 sine and burst excursion ceilings and the thermal ceiling
-\eqref{eq:SPLT}--\eqref{eq:PL0}, at $r=1$~m against the $110$~dB target. The
-sine ceiling crosses target at $22.7$~Hz, below $f_x=32$~Hz; the thermal
-ceiling stays more than $5$~dB above target throughout the passband.}
+\eqref{eq:SPLT}--\eqref{eq:PL0}, at $r_{\mathrm{listen}}=3$~m against the
+$110$~dB target. The sine ceiling clears target by only $0.5$~dB below
+$f_{\mathrm{pz}}$ --- two units are barely sufficient there --- widening to
+a comfortable margin above it; the thermal ceiling stays more than $2$~dB
+above target throughout.}
 \label{fig:spl-sub}
 \end{figure}
 
@@ -1180,7 +1191,7 @@ $\beta B^2\approx1.1$: excluded.
 Room $V_{\mathrm{room}}=60$ m$^3$, $L_{\max}=6$ m $\Rightarrow$
 $f_{\mathrm{pz}}=28.6$ Hz; target 110 dB (rms-equivalent) at the listening
 position; split $f_{\mathrm{sp}}=80$ Hz. PZ demand \eqref{eq:demand}:
-$V_{\mathrm{dem}}=3.80$ L, flat for all $f\le f_{\mathrm{pz}}$.
+$V_{\mathrm{dem}}=4.36$ L, flat for all $f\le f_{\mathrm{pz}}$.
 Figs.~\ref{fig:distortion-sub}--\ref{fig:distortion-attack} plot the three
 non-correctable mechanisms of Sec.~\ref{sec:distortion} against this demand
 for each driver; the bullets below read off their crossings with the budget
@@ -1189,14 +1200,11 @@ line $D^\ast=3\%$.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig_distortion_sub}
-\caption{Driver S (two units, $246$~L each): motor/suspension HD, Doppler IM
+\caption{Driver S (two units, $473$~L each): motor/suspension HD, Doppler IM
 onto $80$~Hz, box air-spring HD2 \eqref{eq:boxHD}, and their sum, at the
-$110$~dB target ($r=1$~m basis). Below $f_{\mathrm{pz}}$ the flat
-pressure-zone demand pins the total near $9\%$, three times over budget; the
-curve steps under budget immediately above $f_{\mathrm{pz}}$ (the step is the
-$r=1$~m driver-comparison basis of App.~\ref{sec:tool-scope}, not the
-self-consistent $r=3$~m of Sec.~\ref{sec:roomclose}). Box HD2 stays two
-orders of magnitude under budget throughout.}
+$110$~dB target ($r_{\mathrm{listen}}=3$~m basis). Below $f_{\mathrm{pz}}$ the
+flat pressure-zone demand pins the total near $9$--$9.5\%$, about three times
+over budget. Box HD2 stays two orders of magnitude under budget throughout.}
 \label{fig:distortion-sub}
 \end{figure}
 
@@ -1212,34 +1220,37 @@ independently favor the same split frequency.}
 \end{figure}
 
 \begin{itemize}
-\item \textbf{Utilization and HD:} one S: $\xi_x=3.80/2.30=1.65$ --- infeasible
-even before distortion. Two S: $\xi_x=0.83\Rightarrow D\approx7$--$8\%$
-\eqref{eq:HDscale}. Budget $D^\ast=3\%$: $\Vd\ge3.80/\xi^\ast$ with
-$\xi^\ast=0.3$--$0.55$, i.e.\ $6.9$--$12.7$ L $\Rightarrow$ \textbf{3--6 units of
+\item \textbf{Utilization and HD:} one S: $\xi_x=4.36/2.30=1.89$ --- infeasible
+even before distortion. Two S: $\xi_x=0.95\Rightarrow D\approx9.0$--$9.5\%$
+\eqref{eq:HDscale}. Budget $D^\ast=3\%$: $\Vd\ge4.36/\xi^\ast$ with
+$\xi^\ast=0.3$--$0.55$, i.e.\ $7.95$--$14.52$ L $\Rightarrow$ \textbf{4--7 units of
 S}. The distortion budget, not the SPL ceiling, multiplies the driver count by
-$1.5$--$3\times$ --- this is the quantitative content of ``it is even more about
+$2$--$3.5\times$ --- this is the quantitative content of ``it is even more about
 distortion than SPL.''
 \item \textbf{Doppler / split check \eqref{eq:doppler}:} two S at
-$X_1=16.5$ mm each: carrying their own band to 80 Hz costs $m/2=1.2\%$ IM; a
+$X_1=18.9$ mm each: carrying their own band to 80 Hz costs $m/2=1.4\%$ IM; a
 hypothetical single full-range cone carrying 250 Hz on the same excursion:
-$3.8\%$. M's own in-band index ($X_1=3.6$ mm at 80 Hz, $f_2=250$ Hz): $0.8\%$.
-The split buys $\sim\!5\times$ lower FM distortion at identical SPL.
-\item \textbf{Box spring \eqref{eq:boxHD}:} two S in 246 L each
-($\Qtc=0.71$): $\mathrm{HD}_2^{\mathrm{box}}\approx0.6\cdot
-(1.90/246)\cdot0.55\approx0.25\%$ --- an order below the motor terms; stuffing
-lowers it further. Sealed-box air is not the bottleneck.
+$4.3\%$. M's own in-band index ($X_1=3.6$ mm at 80 Hz, $f_2=250$ Hz): $0.8\%$.
+The split buys $\sim\!3\times$ lower FM distortion at identical SPL.
+\item \textbf{Box spring \eqref{eq:boxHD}:} two S in 473 L each
+($\Qtc=0.61$): $\mathrm{HD}_2^{\mathrm{box}}\approx0.6\cdot
+(2.18/473)\cdot0.39\approx0.11\%$ --- roughly two orders below the motor
+terms; stuffing lowers it further. Sealed-box air is not the bottleneck.
 \item \textbf{Thermal:} per unit, $P_{\mathrm{req}}$ from \eqref{eq:EQtax}
 evaluated at $f_{\mathrm{pz}}$ (with the $N^2$ coherent-array power sharing of A9,
-$N=2$) is $\approx1.3$ W $\Rightarrow\xi_P\approx0.2\%$ --- small for two compounding
-reasons: two coherent units need $N^2=4\times$ less power each for the same target
-(A9), \emph{and} $F_c\approx f_{\mathrm{pz}}$ (Sec.~\ref{sec:roomclose}) places the
-evaluation at \eqref{eq:PL}'s own bathtub minimum rather than deep below the
-corner. Hence thermal AM $\ll0.1$ dB for any music crest factor; negligible here,
-dominant only if one coil served both bands.
+$N=2$) is $\approx23$ W $\Rightarrow\xi_P\approx3.8\%$ --- still comfortably
+small next to the driver's rating: two coherent units need $N^2=4\times$ less
+power each for the same target (A9), and $F_c=25.5$ Hz sits close enough to
+$f_{\mathrm{pz}}$ (undershooting by $3.1$ Hz) that \eqref{eq:PL}'s tax stays
+near its own bathtub minimum rather than deep below the corner. Hence thermal
+AM is $\approx0.13$ dB for any music crest factor; negligible here, dominant
+only if one coil served both bands.
 \item \textbf{$F_s$ rule \eqref{eq:Fsrule}:} required $F_s/\Qts\le
-f_{\mathrm{pz}}/0.55=52$ Hz; S has 42 Hz --- compliant; at $\Qtc=0.71$ in 246 L,
-$F_c=29.7\,\mathrm{Hz}\approx f_{\mathrm{pz}}$: in-room response flat to the
-leakage corner with \emph{no} EQ, per Sec.~\ref{sec:roomclose}.
+f_{\mathrm{pz}}/0.55=52$ Hz; S has 42 Hz --- compliant; at $\Qtc=0.61$ in 473 L,
+$F_c=25.5\,\mathrm{Hz}$ undershoots $f_{\mathrm{pz}}$ by $3.1$ Hz: a
+$0.99$~dB in-room shelf between $F_c$ and $f_{\mathrm{pz}}$, trimmed by a free
+EQ cut. $\Qtc=0.61$ is chosen from the ringing budget (Prop.~\ref{prop:decay}:
+$M_p\le1\%$) rather than from exact alignment, per Sec.~\ref{sec:roomclose}.
 \end{itemize}
 
 %======================================================================
@@ -1457,14 +1468,14 @@ $E$: sealed DC excursion is $X_{\mathrm{sealed}}(0)=\Bl\Cms E/(\Re(1+\alpha))$
 (confirmed numerically to $0.1\%$) --- a clean reuse of the already-defined
 $\alpha$, not a new constant. A vented alignment moves $(1+\alpha)\times$
 farther, at identical sub-corner drive, than the same driver sealed in the
-same box: for the worked example's $\Qtc=0.71$ box, $1+\alpha\approx2.2$, more
-than double.
+same box: for the worked example's $\Qtc=0.61$ box, $1+\alpha\approx1.63$,
+roughly $60\%$ farther.
 \end{prop}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.92\textwidth]{figures/fig_vented_comparison}
-\caption{Driver S, identical $246$~L box, sealed ($\Qtc=0.71$) vs.\ vented
+\caption{Driver S, identical $473$~L box, sealed ($\Qtc=0.61$) vs.\ vented
 ($F_b=23$~Hz), both curves scaled to the same on-target level at $80$~Hz (top:
 SPL at $r_{\mathrm{listen}}=3$~m; bottom: peak cone excursion). Vented gains
 almost an octave of flat output below the sealed $F_c$, at the cost of the

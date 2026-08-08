@@ -89,20 +89,32 @@ DRIVER_M = Driver(
 # Two reference scenarios, both the 60 m^3 / L_max=6 m room of the worked
 # example (Sec. "Room closure"):
 #  - r_listen = 1 m: the driver-comparison basis used throughout Secs. 3-6
-#    and the worked-example table (A-list convention: compare drivers on
-#    neutral ground before placing them in a room).
-#  - r_listen = 3 m: the actual "couch" listening distance, used from
-#    Sec. 7 on (Scenario's own default; self-consistent with
-#    V_room ~ 2 r L_max^2/pi for L_max = 6 m, eq:demand).
+#    (A8: "priced every driver in free space") -- the table and the
+#    "(1 m, 2pi, rms)" driver-vs-driver paragraph (22.7 Hz/141 W/M's
+#    117 dB) all stay on this basis; those numbers use the plain
+#    free-field/thermal ceilings with no V_room or f_pz dependence, so
+#    they are unaffected by which room the driver eventually lands in.
+#  - r_listen = 3 m: the actual "couch" listening distance, self-consistent
+#    with V_room ~ 2 r L_max^2/pi for L_max = 6 m (eq:demand) -- used from
+#    Sec. "Room closure" on, once the abstract room is given "a concrete
+#    face". SC_SUB uses this: it is the room-specific sub-role alignment,
+#    and its figures/HD numbers plot the pressure-zone transition, so they
+#    must use the self-consistent r or eq:demand's two branches disagree at
+#    f_pz and the curve shows a spurious kink there (an r-mismatch artifact,
+#    not physics -- see Sec. "Room closure").
 # The two are NOT interchangeable and every use below is explicit about
-# which one it needs (see Sec. "Room closure" for the paper-side discussion
-# of why: the PZ branch of eq:demand is r-independent, but the free-field
-# branch, and hence SPL/thermal figures, are not).
+# which one it needs.
 _BASE = Scenario(v_room=60.0, l_max=6.0, r_listen=1.0,
                  target_spl=110.0, distortion_budget=0.03,
                  qtc=0.55, f_low=15.0, f_split=80.0, f_high=250.0)
-SC_SUB = replace(_BASE, qtc=0.71)   # S's sub-role alignment (250 L class)
-SC_ATTACK = _BASE                    # M's attack-role alignment (0.55)
+SC_SUB = replace(_BASE, qtc=0.61, r_listen=3.0)  # S's sub-role alignment:
+                                     # Qtc capped at the Mp<=1% ringing
+                                     # budget (prop:decay), not chased to
+                                     # exact f_pz match (470 L class); r=3
+                                     # so the room-closure figures are
+                                     # self-consistent at f_pz (see above)
+SC_ATTACK = _BASE                    # M's attack-role alignment (0.55),
+                                     # Secs. 3-6 r=1 m driver-pricing basis
 SC_ROOM = replace(_BASE, r_listen=3.0)  # couch distance, room-facing content
 
 
@@ -162,7 +174,7 @@ def fig_demand() -> None:
 
 def fig_vented_comparison() -> None:
     fig = plots.vented_comparison_figure(
-        DRIVER_S, SC_ROOM, vb=BoxedDriver(DRIVER_S, qtc=0.71).vb, fb=23.0,
+        DRIVER_S, SC_ROOM, vb=BoxedDriver(DRIVER_S, qtc=SC_SUB.qtc).vb, fb=23.0,
         s_port=0.008,
     )
     save_figure_checked(fig, FIGURES_DIR / "fig_vented_comparison.pdf")
@@ -174,14 +186,14 @@ def fig_vented_comparison() -> None:
 
 def table_worked_example() -> None:
     s, m = DRIVER_S, DRIVER_M
-    b55_s, b71_s = BoxedDriver(s, qtc=0.55), BoxedDriver(s, qtc=0.71)
+    b55_s, b61_s = BoxedDriver(s, qtc=0.55), BoxedDriver(s, qtc=SC_SUB.qtc)
     b55_m = BoxedDriver(m, qtc=0.55)
 
     fx_s = physics.regime_boundary_fx(s.fs, s.p_max, s.qes, s.mms, s.xmax)
     fx_m = physics.regime_boundary_fx(m.fs, m.p_max, m.qes, m.mms, m.xmax)
 
     pl0_s = physics.power_at_excursion_limit(
-        0.0, s.mms, s.qes, s.fs, s.xmax, b71_s.wc, s.sigma_m)
+        0.0, s.mms, s.qes, s.fs, s.xmax, b61_s.wc, s.sigma_m)
     pl0_m = physics.power_at_excursion_limit(
         0.0, m.mms, m.qes, m.fs, m.xmax, b55_m.wc, m.sigma_m)
 
@@ -231,10 +243,10 @@ def table_worked_example() -> None:
         (r"box @ $\Qtc{=}0.55$: $\Vb$, $F_c$",
          f"{b55_s.vb*1e3:.0f} L, {b55_s.fc:.0f} Hz",
          f"{b55_m.vb*1e3:.0f} L, {b55_m.fc:.0f} Hz"),
-        (r"box @ $\Qtc{=}0.71$: $\Vb$, $F_c$",
-         f"{b71_s.vb*1e3:.0f} L, {b71_s.fc:.1f} Hz", "---"),
+        (r"box @ $\Qtc{=}0.61$: $\Vb$, $F_c$",
+         f"{b61_s.vb*1e3:.0f} L, {b61_s.fc:.1f} Hz", "---"),
         (r"EQ tax $P_{\mathrm{L}}(0)$ \eqref{eq:PL0} (in that box) [W]",
-         f"{pl0_s:.0f} ({b71_s.vb*1e3:.0f} L)",
+         f"{pl0_s:.0f} ({b61_s.vb*1e3:.0f} L)",
          f"{pl0_m:.0f} ({b55_m.vb*1e3:.0f} L)"),
         (r"motor bound: $EBP\,u^2\;/\;$ implied $m_c$",
          f"{ebp_u2_s:.0f} Hz / {beta_s*s.mms*1e3:.0f} g",
@@ -407,21 +419,31 @@ def table_ebp_census() -> None:
 def print_narrative_numbers() -> None:
     s = DRIVER_S
     vroom, lmax = 60.0, 6.0
+    r = SC_SUB.r_listen  # self-consistent couch distance (3 m), not the
+                         # Secs. 3-6 r=1 m driver-pricing basis
     f_pz = physics.pressure_zone_frequency(lmax)
-    v_dem = physics.demand_volume(15.0, 110.0, r=1.0, v_room=vroom, l_max=lmax)
+    v_dem = physics.demand_volume(15.0, 110.0, r=r, v_room=vroom, l_max=lmax)
     xi_1s = v_dem / s.vd
     xi_2s = v_dem / (2 * s.vd)
     x1_2s = min(xi_2s, 1.0) * s.xmax
-    b71_s2 = BoxedDriver(s, qtc=0.71, n_units=2)
-    box_hd_2s = physics.box_hd2(v_dem / 2, b71_s2.vb, s.qts, 0.71)
+    b61_s2 = BoxedDriver(s, qtc=SC_SUB.qtc, n_units=2)
+    box_hd_2s = physics.box_hd2(v_dem / 2, b61_s2.vb, s.qts, SC_SUB.qtc)
 
     p_t = physics.pressure_from_spl(110.0)
-    w_ac = physics.acoustic_power_halfspace(p_t, 1.0)
+    w_ac = physics.acoustic_power_halfspace(p_t, r)
     p_passband_per_unit = w_ac / (s.eta0 * 2 * 2)  # array-coherent scaling
     p_req = physics.eq_tax_power(max(15.0, f_pz), p_passband_per_unit,
-                                 b71_s2.wc, s.sigma_m)
+                                 b61_s2.wc, s.sigma_m)
     xi_p_2s = p_req / s.p_max
 
+    # xi* bounding range (D* = 3%, d2,d3 >= 0 extremes: 0.1 xi^2 <= D <= 0.1 xi)
+    xi_lo, xi_hi = 0.3, math.sqrt(0.3)
+    vd_req_lo, vd_req_hi = v_dem / xi_hi, v_dem / xi_lo
+    units_lo = math.ceil(vd_req_lo / s.vd)
+    units_hi = math.ceil(vd_req_hi / s.vd)
+
+    # free-field reference crossing (r=1, A8 basis): unrelated to SC_SUB,
+    # a room-independent single-unit diagnostic, kept at r=1 on purpose.
     vd_s = s.vd
     spl_pz = 20 * math.log10(physics.RHO0 * physics.C_AIR ** 2 * vd_s
                              / (math.sqrt(2) * vroom * physics.P0))
@@ -432,17 +454,23 @@ def print_narrative_numbers() -> None:
 
     print("\n--- narrative cross-check (Sec. 'Room closure' / Appendix) ---")
     print(f"f_pz = {f_pz:.1f} Hz")
-    print(f"V_dem(15 Hz, 110 dB, r=1, 60 m^3) = {v_dem*1e3:.2f} L")
-    print(f"xi_x one S = {xi_1s:.2f}, two S = {xi_2s:.2f}")
-    print(f"HD(two S) = {physics.harmonic_distortion(xi_2s)*100:.1f} %")
+    print(f"V_dem(15 Hz, 110 dB, r={r:g}, 60 m^3) = {v_dem*1e3:.2f} L")
+    print(f"xi_x one S = {xi_1s:.2f}, two S = {xi_2s:.3f}")
+    print(f"HD(two S) bound = {0.1*xi_2s*xi_2s*100:.1f}--{0.1*xi_2s*100:.1f} %")
     print(f"X1(two S) = {x1_2s*1e3:.1f} mm")
-    print(f"Doppler(two S, 80 Hz) = {physics.doppler_im(80.0, x1_2s)*100:.1f} %")
-    print(f"Doppler(two S, 250 Hz) = {physics.doppler_im(250.0, x1_2s)*100:.1f} %")
-    print(f"box_hd2(two S, 250 L, Qtc=0.71) = {box_hd_2s*100:.2f} %")
-    print(f"xi_P(two S, array-coherent) = {xi_p_2s:.4f}")
+    print(f"Doppler(two S, 80 Hz) = {physics.doppler_im(80.0, x1_2s)*100:.2f} %")
+    print(f"Doppler(two S, 250 Hz, hypothetical full-range) = "
+         f"{physics.doppler_im(250.0, x1_2s)*100:.2f} %"
+         f" ({physics.doppler_im(250.0, x1_2s)/physics.doppler_im(80.0, x1_2s):.1f}x)")
+    print(f"Vd required (D*=3%%): {vd_req_lo*1e3:.2f}--{vd_req_hi*1e3:.2f} L"
+         f" -> {units_lo}--{units_hi} units of S")
+    print(f"box @ Qtc={SC_SUB.qtc}: Vb={b61_s2.vb*1e3:.0f} L, Fc={b61_s2.fc:.1f} Hz"
+         f" (f_pz-Fc={f_pz-b61_s2.fc:.1f} Hz, shelf={20*math.log10(f_pz/b61_s2.fc):.2f} dB)")
+    print(f"box_hd2(two S, {b61_s2.vb*1e3:.0f} L, Qtc={SC_SUB.qtc}) = {box_hd_2s*100:.3f} %")
+    print(f"xi_P(two S, array-coherent) = {xi_p_2s*100:.3f} %, P_req/unit = {p_req:.1f} W")
     print(f"max_corner_rate(f_pz, 0.55) = {physics.max_corner_rate(f_pz, 0.55):.1f} Hz")
-    print(f"SPL_pz(driver S, 60 m^3) = {spl_pz:.1f} dB")
-    print(f"free-field crossing frequency = {f_cross:.1f} Hz")
+    print(f"SPL_pz(driver S, 60 m^3, free-field r=1 ref.) = {spl_pz:.1f} dB")
+    print(f"free-field crossing frequency (r=1 ref.) = {f_cross:.1f} Hz")
 
 
 def main() -> None:

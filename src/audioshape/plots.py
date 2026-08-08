@@ -118,7 +118,7 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None) -> Figure:
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("frequency [Hz]")
-    ax.set_ylabel(f"distortion at {sc.target_spl:g} dB target [%]")
+    ax.set_ylabel(f"distortion at {sc.target_spl:g} dB target, r={sc.r_listen:g} m [%]")
     ax.set_title(f"{d.label()}  |  non-correctable distortion, "
                  f"{ev.boxed.n_units} unit(s)")
     ax.grid(True, which="both", alpha=0.3)

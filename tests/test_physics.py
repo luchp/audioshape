@@ -97,14 +97,14 @@ def test_distortion_laws():
     xi = physics.utilization_for_distortion(0.03)
     assert physics.harmonic_distortion(xi) == pytest.approx(0.03, rel=1e-9)
     assert 0.3 < xi < 0.55  # paper's bracket for D* = 3 %
-    # Doppler: X1 = 16.5 mm carrying 80 Hz -> 1.2 % (worked example)
-    assert physics.doppler_im(80.0, 16.5e-3) == pytest.approx(0.012, abs=0.001)
+    # Doppler: X1 = 18.9 mm carrying 80 Hz -> 1.4 % (worked example)
+    assert physics.doppler_im(80.0, 18.9e-3) == pytest.approx(0.0138, abs=0.001)
 
 
 def test_box_hd2_worked_example():
-    # two S in 250 L each at Qtc 0.71, V_dem 1.89 L/unit -> ~0.25 %
-    hd2 = physics.box_hd2(1.89e-3, 0.250, 0.478, 0.71)
-    assert hd2 == pytest.approx(0.0025, rel=0.15)
+    # two S in 473 L each at Qtc 0.61, V_dem 2.18 L/unit -> ~0.11 %
+    hd2 = physics.box_hd2(2.18e-3, 0.473, 0.478, 0.61)
+    assert hd2 == pytest.approx(0.00107, rel=0.15)
 
 
 def test_corner_rate_rule(scenario, driver_s):

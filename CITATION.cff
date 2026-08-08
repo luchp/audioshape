@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite as in CITATION.cff."
+title: "audioshape: Sealed-Box Loudspeaker Driver Selection Criteria"
+version: "3.0"
+date-released: "2026-01-01"
+authors:
+  - family-names: "Holtkamp"
+    given-names: "Luc"
+    affiliation: "SenseMagic, Netherlands"
+identifiers:
+  - type: url
+    value: "https://github.com/luchp/audioshape"
+license: "MIT"
+abstract: "Frequency- and Time-Domain Excursion and Power Headroom Limits for Sealed Direct-Radiator Loudspeakers"
+keywords:
+  - "loudspeaker design"
+  - "sealed enclosure"
+  - "excursion limit"
+  - "power compression"
+  - "distortion"
+  - "vented enclosure"
+  - "driver selection"

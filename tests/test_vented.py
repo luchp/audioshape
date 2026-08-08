@@ -28,9 +28,9 @@ def driver_s() -> Driver:
 def test_sealed_limit_consistency(driver_s):
     """Delta(s)/Dp(s) with a near-shut port (huge Map) must match
     `sealed_limit_delta`, and `sealed_limit_delta(0)` must match the
-    sealed-box k_t = Mms*wc^2 implied by `BoxedDriver` (same Qtc=0.71 box
-    as the paper's worked example, 250 L)."""
-    boxed = BoxedDriver(driver_s, qtc=0.71)
+    sealed-box k_t = Mms*wc^2 implied by `BoxedDriver` (same Qtc=0.61 box
+    as the paper's worked example, 473 L)."""
+    boxed = BoxedDriver(driver_s, qtc=0.61)
     va = vented.VentedAlignment(driver=driver_s, vb=boxed.vb,
                                 l_eff=1.0e6, s_port=0.008, r_ap=0.0)
 
@@ -46,15 +46,15 @@ def test_sealed_limit_consistency(driver_s):
 
 def test_implied_qtc_round_trips_box_volume_for_qtc(driver_s):
     """implied_qtc is the exact inverse of physics.box_volume_for_qtc."""
-    vb = physics.box_volume_for_qtc(driver_s.vas, driver_s.qts, qtc=0.71)
+    vb = physics.box_volume_for_qtc(driver_s.vas, driver_s.qts, qtc=0.61)
     assert vented.implied_qtc(driver_s.vas, driver_s.qts, vb) == pytest.approx(
-        0.71, rel=1e-9)
+        0.61, rel=1e-9)
 
 
 def test_low_frequency_pressure_slope_is_24db_per_octave(driver_s):
     """Ideal port (Rap=0): pressure proxy f*|U_tot(f)| must grow with
     exponent ~4 in frequency well below Fb (i.e. 24 dB/octave in SPL)."""
-    boxed = BoxedDriver(driver_s, qtc=0.71)
+    boxed = BoxedDriver(driver_s, qtc=0.61)
     va = vented.VentedAlignment.tuned(driver_s, vb=boxed.vb, fb=23.0,
                                       s_port=0.008, r_ap=0.0)
     assert va.fb == pytest.approx(23.0, rel=1e-6)
@@ -72,7 +72,7 @@ def test_low_frequency_excursion_matches_free_air_limit(driver_s):
     """Cone excursion at very low frequency (well below Fb) must match the
     driver's own free-air (no box at all) DC excursion limit -- the vented
     box supplies no restoring force there."""
-    boxed = BoxedDriver(driver_s, qtc=0.71)
+    boxed = BoxedDriver(driver_s, qtc=0.61)
     va = vented.VentedAlignment.tuned(driver_s, vb=boxed.vb, fb=23.0,
                                       s_port=0.008, r_ap=0.0)
     cms = vented.compliance_from_vas(driver_s.vas, driver_s.sd)
@@ -85,7 +85,7 @@ def test_low_frequency_excursion_matches_free_air_limit(driver_s):
 def test_relative_excursion_factor_is_one_plus_alpha(driver_s):
     """Same driver, same box volume: vented DC excursion must exceed sealed
     DC excursion by exactly (1+alpha) = (Fc/Fs)^2 (Prop. box invariance)."""
-    boxed = BoxedDriver(driver_s, qtc=0.71)
+    boxed = BoxedDriver(driver_s, qtc=0.61)
     va = vented.VentedAlignment.tuned(driver_s, vb=boxed.vb, fb=23.0,
                                       s_port=0.008, r_ap=0.0)
 
