@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 from matplotlib.figure import Figure
+from matplotlib.ticker import LogFormatterSciNotation, LogLocator
 
 from audioshape import physics, vented
 from audioshape.driver import BoxedDriver, Driver
@@ -16,9 +17,23 @@ from audioshape.ranking import Evaluation
 from audioshape.scenario import Scenario
 
 
-def _freq_axis(ev: Evaluation, n: int = 400) -> np.ndarray:
+def _freq_axis(ev: Evaluation, n: int = 400, f_min: float | None = None) -> np.ndarray:
     sc = ev.scenario
-    return np.geomspace(sc.f_low * 0.7, sc.f_high, n)
+    lo = sc.f_low * 0.7 if f_min is None else f_min
+    return np.geomspace(lo, sc.f_high, n)
+
+
+def _style_log_xaxis(ax) -> None:
+    """Force labeled minor ticks (2, 3, 4, 6 x each decade) on a log
+    frequency axis. Matplotlib's default LogFormatter only labels minor
+    ticks below ~1 decade of span, so otherwise-similar figures whose axis
+    happens to cross that threshold (e.g. the driver S vs. M worked-example
+    plots) render with inconsistent tick density -- override it so every
+    figure reads the same regardless of exactly how many decades it spans.
+    """
+    ax.xaxis.set_minor_locator(LogLocator(subs=(2, 3, 4, 6)))
+    ax.xaxis.set_minor_formatter(
+        LogFormatterSciNotation(minor_thresholds=(np.inf, np.inf)))
 
 
 def _room_gain_factor(f: float, ev: Evaluation) -> float:
@@ -31,18 +46,80 @@ def _room_gain_factor(f: float, ev: Evaluation) -> float:
     return v_radiation / sc.demand_volume(f)
 
 
-def spl_figure(ev: Evaluation, fig: Figure | None = None) -> Figure:
+def _shade_crossover(ax, f: np.ndarray, crossover: float | None,
+                     crossover_shade: str | None) -> None:
+    """Mark the sub/attack driver crossover f_split with a dotted line, and
+    lightly shade the side of the plot that is the *other* driver's band
+    (crossover_shade='below': this driver's own band starts at crossover,
+    e.g. the attack driver; 'above': its own band ends at crossover, e.g.
+    the sub driver) -- distinct from f_pz, the room's pressure-zone corner,
+    which is a property of the room, not of the two-driver handoff."""
+    if crossover is None or not (f[0] <= crossover <= f[-1]):
+        return
+    if crossover_shade == "below":
+        ax.axvspan(f[0], crossover, color="grey", alpha=0.12, lw=0,
+                  label="other driver's band")
+    elif crossover_shade == "above":
+        ax.axvspan(crossover, f[-1], color="grey", alpha=0.12, lw=0,
+                  label="other driver's band")
+    ax.axvline(crossover, color="grey", lw=0.8, ls=":")
+    # A taller offset than the f_pz/Fc/f_x row (xytext=(2, 6)) keeps the
+    # label legible even when f_split lands close to Fc, as for the attack
+    # driver, whose box is tuned near the crossover by design.
+    ax.annotate("$f_{sp}$", (crossover, ax.get_ylim()[0]),
+                xytext=(2, 20), textcoords="offset points", fontsize=9)
+
+
+def spl_figure(ev: Evaluation, fig: Figure | None = None,
+              show_power_axis: bool = False, f_min: float | None = None,
+              crossover: float | None = None,
+              crossover_shade: str | None = None,
+              legend_loc: str = "lower right") -> Figure:
     """Achievable SPL at the listening position vs frequency.
 
     Curves: sine excursion ceiling, burst (pulse) excursion ceiling, thermal
     ceiling (with EQ tax below Fc), all including room pressure-zone gain;
     plus the target line and the markers f_pz, Fc, f_x.
+
+    show_power_axis adds a secondary (right-hand, log) axis with the
+    per-unit electrical power actually needed to sit at the target line --
+    using the real two-branch demand curve, not a flat-EQ straw man --
+    which is what answers whether A6's unconstrained amplifier ever implies
+    an absurd power draw (eq:EQtax): it stays bounded, because the demand
+    curve itself saturates below Fc/f_pz rather than growing without limit.
+    Only meaningful when `ev.scenario.r_listen` is the *room-consistent*
+    listening distance (f_pz computed from the same room, e.g. SC_SUB):
+    at the r=1 m driver-pricing basis (e.g. SC_ATTACK), demand_volume's
+    below-f_pz branch mixes an unrelated length scale and the resulting
+    curve is not physically meaningful there, so leave this off for that
+    case.
+
+    f_min overrides the default `f_low*0.7` plot-axis floor. Use this either
+    to crop out the below-f_pz region for a scenario whose r_listen is not
+    the room-consistent distance (e.g. SC_ATTACK: below f_pz, demand_volume's
+    two branches are evaluated at mismatched length scales there and the
+    resulting curve is not physically meaningful, see above), or -- for a
+    room-consistent scenario, e.g. SC_SUB -- to trim the uninformative flat
+    run-in below f_pz (the pressure-zone branch is frequency-independent by
+    construction, so nothing new is shown there beyond a single value).
+
+    crossover draws the sub/attack driver handoff frequency f_split as a
+    dotted line, with crossover_shade in {"below", "above"} lightly shading
+    the side of the plot that belongs to the *other* driver's band ("below"
+    for an attack driver whose own band starts at f_split, "above" for a
+    sub driver whose own band ends there) -- distinct from f_pz, which is a
+    property of the room, not of the two-driver handoff.
+
+    legend_loc overrides the default "lower right" legend placement; e.g.
+    for the attack driver, whose box is tuned close to f_split, the f_pz/
+    Fc/f_x/f_sp marker cluster sits right where that corner would go, so
+    "upper left" (clear of curves there) reads better.
     """
     if fig is None:
         fig = Figure(figsize=(9, 6), constrained_layout=True)
     ax = fig.add_subplot(111)
     sc, d, boxed = ev.scenario, ev.driver, ev.boxed
-    f = _freq_axis(ev)
+    f = _freq_axis(ev, f_min=f_min)
 
     # Excursion ceilings: SPL at which V_dem(f) = Vd_total / C.
     spl_sine = np.array([
@@ -65,36 +142,67 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None) -> Figure:
             lw=2, ls="-.")
     ax.axhline(sc.target_spl, color="k", lw=1,
                label=f"target {sc.target_spl:g} dB")
+    # Fix the y-limits before placing marker labels: annotate() below anchors
+    # to ax.get_ylim()[0], which must reflect the *final* view (not a
+    # provisional pre-set_ylim autoscale value) or the label can land outside
+    # the eventually-visible range and silently disappear.
+    ax.set_ylim(sc.target_spl - 25, None)
 
     for x, name in ((sc.f_pz, "$f_{pz}$"), (boxed.fc, "$F_c$"), (ev.f_x, "$f_x$")):
         if np.isfinite(x) and f[0] <= x <= f[-1]:
             ax.axvline(x, color="grey", lw=0.8, ls=":")
             ax.annotate(name, (x, ax.get_ylim()[0]),
                         xytext=(2, 6), textcoords="offset points", fontsize=9)
+    _shade_crossover(ax, f, crossover, crossover_shade)
 
     ax.set_xscale("log")
+    _style_log_xaxis(ax)
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(f"SPL at {sc.r_listen:g} m [dB]")
     ax.set_title(f"{d.label()}  |  {ev.boxed.n_units}x in {boxed.vb*1e3:.0f} L "
                  f"(Qtc={sc.qtc:g}, Fc={boxed.fc:.1f} Hz)")
-    ax.set_ylim(sc.target_spl - 25, None)
     ax.grid(True, which="both", alpha=0.3)
-    ax.legend(loc="lower right", fontsize=9)
+
+    if not show_power_axis:
+        ax.legend(loc=legend_loc, fontsize=9)
+        return fig
+
+    # Secondary axis: per-unit electrical power actually needed to sit at
+    # the target line (real demand curve, room gain included), not at Xmax.
+    x_dem = np.array([sc.demand_volume(x) for x in f]) / (boxed.n_units * d.sd)
+    p_req = physics.power_at_excursion_limit(f, d.mms, d.qes, d.fs, x_dem,
+                                             boxed.wc, d.sigma_m)
+    ax2 = ax.twinx()
+    ax2.plot(f, p_req, color="tab:purple", lw=1.2, ls=(0, (1, 1)),
+             label="power at target, per unit (right axis)")
+    ax2.set_yscale("log")
+    ax2.set_ylabel("electrical power at target, per unit [W]", color="tab:purple")
+    ax2.tick_params(axis="y", labelcolor="tab:purple")
+
+    lines1, labels1 = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax.legend(lines1 + lines2, labels1 + labels2, loc=legend_loc, fontsize=9)
     return fig
 
 
-def distortion_figure(ev: Evaluation, fig: Figure | None = None) -> Figure:
+def distortion_figure(ev: Evaluation, fig: Figure | None = None,
+                      f_min: float | None = None, crossover: float | None = None,
+                      crossover_shade: str | None = None) -> Figure:
     """Predicted non-correctable distortion vs frequency at the target SPL.
 
     Curves: motor/suspension HD (eq:HDscale), Doppler IM onto the top of the
     band (eq:doppler), box air-spring HD2 (eq:boxHD), and their sum, against
     the distortion budget D*.
+
+    f_min overrides the default `f_low*0.7` plot-axis floor; crossover and
+    crossover_shade mark/shade the sub/attack driver handoff f_split -- see
+    `spl_figure`'s docstring for both.
     """
     if fig is None:
         fig = Figure(figsize=(9, 6), constrained_layout=True)
     ax = fig.add_subplot(111)
     sc, d, boxed = ev.scenario, ev.driver, ev.boxed
-    f = _freq_axis(ev)
+    f = _freq_axis(ev, f_min=f_min)
 
     v_dem = np.array([sc.demand_volume(x) for x in f])
     xi = v_dem / boxed.vd_total
@@ -111,12 +219,18 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None) -> Figure:
     ax.plot(f, 100 * (hd + doppler + box), label="total", lw=2.5, color="k")
     ax.axhline(100 * sc.distortion_budget, color="r", lw=1,
                label=f"budget $D^*$ = {100*sc.distortion_budget:g} %")
+    # Switch to log y before placing marker labels: annotate() below anchors
+    # to ax.get_ylim()[0], which must reflect the final (log-scale) view, not
+    # the linear-mode autoscale value, or the label silently lands off-plot.
+    ax.set_yscale("log")
+
     ax.axvline(sc.f_pz, color="grey", lw=0.8, ls=":")
     ax.annotate("$f_{pz}$", (sc.f_pz, ax.get_ylim()[0]),
                 xytext=(2, 6), textcoords="offset points", fontsize=9)
+    _shade_crossover(ax, f, crossover, crossover_shade)
 
     ax.set_xscale("log")
-    ax.set_yscale("log")
+    _style_log_xaxis(ax)
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(f"distortion at {sc.target_spl:g} dB target, r={sc.r_listen:g} m [%]")
     ax.set_title(f"{d.label()}  |  non-correctable distortion, "
@@ -137,12 +251,17 @@ def demand_figure(sc: Scenario, fig: Figure | None = None) -> Figure:
     v_dem_l = np.array([sc.demand_volume(x) * 1e3 for x in f])
 
     ax.plot(f, v_dem_l, lw=2, color="tab:blue")
+    # Switch to log/log before placing the marker label: annotate() below
+    # anchors to ax.get_ylim()[0], which must reflect the final (log-scale)
+    # view, not the linear-mode autoscale value, or the label silently lands
+    # off-plot (see the identical fix in spl_figure/distortion_figure).
+    ax.set_xscale("log")
+    _style_log_xaxis(ax)
+    ax.set_yscale("log")
     ax.axvline(sc.f_pz, color="grey", lw=0.8, ls=":")
     ax.annotate("$f_{pz}$", (sc.f_pz, ax.get_ylim()[0]),
                 xytext=(2, 6), textcoords="offset points", fontsize=9)
 
-    ax.set_xscale("log")
-    ax.set_yscale("log")
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(r"$V_{\mathrm{dem}}$ [L]")
     ax.set_title(f"Required displaced volume at {sc.target_spl:g} dB, "
@@ -222,4 +341,6 @@ def vented_comparison_figure(driver: Driver, sc: Scenario, vb: float, fb: float,
     ax_x.set_ylabel("cone excursion [mm, peak]")
     ax_x.grid(True, which="both", alpha=0.3)
     ax_x.legend(loc="upper right", fontsize=9)
+    _style_log_xaxis(ax_spl)
+    _style_log_xaxis(ax_x)
     return fig

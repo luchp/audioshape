@@ -5,13 +5,15 @@ A real listening room changes the low-frequency boundary condition once
 wavelength exceeds room dimensions, for any driver, sealed or vented alike.
 Lumping the room below its first axial mode as an acoustic compliance with
 leakage \cite{beranek2012}, source volume velocity $U=\Sd\dot x$:
+
 \begin{equation}
-p_{\mathrm{room}}\ \xrightarrow[\ \omega\gg\omega_\ell\ ]{}\
-\frac{\rho_0c^2\,\Sd x}{V_{\mathrm{room}}},
-\qquad
-f_{\mathrm{pz}}\simeq\frac{c}{2L_{\max}} .
-\label{eq:pzdyn}
+	p_{\mathrm{room}}\ \xrightarrow[\ \omega\gg\omega_\ell\ ]{}\
+	\frac{\rho_0c^2\,\Sd x}{V_{\mathrm{room}}},
+	\qquad
+	f_{\mathrm{pz}}\simeq\frac{c}{2L_{\max}} .
+	\label{eq:pzdyn}
 \end{equation}
+
 Below $f_{\mathrm{pz}}$, $p\propto x$ (not $\omega^2x$): the excursion demand
 is frequency-independent, giving a demand curve that rises at 12\,dB/oct
 down to $f_{\mathrm{pz}}$ and is flat below it. A sealed system with
@@ -22,30 +24,39 @@ rescue.
 
 Combining the demand curve with the distortion cap $\xi^\ast$
 (\cref{sec:distortion}) gives the sizing rule
+
 \begin{equation}
-\boxed{\
-\Vd\ \ge\ \frac{1}{\xi^\ast}\,\max\!\left\{
-\frac{\sqrt2\,p_t\,V_{\mathrm{room}}}{\rho_0c^2},\ \
-C\,\frac{\sqrt2\,p_t\,2\pi r}{\rho_0\,\omega_{\mathrm{pz}}^{2}}\right\}
-\ }
-\label{eq:Vdreq}
+	\boxed{\
+	\Vd\ \ge\ \frac{1}{\xi^\ast}\,\max\!
+	\left\{
+		\frac{\sqrt2\,p_t\,V_{\mathrm{room}}}{\rho_0c^2},\ \
+		C\,
+		\frac{\sqrt2\,p_t\,2\pi r}{\rho_0\,\omega_{\mathrm{pz}}^{2}}
+	\right\} \ }
+	\label{eq:Vdreq}
 \end{equation}
 with the pressure-zone branch the robust one (A11), and the corner
 criterion, from the alignment line \eqref{eq:alignment},
+
 \begin{equation}
-\boxed{\ F_c\simeq f_{\mathrm{pz}}=\frac{c}{2L_{\max}}
-\quad\Longleftrightarrow\quad
-\frac{F_s}{\Qts}\simeq\frac{f_{\mathrm{pz}}}{\Qtc^\ast}\ }.
-\label{eq:Fsrule}
+	\boxed{\ F_c\simeq f_{\mathrm{pz}}=\frac{c}{2L_{\max}}
+	\quad\Longleftrightarrow\quad
+	\frac{F_s}{\Qts}\simeq\frac{f_{\mathrm{pz}}}{\Qtc^\ast}\ }.
+	\label{eq:Fsrule}
 \end{equation}
+
 $F_c$ below $f_{\mathrm{pz}}$ wastes only box volume; $F_c$ above it leaves
-a correctable sag taxed by \eqref{eq:EQtax}. The two mistunings are not
-equally cheap: undershoot's shelf, $20\log_{10}(f_{\mathrm{pz}}/F_c)$\,dB,
-comes out with a free EQ \emph{cut}, while overshoot's sag needs a taxed
-\emph{boost} that also eats excursion headroom --- so where
-\eqref{eq:Fsrule}'s exact match would push $\Qtc^\ast$ past a comfortable
-ringing budget (\cref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
+a correctable sag taxed by \eqref{eq:EQtax}. 
+The two mistunings are not equally cheap: undershoot's shelf, 
+$20\log_{10}(f_{\mathrm{pz}}/F_c)$\,dB, comes out with a 
+free EQ \emph{cut}, while overshoot's sag needs a taxed \emph{boost} 
+that also eats excursion headroom 
+--- so where \eqref{eq:Fsrule}'s exact match would push $\Qtc^\ast$ 
+past a comfortable ringing budget 
+	(\cref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
 the better choice is to fix $\Qtc$ there and let $F_c$ undershoot
-$f_{\mathrm{pz}}$ rather than chase exact alignment. Real rooms leak below a
-construction-dependent $f_\ell$ (often $10$--$20$\,Hz), below which
-\eqref{eq:Vdreq}'s pressure-zone branch is an upper bound rather than exact.
+$f_{\mathrm{pz}}$ rather than chase exact alignment. 
+
+Real rooms leak below a construction-dependent $f_\ell$ (often $10$--$20$\,Hz), 
+below which \eqref{eq:Vdreq}'s pressure-zone branch is an upper bound 
+rather than exact.

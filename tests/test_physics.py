@@ -107,6 +107,40 @@ def test_box_hd2_worked_example():
     assert hd2 == pytest.approx(0.00107, rel=0.15)
 
 
+def test_power_and_voltage_at_target_worked_example(driver_s):
+    # Two S in 473 L (Qtc=0.61, Fc=25.5 Hz), r_listen=3 m (room-consistent),
+    # 110 dB target: power/voltage to *sit at the target* (the real,
+    # room-gain-flattened demand curve, not a flat-EQ straw man, and not
+    # Xmax) stays bounded across fig:spl-sub's plotted range (10.5-250 Hz)
+    # -- the review's "does A6's unconstrained amplifier ever get silly"
+    # check (eq:EQtax).
+    boxed = BoxedDriver(driver_s, qtc=0.61, n_units=2)
+    sigma_total = boxed.wc / 0.61  # total (mech+elec) box-invariant damping
+    scenario = Scenario(v_room=60.0, l_max=6.0, r_listen=3.0,
+                        target_spl=110.0, distortion_budget=0.03,
+                        qtc=0.61, f_low=15.0, f_split=80.0, f_high=250.0)
+
+    def per_unit(f):
+        x_dem = scenario.demand_volume(f) / (boxed.n_units * driver_s.sd)
+        p = physics.power_at_excursion_limit(
+            f, driver_s.mms, driver_s.qes, driver_s.fs, x_dem,
+            boxed.wc, driver_s.sigma_m)
+        v = physics.voltage_at_excursion_limit(
+            f, driver_s.mms, driver_s.bl, driver_s.re, x_dem,
+            boxed.wc, sigma_total)
+        return p, v
+
+    p_fc, v_fc = per_unit(25.5)    # near Fc: power minimum
+    p_hi, v_hi = per_unit(250.0)   # top of plotted range: power maximum
+    assert p_fc == pytest.approx(7.9, rel=0.05)
+    assert p_hi == pytest.approx(316.0, rel=0.05)
+    assert v_fc == pytest.approx(43.9, rel=0.05)
+    assert v_hi == pytest.approx(33.7, rel=0.05)
+    # reviewer's sanity thresholds: nowhere near an unreasonable amplifier
+    assert max(p_fc, p_hi) < 1000.0
+    assert max(v_fc, v_hi) < 100.0
+
+
 def test_corner_rate_rule(scenario, driver_s):
     # S: Fs/Qts = 42 Hz <= f_pz/Qtc = 52 Hz -> compliant (eq:Fsrule)
     assert scenario.max_corner_rate == pytest.approx(52.0, abs=0.5)

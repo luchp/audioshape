@@ -23,6 +23,8 @@ import time
 from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
+
 from audioshape import database, physics, plots, vented
 from audioshape.driver import BoxedDriver, Driver
 from audioshape.ranking import evaluate
@@ -151,20 +153,29 @@ def _ev_m():
 # ----------------------------------------------------------------------
 
 def fig_spl_sub() -> None:
-    save_figure_checked(plots.spl_figure(_ev_s()), FIGURES_DIR / "fig_spl_sub.pdf")
+    save_figure_checked(plots.spl_figure(
+        _ev_s(), show_power_axis=True, f_min=0.7 * SC_SUB.f_pz,
+        crossover=SC_SUB.f_split, crossover_shade="above"),
+        FIGURES_DIR / "fig_spl_sub.pdf")
 
 
 def fig_spl_attack() -> None:
-    save_figure_checked(plots.spl_figure(_ev_m()), FIGURES_DIR / "fig_spl_attack.pdf")
+    save_figure_checked(plots.spl_figure(
+        _ev_m(), crossover=SC_ATTACK.f_split, crossover_shade="below",
+        legend_loc="upper left"),
+        FIGURES_DIR / "fig_spl_attack.pdf")
 
 
 def fig_distortion_sub() -> None:
-    save_figure_checked(plots.distortion_figure(_ev_s()),
-                        FIGURES_DIR / "fig_distortion_sub.pdf")
+    save_figure_checked(plots.distortion_figure(
+        _ev_s(), f_min=0.7 * SC_SUB.f_pz,
+        crossover=SC_SUB.f_split, crossover_shade="above"),
+        FIGURES_DIR / "fig_distortion_sub.pdf")
 
 
 def fig_distortion_attack() -> None:
-    save_figure_checked(plots.distortion_figure(_ev_m()),
+    save_figure_checked(plots.distortion_figure(
+        _ev_m(), crossover=SC_ATTACK.f_split, crossover_shade="below"),
                         FIGURES_DIR / "fig_distortion_attack.pdf")
 
 
@@ -471,6 +482,44 @@ def print_narrative_numbers() -> None:
     print(f"max_corner_rate(f_pz, 0.55) = {physics.max_corner_rate(f_pz, 0.55):.1f} Hz")
     print(f"SPL_pz(driver S, 60 m^3, free-field r=1 ref.) = {spl_pz:.1f} dB")
     print(f"free-field crossing frequency (r=1 ref.) = {f_cross:.1f} Hz")
+
+    # Power/voltage actually needed to sit at the target line (real demand
+    # curve, not a flat-EQ straw man), across fig:spl-sub's own plotted
+    # range -- the A6/eq:EQtax "does this ever get silly" reality check.
+    ev_s = _ev_s()
+    f_range = plots._freq_axis(ev_s)
+    sigma_total = b61_s2.wc / SC_SUB.qtc
+    p_watts, v_volts = [], []
+    for freq in f_range:
+        x_dem_unit = SC_SUB.demand_volume(freq) / (b61_s2.n_units * s.sd)
+        p_watts.append(physics.power_at_excursion_limit(
+            freq, s.mms, s.qes, s.fs, x_dem_unit, b61_s2.wc, s.sigma_m))
+        v_volts.append(physics.voltage_at_excursion_limit(
+            freq, s.mms, s.bl, s.re, x_dem_unit, b61_s2.wc, sigma_total))
+    print(f"P_req/unit over fig:spl-sub's range ({ev_s.scenario.f_low*0.7:.1f}-"
+         f"{ev_s.scenario.f_high:g} Hz) = {min(p_watts):.1f}-{max(p_watts):.0f} W")
+    print(f"V_rms/unit over same range = {min(v_volts):.1f}-{max(v_volts):.1f} V")
+
+    # Same reassurance check for M, but restricted to its own operating
+    # band (f_split-f_high, not fig:spl-attack's full plotted range, which
+    # extends below f_split into S's territory where M is not meant to
+    # play) and re-evaluated at the room-consistent r=3 m distance
+    # (SC_ROOM = SC_ATTACK at r=3 instead of SC_ATTACK's own r=1 m
+    # driver-pricing basis) -- fig:spl-attack omits the power axis because
+    # r=1 m mixes length scales below f_pz (see spl_figure's docstring),
+    # but a reader should still be able to see M never implies an
+    # unreasonable power draw once actually placed in the room, over the
+    # band it is actually asked to cover.
+    b_m = BoxedDriver(DRIVER_M, qtc=SC_ATTACK.qtc, n_units=1)
+    f_range_m = np.geomspace(SC_ATTACK.f_split, SC_ATTACK.f_high, 400)
+    p_watts_m = [physics.power_at_excursion_limit(
+        freq, DRIVER_M.mms, DRIVER_M.qes, DRIVER_M.fs,
+        SC_ROOM.demand_volume(freq) / (b_m.n_units * DRIVER_M.sd),
+        b_m.wc, DRIVER_M.sigma_m)
+        for freq in f_range_m]
+    print(f"P_req/unit for M over its own {SC_ATTACK.f_split:g}-"
+         f"{SC_ATTACK.f_high:g} Hz band at r=3 m (room-consistent) = "
+         f"{min(p_watts_m):.1f}-{max(p_watts_m):.0f} W")
 
 
 def main() -> None:

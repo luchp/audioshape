@@ -159,6 +159,24 @@ def power_at_excursion_limit(f: float, mms: float, qes: float, fs: float,
     )
 
 
+def voltage_at_excursion_limit(f: float, mms: float, bl: float, re: float,
+                               xmax: float, wc: float, sigma: float) -> float:
+    """RMS terminal voltage [V] needed to hold x = xmax at frequency f
+    (eq:xofe, inverted for e).
+
+    e_hat = xmax * (Re*Mms/Bl) * sqrt((wc^2-w^2)^2 + sigma^2 w^2), V_rms =
+    e_hat/sqrt(2). Unlike power_at_excursion_limit (current drive, eq:iofx,
+    mechanical damping sigma_m only), a *voltage* source also has to
+    overcome the electrical damping sigma_e = Bl^2/(Re Mms), so this uses
+    the *total* box-invariant damping rate sigma = wc/Qtc = sigma_m+sigma_e
+    (Prop. box invariance), not sigma_m alone.
+    """
+    w = 2.0 * math.pi * f
+    e_hat = xmax * (re * mms / bl) * math.sqrt(
+        (wc * wc - w * w) ** 2 + sigma * sigma * w * w)
+    return e_hat / math.sqrt(2.0)
+
+
 def eq_tax_power(f: float, p_passband: float, wc: float, sigma_m: float) -> float:
     """Power [W] required at f after EQ to flat response (eq:EQtax):
     P_req = P_pb * ((wc^2 - w^2)^2 + sigma_m^2 w^2) / w^4."""

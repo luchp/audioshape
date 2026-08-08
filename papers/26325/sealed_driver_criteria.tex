@@ -223,28 +223,24 @@ chosen: in this document $EBP$ enters only through the regime-boundary
 frequency $f_x$ \eqref{eq:fx} and the corner rate \eqref{eq:cornerrate}, never
 as a standalone performance ranking.
 
-\subsection*{Shorthands worth correcting}
+\subsection*{Three points about $\Qtc$}
 
-\noindent A few further shorthands recur in general DIY/enthusiast practice and
-are worth correcting before proceeding, since later sections rely on the
-corrected versions silently:
+\noindent Three points about $\Qtc$ bear directly on the sections that
+follow:
 \begin{enumerate}
-\item \textbf{Overshoot rules of thumb.} Values of order $1$--$2\%$ are
-often quoted for a $\Qtc=0.55$ (Bessel-like) alignment; the exact step
-response gives $M_p(0.55)=0.11\%$ \eqref{eq:Mp} -- the qualitative
-conclusion (0.55 is essentially overshoot-free) survives, but $M_p\le1\%$
-is in fact already satisfied up to $\Qtc\le0.61$.
-\item \textbf{``Excursion grows as $1/f^2$ going down.''} True only above
-the sealed corner $F_c$. Below $F_c$, excursion at fixed drive
+\item \textbf{Overshoot.} Values of order $1$--$2\%$ are often quoted for
+a $\Qtc=0.55$ (Bessel-like) alignment; the exact step response gives
+$M_p(0.55)=0.11\%$ \eqref{eq:Mp}, and $M_p\le1\%$ is in fact already
+satisfied up to $\Qtc\le0.61$.
+\item \textbf{Excursion vs.\ frequency.} $X\propto1/f^2$ only above the
+sealed corner $F_c$. Below $F_c$, excursion at fixed drive
 \emph{saturates} at the compliance limit \eqref{eq:PL}; the driver reaches
 $\Xmax$ at any $f<F_c$ only if the required drive $P_{\mathrm{L}}(0)$ exceeds
 $\Pmax$ \eqref{eq:PL0} -- a drive limit, not an excursion one.
-\item \textbf{``Given $\Qtc$ and a frequency, what SPL can this driver
-make.''} An intuitive but ill-posed way to frame driver selection: the
-excursion-limited ceiling \eqref{eq:SPLL} does not in fact depend on
-$\Qtc$ (Cor.~\ref{cor:onlyVd}). $\Qtc$ governs corner placement and settling
-(Sec.~\ref{sec:time}, step 3 of Sec.~\ref{sec:procedure}), not the SPL
-ceiling itself.
+\item \textbf{SPL ceiling vs.\ $\Qtc$.} The excursion-limited ceiling
+\eqref{eq:SPLL} does not depend on $\Qtc$ at all (Cor.~\ref{cor:onlyVd}).
+$\Qtc$ governs corner placement and settling (Sec.~\ref{sec:time}, step 3
+of Sec.~\ref{sec:procedure}), not how loud the driver can ultimately play.
 \end{enumerate}
 
 \subsection*{The gap}
@@ -261,8 +257,9 @@ can evaluate, is the subject of Secs.~\ref{sec:assumptions}--\ref{sec:example}.
 \section{Scope, conventions, assumptions}
 \label{sec:assumptions}
 
-All quantities SI unless noted. Sound pressure levels are rms re
-$p_0=20\,\mu\mathrm{Pa}$, on axis, at $r=1\,$m, radiation into half space
+All quantities SI unless noted. Sound pressure levels are dB values
+computed from the rms sound pressure relative to $p_0=20\,\mu\mathrm{Pa}$,
+on axis, at $r=1\,$m, radiation into half space
 ($2\pi$~sr). Constants: $\rho_0=1.204\,\mathrm{kg/m^3}$, $c=343\,$m/s
 (so $\rho_0 c^2=1.416\times10^{5}\,$Pa).
 
@@ -492,7 +489,14 @@ P_{\mathrm{pb}}=\frac{2\pi r^2 p_t^2}{\rho_0 c\,\eta_0},
 \end{equation}
 i.e.\ an EQ tax of $(\wc/\omega)^4$ (12\,dB/oct in power) below the corner. FIR/DSP
 correction is ``free'' in fidelity (LTI, invertible) but pays \eqref{eq:EQtax} in heat
-and \eqref{eq:SPLL} in excursion.
+and \eqref{eq:SPLL} in excursion. Taken at face value, \eqref{eq:EQtax} diverges as
+$\omega\to0$ for a flat target; in practice the room's own pressure-zone gain
+(Sec.~\ref{sec:roomclose}) flattens the \emph{required} SPL below $f_{\mathrm{pz}}$,
+so the real demand curve --- and the power and voltage needed to sit on it ---
+saturates instead. The worked example (Fig.~\ref{fig:spl-sub}) needs only
+$7.8$--$316$~W and $29$--$50$~V per unit across the plotted band, comfortably
+inside a common Class-D amplifier's rating: an unconstrained amplifier (A6) costs
+nothing exotic here.
 
 \subsection{Dissipation ceiling}
 
@@ -1147,7 +1151,14 @@ sine and burst excursion ceilings and the thermal ceiling
 $110$~dB target. The sine ceiling clears target by only $0.5$~dB below
 $f_{\mathrm{pz}}$ --- two units are barely sufficient there --- widening to
 a comfortable margin above it; the thermal ceiling stays more than $2$~dB
-above target throughout.}
+above target throughout. Right axis: per-unit electrical power to sit at
+the target line itself (not at $\Xmax$), which stays within
+$7.8$--$316$~W over the plotted band; the corresponding drive voltage
+\eqref{eq:xofe} stays within $29$--$50$~V per unit, so the unconstrained
+amplifier of A6 never implies anything unusual here. The axis starts just
+below $f_{\mathrm{pz}}$, cropping the flat pressure-zone plateau further
+down (frequency-independent, hence a single value); the shaded band above
+$f_{\mathrm{sp}}=80$~Hz marks driver M's range.}
 \label{fig:spl-sub}
 \end{figure}
 
@@ -1157,7 +1168,12 @@ above target throughout.}
 \caption{Driver M, one unit in $38$~L ($\Qtc=0.55$, $F_c=79$~Hz): the burst
 (dashed) excursion ceiling dips \emph{below} target just under $80$~Hz ---
 the transient clipping that fixes the sub/attack split frequency below,
-invisible on the sine curve alone.}
+invisible on the sine curve alone. The shaded band below
+$f_{\mathrm{sp}}=80$~Hz is driver S's range, shown for context only; the
+visible kink at $f_{\mathrm{pz}}$ there reflects the $r=1$~m vs.\ $r=3$~m
+mismatch discussed at Fig.~\ref{fig:demand}. Re-evaluated at that
+room-consistent $r=3$~m distance, M's own $80$--$250$~Hz band needs at
+most $225$~W per unit ($\ll350$~W rated).}
 \label{fig:spl-attack}
 \end{figure}
 
@@ -1204,7 +1220,9 @@ line $D^\ast=3\%$.
 onto $80$~Hz, box air-spring HD2 \eqref{eq:boxHD}, and their sum, at the
 $110$~dB target ($r_{\mathrm{listen}}=3$~m basis). Below $f_{\mathrm{pz}}$ the
 flat pressure-zone demand pins the total near $9$--$9.5\%$, about three times
-over budget. Box HD2 stays two orders of magnitude under budget throughout.}
+over budget. Box HD2 stays two orders of magnitude under budget throughout.
+The axis starts just below $f_{\mathrm{pz}}$ (see Fig.~\ref{fig:spl-sub});
+the shaded band above $f_{\mathrm{sp}}=80$~Hz marks driver M's range.}
 \label{fig:distortion-sub}
 \end{figure}
 
@@ -1215,7 +1233,8 @@ over budget. Box HD2 stays two orders of magnitude under budget throughout.}
 right at the $80$~Hz split (motor HD dominant, $\xi_x=0.45$ there) before
 clearing budget by $\approx87$~Hz, under a sixth of an octave higher --- the
 HD margin and the burst-excursion margin (Fig.~\ref{fig:spl-attack})
-independently favor the same split frequency.}
+independently favor the same split frequency. The shaded band below
+$f_{\mathrm{sp}}$ marks driver S's range (Fig.~\ref{fig:spl-attack}).}
 \label{fig:distortion-attack}
 \end{figure}
 
@@ -1534,6 +1553,26 @@ target needs a $\approx23$~cm port (or several smaller ones in parallel) ---
 a real, level-dependent, compressive, un-equalizable distortion and noise
 mechanism with no sealed-box analogue, layered on top of the excursion/EQ-tax
 cost already derived above.
+
+\subsection*{Passive radiators}
+
+A passive radiator -- a driver-like cone with no voice coil or motor,
+tuned by its own moving mass and suspension in place of the port's air
+mass -- is a common alternative that avoids the mechanism above entirely:
+no air moves through a constriction, so \eqref{eq:vport} and the
+turbulence threshold simply do not apply, and several pro-audio monitors
+use exactly this solution. It does not, however, change the underlying
+alignment: a passive radiator is still driven by box pressure through a
+fourth-order mass-spring-damper standing in for the port, so
+Prop.~\ref{prop:vented24} and Prop.~\ref{prop:ventedxmax} (the steeper
+roll-off and the box-unbounded excursion below tuning) and the missing
+room-gain match of Sec.~\ref{sec:roomclose} all still apply unchanged. And the
+radiator is itself an added driver: once a second driver is accepted at
+all, an \emph{active} one in the array proposed here is the better use of
+it, contributing shared power and $\Vd$ (A9) that a passive radiator,
+lacking its own voice coil, cannot provide. Room gain remains the
+strongest of the reasons above -- it is the one advantage no port or
+radiator geometry can reproduce.
 
 \subsection{Summary: two regimes, two optimal drivers, or one compromise}
 \label{sec:vented-summary}

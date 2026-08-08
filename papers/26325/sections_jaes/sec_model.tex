@@ -1,55 +1,72 @@
 \section{Model and exact transfer relations}
 \label{sec:model}
 
-Terminal voltage $e(t)$, current $i(t)$, cone displacement $x(t)$. Electrical
-side (A2): $e=\Re i+\Bl\dot{x}$; force $F=\Bl\,i$. With total stiffness
-$k_t=1/\Cms+\rho_0c^2\Sd^2/\Vb=(1+\alpha)/\Cms$, $\alpha\equiv\Vas/\Vb$:
+Terminal voltage $e(t)$, current $i(t)$, cone displacement $x(t)$. 
+Electrical side (A2): 
+	$e=\Re i+\Bl\dot{x}$; force $F=\Bl\,i$. 
+With total stiffness
+	$k_t=1/\Cms+\rho_0c^2\Sd^2/\Vb=(1+\alpha)/\Cms$, $\alpha\equiv\Vas/\Vb$:
+
 \begin{equation}
-\boxed{\ \ddot{x}+\sigma\dot{x}+\wc^2 x=\frac{\Bl}{\Re \Mms}\,e(t)\ }
-\label{eq:ode}
+	\boxed{\ 
+		\ddot{x}+\sigma\dot{x}+\wc^2 x = \frac{\Bl}{\Re \Mms}\,e(t)\ }
+	\label{eq:ode}
 \end{equation}
+
 with
-$\sigma\equiv\sm+\se$, $\sm\equiv\Rms/\Mms$, $\se\equiv\Bl^2/(\Re \Mms)$, and
-$\wc^2\equiv k_t/\Mms$.
-Free-air: $\ws=2\pi F_s=\sqrt{1/(\Mms\Cms)}$, $\Qes=\ws/\se$, $\Qms=\ws/\sm$,
-$\Qts=\ws/\sigma$, $EBP\equiv F_s/\Qes=\se/2\pi$. In-box: $\wc=\ws\sqrt{1+\alpha}$,
-$\Qtc=\wc/\sigma$.
+	$\sigma\equiv\sm+\se$, $\sm\equiv\Rms/\Mms$, $\se\equiv\Bl^2/(\Re \Mms)$, and
+	$\wc^2\equiv k_t/\Mms$.
+Free-air: 
+	$\ws=2\pi F_s=\sqrt{1/(\Mms\Cms)}$, $\Qes=\ws/\se$, $\Qms=\ws/\sm$,
+	$\Qts=\ws/\sigma$, $EBP\equiv F_s/\Qes=\se/2\pi$. 
+In-box: 
+	$\wc=\ws\sqrt{1+\alpha}$,
+	$\Qtc=\wc/\sigma$.
 
 \begin{proposition}[Alignment line; box invariance of $\sigma$ --- after \cite{small1972}]
-\label{prop:invariance}
-$\sigma$ contains no stiffness, hence is enclosure-independent:
-\begin{equation}
-\boxed{\ \frac{\wc}{\Qtc}=\frac{\ws}{\Qts}=\sigma\quad\Longleftrightarrow\quad
-F_c = \Qtc\,\frac{F_s}{\Qts}\ }
-\label{eq:alignment}
-\end{equation}
-with $\Vb=\Vas/((\Qtc/\Qts)^2-1)$ and $\Qtc>\Qts$.
+	\label{prop:invariance}
+	$\sigma$ contains no stiffness, hence is enclosure-independent:	
+	\begin{equation}
+	\boxed{\ 
+		\frac{\wc}{\Qtc} = \frac{\ws}{\Qts} = \sigma
+			\quad\Longleftrightarrow\quad
+		F_c = \Qtc\,\frac{F_s}{\Qts}\ }
+	\label{eq:alignment}
+	\end{equation}
+	with $\Vb=\Vas/((\Qtc/\Qts)^2-1)$ and $\Qtc>\Qts$.
 \end{proposition}
+
 \begin{proof}
-$\sigma=(\Rms+\Bl^2/\Re)/\Mms$; the box adds only $k_t$, so
-$\wc/\Qtc=\sigma=\ws/\Qts$ and $F_c/F_s=\sqrt{1+\alpha}=\Qtc/\Qts$.
+	$\sigma=(\Rms+\Bl^2/\Re)/\Mms$; the box adds only $k_t$, so
+	$\wc/\Qtc=\sigma=\ws/\Qts$ and $F_c/F_s=\sqrt{1+\alpha}=\Qtc/\Qts$.
 \end{proof}
 
-A sealed driver owns one free parameter, position along $\wc=\Qtc\sigma$; the
-driver constant
+A sealed driver owns one free parameter, position along $\wc=\Qtc\sigma$; 
+the driver constant
+
 \begin{equation}
-\frac{\sigma}{2\pi}=\frac{F_s}{\Qts}=EBP\left(1+\frac{\Qes}{\Qms}\right)\approx EBP
-\label{eq:cornerrate}
+	\frac{\sigma}{2\pi}=\frac{F_s}{\Qts}=EBP\left(1+\frac{\Qes}{\Qms}\right)\approx EBP
+	\label{eq:cornerrate}
 \end{equation}
+
 is the \emph{corner rate}: the rigorous content of $EBP$ is where the corner
 lands for a chosen $\Qtc$, not output capability.
 
 Steady sine, phasor amplitudes ($\hat{x}$ peak):
 \begin{align}
-\hat{x}(\omega)&=\frac{\Bl}{\Re\Mms}\,
-\frac{\hat{e}}{\sqrt{(\wc^2-\omega^2)^2+\sigma^2\omega^2}},
-\label{eq:xofe}\\
-\hat{\imath}(\omega)&=\frac{\Mms}{\Bl}\,
-\hat{x}\,\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2},
-\label{eq:iofx}\\
-\hat{p}(\omega)&=\frac{\rho_0\Sd\,\omega^2\hat{x}}{2\pi r}\qquad\text{(A3)}.
-\label{eq:pofx}
+	\hat{x}(\omega)&=
+		\frac{\Bl}{\Re\Mms}\,
+		\frac{\hat{e}}{\sqrt{(\wc^2-\omega^2)^2+\sigma^2\omega^2}},
+		\label{eq:xofe}\\
+	\hat{\imath}(\omega)&=
+		\frac{\Mms}{\Bl}\,
+		\hat{x}\,\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2},
+		\label{eq:iofx}\\
+	\hat{p}(\omega)&=
+		\frac{\rho_0\Sd\,\omega^2\hat{x}}{2\pi r}\qquad\text{(A3)}.
+		\label{eq:pofx}
 \end{align}
+
 Only mechanical damping $\sm$ enters \eqref{eq:iofx}; electrical damping
 $\se$ appears in \eqref{eq:xofe} (voltage drive) but not in the
 current-to-displacement relation.

@@ -5,32 +5,35 @@ Model a bass attack as a one-cycle acceleration burst, $\omega\gg\wc$
 (free-mass limit).
 
 \begin{lemma}[Burst shape factor]
-\label{lem:shape}
-With $C\equiv \omega^2\max_t|x(t)|/A$: $C=1$ for steady sine; for one-cycle
-sine-phase bursts $C=2\pi$, cosine-phase $C=2$; $n$ cycles, sine phase,
-$C=2\pi n$. Transient program thus demands $C\in[2,2\pi]$
-($6$--$16$\,dB) more excursion per unit peak pressure than steady sine.
+	\label{lem:shape}
+	With $C\equiv \omega^2\max_t|x(t)|/A$: $C=1$ for steady sine; 
+		for one-cycle sine-phase bursts $C=2\pi$, 
+		cosine-phase $C=2$; $n$ cycles, sine phase,	$C=2\pi n$. 
+	Transient program thus demands $C\in[2,2\pi]$ ($6$--$16$\,dB) 
+		more excursion per unit peak pressure than steady sine.
 \end{lemma}
 
 Peak-equivalent ceilings become
 \begin{align}
-\hat L_{\mathrm{L,burst}}(f)&=108.5+20\log_{10}(f^2\Vd)-20\log_{10}C,
-\label{eq:burstL}\\
-\hat L_{\mathrm{T,burst}}&=112.2+10\log_{10}(\eta_0\,\kappa\Pmax),
-\label{eq:burstT}
+	\hat L_{\mathrm{L,burst}}(f)&=
+		108.5+20\log_{10}(f^2\Vd)-20\log_{10}C,
+	\label{eq:burstL}\\
+	\hat L_{\mathrm{T,burst}}&=
+		112.2+10\log_{10}(\eta_0\,\kappa\Pmax),
+	\label{eq:burstT}
 \end{align}
 with $\kappa$ (A5) the short-term dissipation headroom.
 
 \begin{proposition}[Equivalence of the two analyses; boundary shift]
-\label{prop:equiv}
-Time- and frequency-domain limits yield the same two figures of merit,
-$\Vd$ and $\eta_0\Pmax$, rescaled by $C$ and $\kappa$. The regime boundary
-moves up to
-\begin{equation}
-\hat f_x=f_x\,(\kappa C^2)^{1/4}
-\qquad(\kappa=4,\ C=2\ \Rightarrow\ \hat f_x=2f_x).
-\label{eq:fxburst}
-\end{equation}
+	\label{prop:equiv}
+	Time- and frequency-domain limits yield the same two figures of merit,
+	$\Vd$ and $\eta_0\Pmax$, rescaled by $C$ and $\kappa$. The regime boundary
+	moves up to
+	\begin{equation}
+		\hat f_x=f_x\,(\kappa C^2)^{1/4}
+		\qquad(\kappa=4,\ C=2\ \Rightarrow\ \hat f_x=2f_x).
+		\label{eq:fxburst}
+	\end{equation}
 \end{proposition}
 
 So for attack-type program the excursion regime extends roughly an octave
@@ -38,19 +41,20 @@ higher than the sine analysis suggests; both roles need both FOMs checked at
 their own band edge.
 
 \begin{proposition}[Settling is a driver constant; ring shape is a box choice]
-\label{prop:decay}
-The envelope decay rate of every sealed alignment of a given driver equals
-$\sigma/2=\pi F_s/\Qts$ (box-invariant, \cref{prop:invariance}); the box
-selects only $\omega_d$ and the overshoot pattern. Step-response overshoot
-$M_p=\exp(-\pi\zeta/\sqrt{1-\zeta^2})$, $\zeta=1/(2\Qtc)$: $M_p\le1\%
-\Leftrightarrow\Qtc\le0.61$; $M_p\le5\%\Leftrightarrow\Qtc\le0.72$.
+	\label{prop:decay}
+	The envelope decay rate of every sealed alignment of a given driver equals
+	$\sigma/2=\pi F_s/\Qts$ (box-invariant, \cref{prop:invariance}); 
+	the box	selects only $\omega_d$ and the overshoot pattern. 
+	Step-response overshoot 
+		$M_p=\exp(-\pi\zeta/\sqrt{1-\zeta^2})$, $\zeta=1/(2\Qtc)$: $M_p\le1\%
+		\Leftrightarrow \Qtc\le0.61$; $M_p\le5\% \Leftrightarrow \Qtc\le0.72$.
 \end{proposition}
 
 Spurious ring-down tail pressure satisfies
 $\hat p_{\mathrm{tail}}/\hat p_{\mathrm{burst}}\le C(\wc/\omega)^{2}$
 (worst phase), improving 12\,dB/oct with corner-below-band separation --- an
-LTI, hence FIR-correctable, effect (at the cost of \eqref{eq:EQtax}). The
-invariants FIR cannot touch remain $\Vd$, $\eta_0\Pmax$, $\sigma$.
+LTI, hence FIR-correctable, effect (at the cost of \eqref{eq:EQtax}). 
+The invariants FIR cannot touch remain $\Vd$, $\eta_0\Pmax$, $\sigma$.
 
 \subsection{The driver invariants, and what \texorpdfstring{$EBP$}{EBP} actually is}
 \label{sec:invariants}
@@ -66,46 +70,58 @@ proxy; here is the exact version. For an overhung motor with coil conductor
 mass $m_c$, conductivity $\sigma_c$, density $\rho_c$, flux density $B$, and
 effective overhang factor $u\ge1$:
 \begin{equation}
-\se=\frac{\Bl^2}{\Re\Mms}=\frac{B^2\sigma_c}{\rho_c}\cdot\frac{m_c}{\Mms}\cdot\frac{1}{u^2}.
-\label{eq:sebound}
+	\se =
+		\frac{\Bl^2}{\Re\Mms} =
+		\frac{B^2\sigma_c}{\rho_c}\cdot\frac{m_c}{\Mms}\cdot\frac{1}{u^2}.
+	\label{eq:sebound}
 \end{equation}
 
 \begin{theorem}[Motor materials bound]
-\label{thm:bound}
-For an overhung motor, equality holds in \eqref{eq:sebound}:
-$EBP\cdot u^{2}=K_{\mathrm{mat}}\cdot\dfrac{m_c}{\Mms}$, with
-$K_{\mathrm{mat}}\equiv\dfrac{B^{2}\sigma_c}{2\pi\rho_c}$ (copper:
-$1059\,B^2$\,Hz; aluminium: $2063\,B^2$\,Hz). Bounding the coil-mass
-fraction, $m_c/\Mms\le\beta_{\max}\lesssim0.35$, gives
-\begin{equation}
-\boxed{\ EBP\cdot u^{2}\;\le\;K_{\mathrm{mat}}\,\beta_{\max}\ }
-\label{eq:thmbound}
-\end{equation}
+	\label{thm:bound}
+	For an overhung motor, equality holds in \eqref{eq:sebound}:
+	$EBP\cdot u^{2}=K_{\mathrm{mat}}\cdot\dfrac{m_c}{\Mms}$, with
+	$K_{\mathrm{mat}}\equiv\dfrac{B^{2}\sigma_c}{2\pi\rho_c}$ 
+	(copper: $1059\,B^2$\,Hz; aluminium: $2063\,B^2$\,Hz). 
+	
+	Bounding the coil-mass fraction, $m_c/\Mms\le\beta_{\max}\lesssim0.35$, gives
+	\begin{equation}
+		\boxed{\ EBP\cdot u^{2}\;\le\;K_{\mathrm{mat}}\,\beta_{\max}\ }
+		\label{eq:thmbound}
+	\end{equation}
 \end{theorem}
 
 At $B=1.0$--$1.2$\,T (Cu, $\beta_{\max}=0.35$) the bound is
 $\approx370$--$530$\,Hz: a sub-class driver ($u\approx3$) is limited to
 $EBP\lesssim45$\,Hz, an attack-class corner rate of $135$\,Hz forces
-$u\lesssim1.8$. A single driver combining sub-class stroke and attack-class
-corner rate would need $\beta B^2\approx1.1$ --- impossible. Three
-independent mechanisms enforce the split: \eqref{eq:thmbound} itself
-(stroke suppresses corner rate quadratically); \cref{prop:invariance} (one
-driver has one $\sigma$, hence one $F_c$); and A2 (tall coil $\Rightarrow$
-large $\Le$ $\Rightarrow$ low $f_L$ intruding into the attack band).
+$u\lesssim1.8$. 
+
+A single driver combining sub-class stroke and attack-class
+corner rate would need $\beta B^2\approx1.1$ --- impossible. 
+
+Three independent mechanisms enforce the split: 
+	\eqref{eq:thmbound} itself (stroke suppresses corner rate quadratically); 
+	\cref{prop:invariance} (one driver has one $\sigma$, hence one $F_c$); 
+	and A2 (tall coil $\Rightarrow$ large $\Le$ $\Rightarrow$ low $f_L$ 
+		intruding into the attack band).
+		
 Escape routes (underhung/XBL$^2$, dual gap, shorting rings, aluminium
 coils) buy factors of $\sim2$, not the required $\sim5$, trading against
 $\beta$ or $B$ inside the same bound.
 
 $\beta_{\max}$ is an observed ceiling on real motor construction (coil
 formers, adhesives, winding density), not a law of electromagnetism, and
-neither $m_c$ nor $B$ is a standalone datasheet field. Since $u\ge1$,
-however, \eqref{eq:thmbound}'s equality also gives a lower bound
+neither $m_c$ nor $B$ is a standalone datasheet field. 
+
+Since $u\ge1$, however, \eqref{eq:thmbound}'s equality also gives a lower bound
 computable from $EBP$ alone: $m_c/\Mms\ge EBP/K_{\mathrm{mat}}(B)$,
-independent of the otherwise-unmeasurable $u$. \Cref{tab:ebp-census}
-applies this to $N=1025$ bass-relevant drivers (VituixCAD database, Type
-S/W/WM): at a conservative $B=1.0$\,T (copper), only $0.3\%$ approach
-$\beta_{\max}$, and the material-agnostic (aluminium) bound is never
-exceeded; the single outlier needs only $B\approx1.4$\,T (a plausible
-neodymium motor) to reach the ceiling, not exceed it.
+independent of the otherwise-unmeasurable $u$. 
+
+\Cref{tab:ebp-census} applies this to $N=1025$ bass-relevant drivers 
+(VituixCAD database, Type S/W/WM): 
+	at a conservative $B=1.0$\,T (copper), only $0.3\%$ approach
+	$\beta_{\max}$, and the material-agnostic (aluminium) bound is never
+	exceeded; 
+	the single outlier needs only $B\approx1.4$\,T (a plausible
+	neodymium motor) to reach the ceiling, not exceed it.
 
 \input{../tables/table_ebp_census}

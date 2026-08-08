@@ -10,13 +10,20 @@ datasheet rows alone.
 \input{../tables/table_worked_example}
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=\columnwidth]{../figures/fig_spl_sub}
-\caption{Driver S, two units in $473$~L each ($\Qtc=0.61$, $F_c=25.5$~Hz):
-sine and burst excursion ceilings and the thermal ceiling, at
-$r_{\mathrm{listen}}=3$~m (\cref{sec:roomclose}) against the $110$~dB
-target.}
-\label{fig:spl-sub}
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_spl_sub}
+	\caption{Driver S, two units in $473$~L each ($\Qtc=0.61$, $F_c=25.5$~Hz):
+	sine and burst excursion ceilings and the thermal ceiling, at
+	$r_{\mathrm{listen}}=3$~m (\cref{sec:roomclose}) against the $110$~dB
+	target. Right axis: per-unit electrical power to sit at the target line
+	itself (not at $\Xmax$), which stays within $7.8$--$316$\,W over the
+	plotted band 
+	--- the peak drive voltage from \eqref{eq:xofe} stays within
+	$29$--$50$\,V per unit, so A6's unconstrained amplifier never implies an
+	unusual one here. The axis starts just below $f_{\mathrm{pz}}$, cropping
+	the flat pressure-zone plateau below it (a single value, see text); the
+	shaded band above $f_{\mathrm{sp}}=80$\,Hz marks driver M's range.}
+	\label{fig:spl-sub}
 \end{figure}
 
 Against target $L_t=110$\,dB (1\,m, $2\pi$, rms): S meets 110\,dB down to
@@ -30,6 +37,21 @@ fixing the split at $\ge$80\,Hz --- set by the burst penalty
 (\cref{lem:shape}), not the sine math. Both drivers saturate the materials
 bound at $\beta\approx0.3$ (\cref{thm:bound}): two ends of one Pareto front.
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_spl_attack}
+	\caption{Driver M, one unit in $38$~L ($\Qtc=0.55$, $F_c=79$~Hz): the burst
+	(dashed) excursion ceiling dips below target just under $80$~Hz 
+	--- the	transient clipping that fixes the sub/attack split, invisible on the sine
+	curve alone. The shaded band below $f_{\mathrm{sp}}=80$\,Hz is driver S's
+	range, shown for context only using this appendix's $r=1$\,m comparison
+	basis rather than S's own room-consistent $r_{\mathrm{listen}}=3$\,m
+	(\cref{fig:spl-sub}), hence the visible kink at $f_{\mathrm{pz}}$.
+	Re-evaluated at that room-consistent distance, M's own
+	$80$--$250$\,Hz band needs at most $225$\,W per unit ($\ll350$\,W rated).}
+	\label{fig:spl-attack}
+\end{figure}
+
 \subsection*{Distortion-referenced sizing with room closure}
 
 Room $V_{\mathrm{room}}=60$\,m$^3$, $L_{\max}=6$\,m
@@ -39,12 +61,14 @@ pressure-zone demand $V_{\mathrm{dem}}=4.36$\,L, flat for
 $f\le f_{\mathrm{pz}}$.
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=\columnwidth]{../figures/fig_distortion_sub}
-\caption{Driver S: motor/suspension HD, Doppler IM onto 80\,Hz, box
-air-spring HD2, and their sum, at the 110\,dB target
-($r_{\mathrm{listen}}=3$~m).}
-\label{fig:distortion-sub}
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_distortion_sub}
+	\caption{Driver S: motor/suspension HD, Doppler IM onto 80\,Hz, box
+	air-spring HD2, and their sum, at the 110\,dB target
+	($r_{\mathrm{listen}}=3$~m). The axis starts just below $f_{\mathrm{pz}}$
+	(\cref{fig:spl-sub}); 
+	the shaded band above $f_{\mathrm{sp}}=80$\,Hz marks driver M's range.}
+	\label{fig:distortion-sub}
 \end{figure}
 
 One S gives utilization $\xi_x=4.36/2.30=1.89$: infeasible even before
@@ -62,3 +86,21 @@ the driver's rating. The $F_s$ rule requires $F_s/\Qts\le52$\,Hz; S has
 $3.1$\,Hz at $\Qtc=0.61$ ($M_p\le1\%$, \cref{prop:decay}): a $0.99$\,dB
 in-room shelf, trimmed by a free EQ cut rather than chasing exact alignment
 at a less comfortable $\Qtc$.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_distortion_attack}
+	\caption{Driver M, one unit in $38$~L: motor/suspension HD, Doppler IM, and
+	their sum, at the $110$~dB target, split at $80$~Hz. 
+	The shaded band below $f_{\mathrm{sp}}$ marks 
+	driver S's range (\cref{fig:spl-attack}).}
+	\label{fig:distortion-attack}
+\end{figure}
+
+M (one unit, $38$\,L) carries the split at $80$\,Hz with $7$--$10$\,dB of
+sine headroom; its distortion total briefly touches $3.7\%$ right at the
+split (motor HD dominant) before clearing the $3\%$ budget by
+$\approx87$\,Hz, under a sixth of an octave higher. This HD margin and the
+burst-excursion margin (\cref{fig:spl-attack}) independently favor the same
+split frequency, corroborating rather than merely assuming the empirically
+common $\sim\!80$\,Hz sub/attack crossover.

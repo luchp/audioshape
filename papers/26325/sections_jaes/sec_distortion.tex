@@ -7,45 +7,51 @@ free, so the only distortion that should decide a ranking is the kind no
 filter can remove.
 
 \begin{proposition}[FIR correctability boundary]
-\label{prop:LTI}
-(i)~In-band, the sealed-box transfer function is minimum-phase, so a
-causal, stable LTI pre-filter $G\approx H^{-1}$ exists on any band: magnitude,
-phase, group delay, corner sag, and ring-down tail are all exactly
-correctable (at the drive costs \eqref{eq:SPLL}, \eqref{eq:EQtax}).
-(ii)~No LTI $G$ reduces the nonlinear residual $\mathcal{N}$ for all program:
-if it did, scaling the input would force $\mathcal N$ linear on the signal
-space --- contradiction unless $\mathcal N\equiv0$.
+	\label{prop:LTI}
+	(i)~In-band, the sealed-box transfer function is minimum-phase, so a
+		causal, stable LTI pre-filter $G\approx H^{-1}$ exists on any band: 
+		magnitude, phase, group delay, corner sag, and ring-down tail 
+		are all exactly	correctable (at the drive costs \eqref{eq:SPLL}, \eqref{eq:EQtax}).
+	(ii)~No LTI $G$ reduces the nonlinear residual $\mathcal{N}$ for all program:
+		if it did, scaling the input would force $\mathcal N$ linear on the signal
+		space --- contradiction unless $\mathcal N\equiv0$.
 \end{proposition}
 
 Three independent, first-principles mechanisms all reduce to the same
 headroom ranking, which is the central result of this section.
 
-\textbf{(1) Displacement-driven nonlinearity.} Expanding motor and
-suspension nonlinearity to leading Taylor order (A10) and anchoring at the
-distortion-defined $\Xmax$ (A7, $D(\Xmax)\approx10\%$) gives, with
-utilization $\xi_x\equiv V_{\mathrm{dem}}/\Vd$,
-\begin{equation}
-\boxed{\ D(\xi_x)\approx d_2\,\xi_x+d_3\,\xi_x^{2},\quad d_2+d_3\approx0.1\ }.
-\label{eq:HDscale}
-\end{equation}
-Since $d_2,d_3\ge0$, this bounds $D$ between its two limiting orders,
-$0.1\,\xi_x^{2}\le D\le0.1\,\xi_x$. At fixed target this distortion class is
-monotone in the headroom on the
-displacement ceiling \eqref{eq:SPLL}: sorting by it is sorting by $\Vd$. A
-distortion budget $D^\ast$ converts to a utilization cap
-$\xi^\ast=D^\ast/0.1$ (even-order) or $\sqrt{D^\ast/0.1}$ (symmetric); e.g.\
-$D^\ast=3\%\Rightarrow\xi^\ast=0.3$--$0.55$, i.e.\ $\Vd$ must be $2$--$3\times$
-the bare SPL-ceiling requirement --- this factor, not the SPL math, sizes
-the sub. (Per A10, this leading-order expansion sizes headroom correctly
-as a ranking law; it is not a $\pm1$\,dB THD predictor.)
+\textbf{(1) Displacement-driven nonlinearity.} 
+Expanding motor and suspension nonlinearity to leading Taylor order (A10) 
+and anchoring at the distortion-defined $\Xmax$ (A7, $D(\Xmax)\approx10\%$) 
+gives, with utilization $\xi_x\equiv V_{\mathrm{dem}}/\Vd$,
 
-\textbf{(2) Doppler (FM) distortion, the second use of area.} A component at
-$f_2$ riding on a cone at position $x_1(t)$ acquires phase modulation index
-$m=2\pi f_2X_1/c$, giving sidebands
 \begin{equation}
-\boxed{\ \frac{J_1(m)}{J_0(m)}\approx\frac{\pi f_2}{c}\cdot\frac{V_{\mathrm{dem}}(f_1)}{\Sd}\ }.
-\label{eq:doppler}
+	\boxed{\ D(\xi_x)\approx d_2\,\xi_x+d_3\,\xi_x^{2},\quad d_2+d_3\approx0.1\ }.
+	\label{eq:HDscale}
 \end{equation}
+
+Since $d_2,d_3\ge0$, this bounds $D$ between its two limiting orders,
+$0.1\,\xi_x^{2}\le D\le0.1\,\xi_x$. 
+
+At fixed target this distortion class is monotone in the headroom on the
+displacement ceiling \eqref{eq:SPLL}: sorting by it is sorting by $\Vd$. 
+A distortion budget $D^\ast$ converts to a utilization cap
+$\xi^\ast=D^\ast/0.1$ (even-order) or $\sqrt{D^\ast/0.1}$ (symmetric); 
+e.g. $D^\ast=3\%\Rightarrow\xi^\ast=0.3$--$0.55$, i.e.\ $\Vd$ must be $2$--$3\times$
+the bare SPL-ceiling requirement --- this factor, not the SPL math, sizes
+the sub. 
+(Per A10, this leading-order expansion sizes headroom correctly as a ranking law; 
+it is not a $\pm1$\,dB THD predictor.)
+
+\textbf{(2) Doppler (FM) distortion, the second use of area.} 
+A component at $f_2$ riding on a cone at position $x_1(t)$ acquires phase modulation 
+index $m=2\pi f_2X_1/c$, giving sidebands
+\begin{equation}
+	\boxed{\ \frac{J_1(m)}{J_0(m)} \approx 
+			 \frac{\pi f_2}{c}\cdot\frac{V_{\mathrm{dem}}(f_1)}{\Sd}\ }.
+	\label{eq:doppler}
+\end{equation}
+
 This is FM, maximally non-LTI-correctable; at fixed output it scales as
 $1/\Sd$ and is independent of $\Xmax$, so among equal-$\Vd$ drivers the
 larger cone is strictly cleaner --- area enters selection a \emph{second}
@@ -60,9 +66,10 @@ unconstrained-DSP premise (A6), but worth stating explicitly.
 an asymmetric spring; weighting by the box's share of total stiffness
 (\cref{prop:invariance}) gives
 \begin{equation}
-\boxed{\ \mathrm{HD}_{2}^{\mathrm{box}}\approx\frac{\gamma+1}{4}\,
-\frac{V_{\mathrm{dem}}}{\Vb}\Big(1-\frac{\Qts^2}{\Qtc^2}\Big)\ },
-\label{eq:boxHD}
+	\boxed{\ \mathrm{HD}_{2}^{\mathrm{box}} \approx
+		\frac{\gamma+1}{4}\, 
+		\frac{V_{\mathrm{dem}}}{\Vb}\Big(1-\frac{\Qts^2}{\Qtc^2}\Big)\ },
+	\label{eq:boxHD}
 \end{equation}
 driver-independent at fixed output: a \emph{box} criterion, $\propto1/\Vb$,
 mitigated by larger $\Vb$ and stuffing ($\gamma_{\mathrm{eff}}\to1$).
@@ -74,23 +81,30 @@ and thermal AM ($\Delta L\approx-0.034\,\xi_P\Delta T_{\mathrm{rated}}$\,dB,
 $\xi_P=P_{\mathrm{dem}}/\Pmax$, slow and program-dependent, worse if one
 coil serves both regimes); the same coil heating shifts $\Re$ and hence
 $\Qtc,F_c$ (\cref{sec:freq}), a slow drift outside the strict LTI premise
-(A1). Suspension creep/hysteresis is real,
-non-correctable, and absent from datasheets --- a quality prior, not a
-computable criterion.
+(A1). 
+Suspension creep/hysteresis is real, non-correctable, and absent from datasheets 
+--- a quality prior, not a computable criterion.
 
 \begin{proposition}[Distortion-referenced selection $=$ headroom maximization]
-\label{prop:equivdist}
-At fixed band, room, and target, every non-correctable component above is
-monotone decreasing in the headroom vector $h=(\Vd,\ \Sd,\ \Vb,\
-\eta_0\Pmax)$. Sorting candidates by predicted non-correctable distortion is
-therefore the Pareto/lexicographic order on $h$: three independent
-mechanisms (displacement, Doppler, box spring), one target, the same
-headroom ranking, now with $\Sd$ and $\Vb$ entering separately from $\Vd$.
+	\label{prop:equivdist}
+	At fixed band, room, and target, every non-correctable component above is
+	monotone decreasing in the headroom vector 
+	$h=(\Vd,\ \Sd,\ \Vb,\ \eta_0, \ \Pmax)$. 
+	Sorting candidates by predicted non-correctable distortion is
+	therefore the Pareto/lexicographic order on $h$: three independent
+	mechanisms (displacement, Doppler, box spring), one target, the same
+	headroom ranking, now with $\Sd$ and $\Vb$ entering separately from $\Vd$.
 \end{proposition}
 
 Distortion tolerance is itself frequency-dependent: psychoacoustic masking
 of harmonics by their own fundamental is strongest at low frequencies,
 where critical bands are widest and absolute sensitivity is lowest
-\cite{fielder2019}. This is consistent with point~(1) above: distortion,
-not the bare SPL ceiling, is the leading criterion specifically in the
-sub-bass band.
+\cite{fielder2019}. 
+
+This connects directly to the worked example: the non-correctable distortion 
+total (\cref{fig:distortion-sub}) is highest in the flat, $9$--$9.5\%$ 
+plateau at and below $f_{\mathrm{pz}}$ 
+--- precisely the low-frequency range where \cite{fielder2019}'s masking 
+argument offers the most cover. Distortion, not the bare SPL ceiling, 
+is therefore the leading criterion specifically in the sub-bass band, 
+and it is worst exactly where it is least audible as such.
