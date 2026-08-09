@@ -17,8 +17,9 @@ from pathlib import Path
 
 from audioshape.driver import Driver
 
-# header name -> (Driver field, scale factor to SI)
-_COLUMN_MAP = {
+# header name -> (Driver field, scale factor to SI). Public: also reused by
+# `vituixcad.driver_database_tsv` to write rows back out in this same schema.
+COLUMN_MAP = {
     "Size [in]": ("size_in", 1.0),
     "Re [ohm]": ("re", 1.0),
     "fs [Hz]": ("fs", 1.0),
@@ -51,7 +52,7 @@ def parse_database(path: str | Path) -> ParseResult:
 
     header = lines[0].split("\t")
     try:
-        col_index = {name: header.index(name) for name in _COLUMN_MAP}
+        col_index = {name: header.index(name) for name in COLUMN_MAP}
         i_manufacturer = header.index("Manufacturer")
         i_model = header.index("Model")
         i_type = header.index("Type")
@@ -67,7 +68,7 @@ def parse_database(path: str | Path) -> ParseResult:
         label = f"{_cell(cells, i_manufacturer)} {_cell(cells, i_model)}".strip()
 
         fields: dict[str, float] = {}
-        for name, (attr, scale) in _COLUMN_MAP.items():
+        for name, (attr, scale) in COLUMN_MAP.items():
             raw = _cell(cells, col_index[name])
             if raw:
                 try:

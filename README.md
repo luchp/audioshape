@@ -23,7 +23,8 @@ thermal clipping). It supports both single-role ranking and a two-role
 - `src/audioshape/database.py` — VituixCAD TSV parser
 - `src/audioshape/ranking.py` — `evaluate`/`rank` and `PairEvaluation`/`pair_rank`
 - `src/audioshape/plots.py` — matplotlib figure functions
-- `src/audioshape/cli.py` — `rank`, `pair`, `plot` subcommands
+- `src/audioshape/vituixcad.py` — export a driver selection to a VituixCAD `.vxp` project + driver-database TSV
+- `src/audioshape/cli.py` — `rank`, `pair`, `plot`, `export-vituixcad` subcommands
 - `tests/` — pytest, physics pinned to the paper's worked example
 - `data/` — `VituixCAD_driver_db.txt` driver database
 - `examples/` — `example_recipe.toml` sample recipe config
@@ -40,6 +41,8 @@ uv run audioshape rank --recipe examples/example_recipe.toml --role sub
 uv run audioshape pair --recipe examples/example_recipe.toml --top 5
 uv run audioshape plot --recipe examples/example_recipe.toml --role sub \
     --driver "UMII18" --save dev/out
+uv run audioshape export-vituixcad --recipe examples/example_recipe.toml \
+    --sub-driver "UMII18" --attack-driver "TD15S" --save dev/out
 ```
 
 ## Development

@@ -4,6 +4,8 @@
     audioshape rank --recipe example_recipe.toml --role sub
     audioshape plot --recipe example_recipe.toml --driver "TD15H" \
         --role sub --save dev/out
+    audioshape export-vituixcad --recipe example_recipe.toml \
+        --sub-driver "TD15H" --attack-driver "TD15S" --save dev/out
 
 Thin layer: argument parsing, table printing, figure saving.  All computation
 lives in `ranking` / `physics`.  Configuration lives in a recipe TOML file
@@ -17,6 +19,7 @@ import sys
 from pathlib import Path
 
 from audioshape.database import parse_database
+from audioshape.driver import Driver
 from audioshape.ranking import Evaluation, evaluate, pair_rank, rank
 from audioshape.recipe import load_recipe
 from audioshape.scenario import Scenario
@@ -72,6 +75,18 @@ def build_parser() -> argparse.ArgumentParser:
                         help="override recipe's unit count for this role")
     p_plot.add_argument("--save", type=Path, default=None,
                         help="directory for PNGs (default: show interactively)")
+
+    p_export = sub.add_parser(
+        "export-vituixcad",
+        help="export a sub/attack driver selection as a VituixCAD project "
+             "+ driver-database TSV")
+    add_recipe_arg(p_export)
+    p_export.add_argument("--sub-driver", default=None,
+                          help="substring of 'Manufacturer Model' for the sub role")
+    p_export.add_argument("--attack-driver", default=None,
+                          help="substring of 'Manufacturer Model' for the attack role")
+    p_export.add_argument("--save", type=Path, required=True,
+                          help="output directory for the .vxp project + driver TSV")
     return parser
 
 
@@ -193,12 +208,65 @@ def cmd_plot(args: argparse.Namespace) -> int:
     return 0
 
 
+def _match_one(drivers: list[Driver], needle: str, role: str) -> Driver | None:
+    lo = needle.lower()
+    matches = [d for d in drivers if lo in d.label().lower()]
+    if not matches:
+        print(f"no driver matching {needle!r} for role {role!r}", file=sys.stderr)
+        return None
+    if len(matches) > 1:
+        print(f"{len(matches)} matches for role {role!r}; using first: "
+              + ", ".join(d.label() for d in matches[:5]), file=sys.stderr)
+    return matches[0]
+
+
+def cmd_export(args: argparse.Namespace) -> int:
+    from audioshape import vituixcad  # keep import lazy, mirrors cmd_plot
+
+    recipe = load_recipe(args.recipe)
+    sc = recipe.scenario
+    result = parse_database(recipe.db)
+
+    role_requests = [
+        ("sub", args.sub_driver, recipe.sub_units),
+        ("attack", args.attack_driver, recipe.attack_units),
+    ]
+    selections: list[vituixcad.RoleSelection] = []
+    for role, needle, n_units in role_requests:
+        if not needle:
+            continue
+        driver = _match_one(result.drivers, needle, role)
+        if driver is None:
+            return 1
+        band_low, band_high, doppler_ref = _band_for_role(sc, role)
+        ev = evaluate(driver, sc, n_units=n_units, band_low=band_low,
+                     band_high=band_high, doppler_ref=doppler_ref)
+        selections.append(vituixcad.RoleSelection(role, ev, band_low, band_high))
+
+    if not selections:
+        print("pass --sub-driver and/or --attack-driver", file=sys.stderr)
+        return 1
+
+    args.save.mkdir(parents=True, exist_ok=True)
+    project_path = args.save / "driver_selection.vxp"
+    project_path.write_bytes(vituixcad.project_xml(selections).encode("utf-8-sig"))
+    tsv_path = args.save / "VituixCAD_Drivers_selection.txt"
+    tsv_path.write_text(
+        vituixcad.driver_database_tsv([s.evaluation.driver for s in selections]),
+        encoding="utf-8")
+    print(f"wrote {project_path}")
+    print(f"wrote {tsv_path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "rank":
         return cmd_rank(args)
     if args.command == "pair":
         return cmd_pair(args)
+    if args.command == "export-vituixcad":
+        return cmd_export(args)
     return cmd_plot(args)
 
 
