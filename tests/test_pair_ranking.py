@@ -91,14 +91,41 @@ def test_qtc_ceiling_rescues_overshooting_driver(scenario):
     assert ev.boxed.qtc < scenario.qtc
     assert ev.boxed.fc <= scenario.f_pz + 1e-6
 
-    # a still-higher corner rate (Fs alone already past f_pz) stays infeasible
+    # a still-higher corner rate (Fs alone already past f_pz) no longer
+    # hard-rejects: it falls back to a large practical box (capped at
+    # MAX_VB_VAS_RATIO * Vas) and leans on EQ to fill the remaining gap,
+    # with feasibility now decided by the real excursion/thermal budgets.
     unreachable = Driver(
         manufacturer="Example", model="FsAboveTarget", size_in=18,
         fs=35.0, qes=0.4083, qms=5.0, re=4.0, mms=0.400,
         sd=0.115, xmax=0.020, vas=0.297, p_max=600.0)
     ev_bad = evaluate(unreachable, scenario, n_units=2, role="sub")
-    assert not ev_bad.feasible
-    assert any("Qts" in r for r in ev_bad.reasons)
+    assert any("Fc can't reach" in n for n in ev_bad.notes)
+    assert ev_bad.boxed.fc > scenario.f_pz  # EQ has to fill the remaining gap
+
+
+def test_large_room_unreachable_corner_scales_to_feasible_with_more_units():
+    """Real-world case: a large room (f_pz well below any commercial driver's
+    Fs/Qts corner rate) makes ideal Fc-at-f_pz alignment unreachable by any
+    finite box for a driver like the Dayton UMII18-22 (Fs=22, Qts=0.53).
+    This must not hard-reject the driver -- MAX_VB_VAS_RATIO's large-box +
+    EQ fallback is used, and feasibility is decided by real excursion/
+    thermal headroom, which more units can supply."""
+    umii18 = Driver(
+        manufacturer="Dayton Audio", model="UMII18-22", size_in=18,
+        fs=22.0, qes=0.67, qms=23.06, re=0.124, mms=0.2482,
+        sd=0.192, xmax=0.028, vas=1.184, p_max=1200.0)
+    sc = Scenario(v_room=150.0, l_max=10.0)
+    assert umii18.qts >= sc.f_pz / umii18.corner_rate  # corner unreachable
+
+    ev_1 = evaluate(umii18, sc, n_units=1, role="sub")
+    assert any("Fc can't reach" in n for n in ev_1.notes)
+    assert not ev_1.feasible  # too little headroom with just one unit
+    assert any("clip" in r for r in ev_1.reasons)  # real excursion/thermal reason
+
+    ev_8 = evaluate(umii18, sc, n_units=8, role="sub")
+    assert any("Fc can't reach" in n for n in ev_8.notes)
+    assert ev_8.feasible  # enough array headroom makes it buildable after all
 
 
 def test_pair_rank_combines_independent_rankings(driver_s, driver_m, scenario):

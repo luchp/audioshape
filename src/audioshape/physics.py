@@ -98,6 +98,12 @@ def box_volume_for_qtc(vas: float, qts: float, qtc: float) -> float:
     return vas / ratio
 
 
+def qtc_for_box_volume(vas: float, qts: float, vb: float) -> float:
+    """Inverse of box_volume_for_qtc: the Qtc a box of volume vb actually
+    gives this driver, Qtc = Qts * sqrt(1 + Vas/Vb)."""
+    return qts * math.sqrt(1.0 + vas / vb)
+
+
 def fc_for_qtc(fs: float, qts: float, qtc: float) -> float:
     """Fc = Qtc * Fs / Qts (box invariance: Fc/Qtc = Fs/Qts = sigma/2pi)."""
     return qtc * fs / qts

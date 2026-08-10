@@ -56,4 +56,9 @@ def test_infeasible_high_qts_driver_flagged(db):
     high_qts = next(d for d in db.drivers if d.qts >= 0.55)
     ev = evaluate(high_qts, sc)
     assert not ev.feasible
-    assert any("Qts" in r for r in ev.reasons)
+    # Unreachable alignment is no longer a hard rejection by itself (see
+    # test_qtc_ceiling_rescues_overshooting_driver / MAX_VB_VAS_RATIO
+    # fallback): this driver is genuinely infeasible on excursion/thermal
+    # clipping even in the large-box + EQ fallback.
+    assert any("clip" in r for r in ev.reasons)
+    assert any("Fc can't reach" in n for n in ev.notes)

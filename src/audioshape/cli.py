@@ -132,6 +132,9 @@ def _print_rank_table(evals: list[Evaluation]) -> None:
 def _format_row(i: int, ev: Evaluation) -> str:
     d = ev.driver
     flags = "" if ev.feasible else "; ".join(ev.reasons)
+    if ev.notes:
+        note_str = "; ".join(ev.notes)
+        flags = f"{flags}; {note_str}" if flags else note_str
     return (f"{i:>3} {d.label():<38.38} {d.size_in:>4.0f} {d.vd*1e3:>6.2f} "
             f"{ev.boxed.vb*1e3:>6.0f} {ev.boxed.fc:>5.1f} "
             f"{ev.boxed.qtc:>5.2f} {ev.xi_x:>5.2f} "

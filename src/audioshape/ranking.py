@@ -8,7 +8,6 @@ distortion sorting == headroom maximization).
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Literal
 
@@ -17,6 +16,13 @@ from audioshape.driver import BoxedDriver, Driver
 from audioshape.scenario import Scenario
 
 Role = Literal["sub", "attack"]
+
+# Practical box-volume cap when a driver's own corner rate (Fs/Qts) makes
+# the ideal alignment (Fc at the role's target corner) unreachable by any
+# finite sealed box (Vb -> inf as Qtc -> Qts): a real system just builds
+# the largest reasonable box instead and leans on EQ for the rest of the
+# gap (eq:EQtax), rather than treating the driver as infeasible outright.
+MAX_VB_VAS_RATIO = 10.0
 
 
 @dataclass(frozen=True)
@@ -51,6 +57,7 @@ class Evaluation:
     n_units_required: int           # units to meet the distortion budget
     n_channels: int = 1             # coherent-signal channels (see evaluate())
     role: Role = "sub"              # which selection rule sort_key() applies
+    notes: tuple[str, ...] = ()     # non-blocking caveats (e.g. large-box+EQ fallback)
 
     @property
     def driver(self) -> Driver:
@@ -124,6 +131,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     band_high = sc.f_high if band_high is None else band_high
     doppler_ref = sc.f_split if doppler_ref is None else doppler_ref
     reasons: list[str] = []
+    notes: list[str] = []
 
     # --- Qtc ceiling vs. this role's own corner target (eq:Fsrule) -------
     # Use the smaller of the configured ceiling and whatever Qtc lands Fc
@@ -131,19 +139,30 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     # attack): undershooting a target corner is free (EQ cut), overshooting
     # it is taxed (EQ boost, costs excursion), so never pin every driver to
     # the same fixed ceiling when a lower Qtc (bigger box) both avoids the
-    # overshoot and is still available under it. This one check subsumes
-    # the old "Qts >= ceiling" gate: Fs >= f_target forces qtc <= driver.qts
-    # regardless of the ceiling, so it is caught here too; a driver already
-    # compliant at the fixed ceiling gets qtc == sc.qtc, unchanged.
+    # overshoot and is still available under it.
+    #
+    # If even Qtc==Qts (the largest box gives, in the limit) can't reach the
+    # target corner -- i.e. the driver's own corner rate Fs/Qts is below
+    # f_target/Qts, meaning no finite box can align Fc there -- this is not
+    # by itself infeasible: a real system just uses a large practical box
+    # (capped at MAX_VB_VAS_RATIO * Vas, since Vb -> inf as Qtc -> Qts) and
+    # leans on EQ to fill the gap between Fc and f_target, which costs
+    # excursion/power (eq:EQtax) rather than being geometrically impossible.
+    # Feasibility is then decided by the real budgets below (xi_x, xi_p),
+    # not by alignment reachability -- consistent with there being no
+    # commercial driver with Fs below ~20 Hz, so this case only arises for
+    # very large rooms where f_pz is already low.
     f_target = sc.target_corner_hz(role)
     qtc = physics.qtc_for_target_corner(driver.corner_rate, f_target, sc.qtc)
     if driver.qts >= qtc:
-        corner_name = "f_sp" if role == "attack" else "f_pz"
-        return _infeasible(
-            driver, sc, n_units, band_low,
-            f"Qts={driver.qts:.2f} >= usable Qtc={qtc:.2f} "
-            f"(ceiling {sc.qtc:.2f}, {corner_name}={f_target:.0f} Hz)",
-            n_channels=n_channels, role=role)
+        vb = MAX_VB_VAS_RATIO * driver.vas
+        qtc = physics.qtc_for_box_volume(driver.vas, driver.qts, vb)
+        notes.append(
+            f"Fc can't reach {('f_sp' if role == 'attack' else 'f_pz')}="
+            f"{f_target:.0f} Hz in any finite box (Fs/Qts="
+            f"{driver.corner_rate:.0f} Hz); using a {MAX_VB_VAS_RATIO:g}x-Vas "
+            f"box (Qtc={qtc:.2f}) and EQ to fill the gap -- not itself "
+            "infeasible, see xi_x/xi_P below")
 
     boxed = BoxedDriver(driver, qtc=qtc, n_units=n_units)
     n_acoustic = n_units * n_channels  # coherent-sum units across channels
@@ -213,7 +232,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
 
     return Evaluation(
         boxed=boxed, scenario=sc,
-        feasible=not reasons, reasons=tuple(reasons),
+        feasible=not reasons, reasons=tuple(reasons), notes=tuple(notes),
         xi_x=xi_x, hd=hd, doppler_im=doppler, box_hd2=box_hd,
         total_distortion=total,
         xi_p=xi_p,
@@ -303,21 +322,3 @@ def _room_spl_ceiling(vd_total: float, sc: Scenario, band_low: float,
     v_dem_unit = sc.demand_volume(band_low, role) / sc.target_pressure(role)  # per Pa
     p_max_rms = (vd_total / shape_factor) / v_dem_unit
     return physics.spl_from_pressure(p_max_rms)
-
-
-def _infeasible(driver: Driver, sc: Scenario, n_units: int, band_low: float,
-                reason: str, n_channels: int = 1, role: Role = "sub") -> Evaluation:
-    """Driver cannot form the requested box at all."""
-    inf = float("inf")
-    boxed = BoxedDriver(driver, qtc=max(sc.qtc, driver.qts * 1.01) + 1e-9,
-                        n_units=n_units)
-    return Evaluation(
-        boxed=boxed, scenario=sc, feasible=False, reasons=(reason,),
-        xi_x=inf, hd=inf, doppler_im=inf, box_hd2=inf, total_distortion=inf,
-        xi_p=inf, thermal_compression_db=-inf,
-        spl_sine_floor=-inf, spl_burst_floor=-inf,
-        f_x=math.nan, f_x_burst=math.nan,
-        n_units_required=sc.units_required(driver.vd, band_low, role),
-        n_channels=n_channels,
-        role=role,
-    )
