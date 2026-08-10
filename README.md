@@ -13,6 +13,17 @@ Qtc, the corner-rate room-closure rule, inductance corner, excursion/
 thermal clipping). It supports both single-role ranking and a two-role
 (sub + attack) pair ranking for the paper's Part II architecture.
 
+`distortion_budget` (`D*`, set in the recipe) is a **selection ceiling at
+the target SPL**, not an operating point: the target itself is typically a
+brief reference-level peak (105 dB per channel, coherently stereo-summed
+to ~111 dB at the seat, is only safely sustainable for about a minute per
+NIOSH exposure limits), so a driver picked to just clear `D*` there will,
+in ordinary continuous listening, run at distortion levels well below it.
+`audioshape plot ... distortion` plots the total-distortion-vs-frequency
+curve both at the target and 20 dB down (a proxy for normal listening
+level) against the same `D*` line, so you can see how much margin actually
+remains day-to-day.
+
 ## Layout
 
 - `src/audioshape/physics.py` — pure physics functions, SI units, no I/O

@@ -52,7 +52,7 @@ def test_attack_role_ignores_subs_own_excursion(driver_m, scenario):
     band top (f_high), not the sub's -- physically separate sources."""
     ev = evaluate(driver_m, scenario, n_units=1,
                  band_low=scenario.f_split, band_high=scenario.f_high,
-                 doppler_ref=scenario.f_high)
+                 doppler_ref=scenario.f_high, role="attack")
     # its own excursion utilization, not the sub's huge one
     assert ev.xi_x < 3.0  # sane, driven by its own small Vd vs band-top demand
     # Doppler uses f_high (250 Hz) as reference, matching band_high
@@ -67,8 +67,38 @@ def test_corner_rate_gate_only_binds_low_band(driver_m, scenario):
     flagged for it when scored only in the attack band (band_low > f_pz)."""
     ev_attack = evaluate(driver_m, scenario, n_units=1,
                          band_low=scenario.f_split, band_high=scenario.f_high,
-                         doppler_ref=scenario.f_high)
+                         doppler_ref=scenario.f_high, role="attack")
     assert not any("f_pz" in r for r in ev_attack.reasons)
+
+
+def test_qtc_ceiling_rescues_overshooting_driver(scenario):
+    """A driver whose corner rate would overshoot f_pz at the fixed ceiling
+    Qtc is not simply rejected: a lower Qtc (bigger box) that still clears
+    Qts is used instead, same as the paper's own undershoot-is-free
+    argument after eq:Fsrule."""
+    # Fs/Qts = 100 Hz > f_pz/Qtc(0.55) = 28.6/0.55 = 52 Hz at the ceiling,
+    # so the old fixed-ceiling gate rejected this driver outright even
+    # though Fs=20 Hz itself is well below f_pz -- a bigger box rescues it.
+    high_corner_rate = Driver(
+        manufacturer="Example", model="HighFsQts", size_in=18,
+        fs=20.0, qes=0.2083, qms=5.0, re=4.0, mms=0.400,
+        sd=0.115, xmax=0.020, vas=0.297, p_max=600.0)
+    assert high_corner_rate.corner_rate == pytest.approx(100.0, rel=0.02)
+
+    ev = evaluate(high_corner_rate, scenario, n_units=2, role="sub")
+    assert ev.feasible
+    # actual alignment undershoots the ceiling to keep Fc at/below f_pz
+    assert ev.boxed.qtc < scenario.qtc
+    assert ev.boxed.fc <= scenario.f_pz + 1e-6
+
+    # a still-higher corner rate (Fs alone already past f_pz) stays infeasible
+    unreachable = Driver(
+        manufacturer="Example", model="FsAboveTarget", size_in=18,
+        fs=35.0, qes=0.4083, qms=5.0, re=4.0, mms=0.400,
+        sd=0.115, xmax=0.020, vas=0.297, p_max=600.0)
+    ev_bad = evaluate(unreachable, scenario, n_units=2, role="sub")
+    assert not ev_bad.feasible
+    assert any("Qts" in r for r in ev_bad.reasons)
 
 
 def test_pair_rank_combines_independent_rankings(driver_s, driver_m, scenario):

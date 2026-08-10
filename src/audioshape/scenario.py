@@ -38,7 +38,12 @@ class Scenario:
     doppler_budget: float = 0.02      # allowed Doppler FM index, D*_IM
                                         # (eq:doppler); attack-role feasibility
                                         # gate only (sec_procedure.tex step 4)
-    qtc: float = 0.55           # target closed-box alignment
+    qtc: float = 0.55           # closed-box alignment ceiling: never
+                                 # exceeded, but a driver/role may use a
+                                 # lower Qtc when the ceiling would overshoot
+                                 # its own corner target (see
+                                 # target_corner_hz(), physics.qtc_for_
+                                 # target_corner(), eq:Fsrule)
     f_low: float = 15.0         # lowest analysis frequency [Hz]
     f_split: float = 80.0       # sub / attack split [Hz]
     f_high: float = 250.0       # top of the attack band [Hz]
@@ -66,6 +71,13 @@ class Scenario:
     def target_spl_for(self, role: str) -> float:
         """Per-driver target SPL for `role` ('sub' or 'attack')."""
         return self.sub_target_spl if role == "sub" else self.attack_target_spl
+
+    def target_corner_hz(self, role: str) -> float:
+        """This role's own box-corner target (eq:Fsrule): the room's
+        pressure zone for sub (and 'full', a single driver whose band also
+        reaches down into it), the sub/attack split for attack
+        (sec_procedure.tex step 5's "Fc<~f_sp")."""
+        return self.f_split if role == "attack" else self.f_pz
 
     def demand_volume(self, f: float, role: str = "sub") -> float:
         """Peak displaced volume [m^3] needed for the target SPL at f."""

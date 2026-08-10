@@ -125,21 +125,28 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     doppler_ref = sc.f_split if doppler_ref is None else doppler_ref
     reasons: list[str] = []
 
-    if driver.qts >= sc.qtc:
-        return _infeasible(driver, sc, n_units, band_low,
-                           f"Qts={driver.qts:.2f} >= target Qtc={sc.qtc:.2f}",
-                           n_channels=n_channels, role=role)
+    # --- Qtc ceiling vs. this role's own corner target (eq:Fsrule) -------
+    # Use the smaller of the configured ceiling and whatever Qtc lands Fc
+    # exactly at this role's own corner (f_pz for sub/full, f_split for
+    # attack): undershooting a target corner is free (EQ cut), overshooting
+    # it is taxed (EQ boost, costs excursion), so never pin every driver to
+    # the same fixed ceiling when a lower Qtc (bigger box) both avoids the
+    # overshoot and is still available under it. This one check subsumes
+    # the old "Qts >= ceiling" gate: Fs >= f_target forces qtc <= driver.qts
+    # regardless of the ceiling, so it is caught here too; a driver already
+    # compliant at the fixed ceiling gets qtc == sc.qtc, unchanged.
+    f_target = sc.target_corner_hz(role)
+    qtc = physics.qtc_for_target_corner(driver.corner_rate, f_target, sc.qtc)
+    if driver.qts >= qtc:
+        corner_name = "f_sp" if role == "attack" else "f_pz"
+        return _infeasible(
+            driver, sc, n_units, band_low,
+            f"Qts={driver.qts:.2f} >= usable Qtc={qtc:.2f} "
+            f"(ceiling {sc.qtc:.2f}, {corner_name}={f_target:.0f} Hz)",
+            n_channels=n_channels, role=role)
 
-    boxed = BoxedDriver(driver, qtc=sc.qtc, n_units=n_units)
+    boxed = BoxedDriver(driver, qtc=qtc, n_units=n_units)
     n_acoustic = n_units * n_channels  # coherent-sum units across channels
-
-    # --- corner-rate gate (eq:Fsrule): only binds the driver that must ----
-    # reach into the room's pressure zone; an attack driver starting above
-    # f_pz does not need its box corner placed there.
-    if band_low <= sc.f_pz and driver.corner_rate > sc.max_corner_rate:
-        reasons.append(
-            f"Fs/Qts={driver.corner_rate:.0f} Hz > "
-            f"f_pz/Qtc={sc.max_corner_rate:.0f} Hz (corner cannot reach f_pz)")
 
     # --- inductance corner must clear this driver's own band -----------
     if driver.f_le < band_high:
@@ -158,7 +165,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     doppler = physics.doppler_im(doppler_ref, x1)
 
     box_hd = physics.box_hd2(min(v_dem / n_acoustic, driver.vd),
-                             boxed.vb, driver.qts, sc.qtc)
+                             boxed.vb, driver.qts, qtc)
     total = hd + doppler + box_hd
 
     if xi_x > 1.0:

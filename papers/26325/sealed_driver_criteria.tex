@@ -846,6 +846,15 @@ $\sqrt{D^\ast/0.1}$ (symmetric driver). E.g.\ $D^\ast=3\%$:
 $\xi^\ast=0.3$--$0.55$; the $\Vd$ requirement is $1/\xi^\ast\approx2$--$3\times$
 the bare SPL-ceiling requirement. \textbf{This factor, not the SPL math, sizes the
 sub.}
+\item $D^\ast$ is a \emph{selection ceiling at the reference-level target}, not
+an operating point: the reference target itself is a brief, high-SPL condition
+(peak playback at that level is typically limited to a minute or so before
+hearing-damage exposure limits are reached), so a driver sized to meet $D^\ast$
+at that target should, in normal use, sit far below it. Reading the same
+distortion curves $20$~dB down (a $\times10$ lower demand volume, i.e.\ normal
+continuous listening level rather than the reference peak) is the relevant
+check for everyday distortion; Figs.~\ref{fig:distortion-sub}--\ref{fig:distortion-attack}
+plot both.
 \end{itemize}
 
 \subsection{Doppler (FM) distortion: the second use of area}
@@ -1081,7 +1090,14 @@ Since \eqref{eq:Fsrule}'s exact match can force $\Qtc^\ast$ past a comfortable
 ringing budget (Prop.~\ref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
 the practical rule is to fix $\Qtc$ from that budget first and let $F_c$
 undershoot $f_{\mathrm{pz}}$ rather than chase exact alignment
-(Sec.~\ref{sec:example}).
+(Sec.~\ref{sec:example}). Nothing in \eqref{eq:Fsrule} is specific to the
+room corner: it is a box invariant ($F_c/\Qtc=F_s/\Qts$, fixed once the
+driver is chosen) equated to whatever corner the band in question must
+clear, so the identical ceiling-not-target treatment applies verbatim to the
+attack driver's split corner $f_{\mathrm{sp}}$ (Sec.~\ref{sec:procedure},
+step 5) --- undershoot $f_{\mathrm{sp}}$ for free, avoid overshoot's taxed
+boost, and only drop $\Qtc$ below its budget ceiling $\Qtc^\ast$ when the
+driver's own corner rate demands it.
 
 \emph{Caveats.} Real rooms leak: below $f_\ell=\omega_\ell/2\pi$ (construction
 dependent, often 10--20 Hz in masonry rooms, higher in lightweight ones) the
@@ -1096,7 +1112,7 @@ $f_\ell$ and $f_{\mathrm{pz}}$. The air itself is irrelevantly linear here
 
 Given: room ($V_{\mathrm{room}}$, $L_{\max}$), band top $f_2$, peak-equivalent
 target $L_t$ at the listening position, distortion budgets
-$D^\ast$ (HD) and $D^\ast_{\mathrm{IM}}$ (Doppler), damping target $\Qtc^\ast$
+$D^\ast$ (HD) and $D^\ast_{\mathrm{IM}}$ (Doppler), damping ceiling $\Qtc^\ast$
 (e.g.\ 0.55, $M_p=0.1\%$), burst factor $C$ (Lemma~\ref{lem:shape}, take 2),
 burst headroom $\kappa$.
 
@@ -1114,11 +1130,16 @@ $\eta_0\Pmax\ \ge\ 10^{(L_t-112.2)/10}$ (referred to 1 m/$2\pi$), $\eta_0$ from
 \item \textbf{Split (Doppler):} choose $f_{\mathrm{sp}}$ with
 $\pi f_{\mathrm{sp}}X_1^{\max}/c\le D^\ast_{\mathrm{IM}}$ \eqref{eq:doppler};
 verify the attack driver's own in-band index at $(f_{\mathrm{sp}},f_2)$.
-\item \textbf{Corner/settling/box:} $\Qts\le\Qtc^\ast$;
-$F_s/\Qts\simeq f_{\mathrm{pz}}/\Qtc^\ast$ (sub, \eqref{eq:Fsrule}) resp.\
-$F_c\lesssim f_{\mathrm{sp}}$ (attack); $\Vb=\Vas/((\Qtc^\ast/\Qts)^2-1)$;
-box distortion \eqref{eq:boxHD} $\le$ budget (sets minimum $\Vb$, stuffing);
-EQ tax below $F_c$ bounded via \eqref{eq:EQtax}, \eqref{eq:PL0}.
+\item \textbf{Corner/settling/box:} with
+$f_{\mathrm{corner}}=f_{\mathrm{pz}}$ (sub) or $f_{\mathrm{sp}}$ (attack),
+take $\Qtc=\min\!\big(\Qtc^\ast,\,f_{\mathrm{corner}}\Qts/F_s\big)$
+(\eqref{eq:Fsrule} used as a ceiling, never a fixed target: undershooting
+$f_{\mathrm{corner}}$ is free, overshooting it is taxed); reject the driver
+only if $\Qts\ge\Qtc$ (its own $\Qts$ already exceeds the damping ceiling, or
+$F_s$ alone sits at/above $f_{\mathrm{corner}}$, so no box, however large,
+clears it); $\Vb=\Vas/((\Qtc/\Qts)^2-1)$; box distortion \eqref{eq:boxHD}
+$\le$ budget (sets minimum $\Vb$, stuffing); EQ tax below $F_c$ bounded via
+\eqref{eq:EQtax}, \eqref{eq:PL0}.
 \item \textbf{Regime map:} $f_x$ \eqref{eq:fx}, $\hat f_x$ \eqref{eq:fxburst};
 verify $p_{\max}(\omega)$ \eqref{eq:master} $\ge$ target across the band.
 \item \textbf{Validity:} $f_2\ll f_L=\Re/(2\pi\Le)$; $ka(f_2)\lesssim1$; same
@@ -1226,7 +1247,10 @@ $110$~dB target ($r_{\mathrm{listen}}=3$~m basis). Below $f_{\mathrm{pz}}$ the
 flat pressure-zone demand pins the total near $9$--$9.5\%$, about three times
 over budget. Box HD2 stays two orders of magnitude under budget throughout.
 The axis starts just below $f_{\mathrm{pz}}$ (see Fig.~\ref{fig:spl-sub});
-the shaded band above $f_{\mathrm{sp}}=80$~Hz marks driver M's range.}
+the shaded band above $f_{\mathrm{sp}}=80$~Hz marks driver M's range. The
+dotted grey curve is the same total at $20$~dB below the reference target
+--- normal continuous listening level rather than the brief reference peak
+the budget line is checked against.}
 \label{fig:distortion-sub}
 \end{figure}
 
@@ -1238,7 +1262,9 @@ right at the $80$~Hz split (motor HD dominant, $\xi_x=0.45$ there) before
 clearing budget by $\approx87$~Hz, under a sixth of an octave higher --- the
 HD margin and the burst-excursion margin (Fig.~\ref{fig:spl-attack})
 independently favor the same split frequency. The shaded band below
-$f_{\mathrm{sp}}$ marks driver S's range (Fig.~\ref{fig:spl-attack}).}
+$f_{\mathrm{sp}}$ marks driver S's range (Fig.~\ref{fig:spl-attack}). The
+dotted grey curve is the same total $20$~dB down, the normal-listening
+proxy discussed after \eqref{eq:HDscale}.}
 \label{fig:distortion-attack}
 \end{figure}
 
@@ -1643,7 +1669,18 @@ stay in sync:
   alignment across drivers, so only the \emph{non-correctable} (nonlinear)
   distortion of Sec.~\ref{sec:distortion} is scored --- never distortion an
   FIR filter could remove (Sec.~\ref{sec:distortion}, ``What LTI correction
-  can and cannot do'').
+  can and cannot do''). This deliberately trades the multi-seat coverage of
+  a cinema-style design --- many small woofers distributed around the room,
+  or diffuse-field/dipole surrounds, both of which treat the room as a
+  reverberant field and leave placement free precisely because no single
+  seat's phase coherence is the goal --- for tighter phase/image control at
+  the one seat that \emph{is} targeted. That trade is also why array size
+  is not a free scaling knob here the way it is for a cinema bass array
+  (item (d) below): the mono sub role can add units almost anywhere on the
+  shared manifold, since it carries no stereo image to preserve, but the
+  stereo attack role cannot --- each channel must stay a coherent point
+  source at the couch to keep the image intact, not merely add output
+  somewhere along the front wall.
 \item[(c)] \textbf{Room gain via the pressure-zone corner only.} Below
   $f_{\mathrm{pz}}=c/2L_{\max}$ the demand curve flattens per
   Sec.~\ref{sec:roomclose} and App.~\ref{app:room}; no other room-mode modeling is
@@ -1677,10 +1714,22 @@ stay in sync:
   bands are fixed per run by a hand-authored recipe; the tool ranks and pairs
   drivers for that one design point rather than optimizing over the general
   scenario space.
+\item[(g)] \textbf{$\Qtc^\ast$ is a per-role damping ceiling, not a fixed
+  target.} The tool never boxes a driver at exactly $\Qtc^\ast$: it computes
+  $\Qtc=\min(\Qtc^\ast,\,f_{\mathrm{corner}}\Qts/F_s)$ per driver and role
+  ($f_{\mathrm{corner}}=f_{\mathrm{pz}}$ for sub/full, $f_{\mathrm{sp}}$ for
+  attack; Sec.~\ref{sec:procedure} step 5), so a driver whose own corner rate
+  $F_s/\Qts$ would overshoot its role's corner at the ceiling gets a lower
+  $\Qtc$ (bigger box) instead of being rejected outright. A driver is marked
+  infeasible only when even this reduced $\Qtc$ cannot clear $\Qts$, i.e.\
+  when $\Qts$ alone already exceeds $\Qtc^\ast$ or $F_s$ alone already sits
+  at/above the corner --- no box, however large, helps either case. The rank
+  table reports each driver's own realized $\Qtc$ alongside the run's
+  ceiling.
 \end{enumerate}
 
 These are deliberate simplifications, not limitations of the underlying
-math: relaxing any of (a)--(f) only changes which constants feed
+math: relaxing any of (a)--(g) only changes which constants feed
 Secs.~\ref{sec:freq}--\ref{sec:roomclose}, not the criteria themselves.
 
 %======================================================================

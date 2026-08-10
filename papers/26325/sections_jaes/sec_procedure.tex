@@ -3,7 +3,7 @@
 
 Given room ($V_{\mathrm{room}}$, $L_{\max}$), band top $f_2$,
 peak-equivalent target $L_t$, distortion budgets $D^\ast$ (HD) and
-$D^\ast_{\mathrm{IM}}$ (Doppler), damping target $\Qtc^\ast$ (e.g.\ $0.55$),
+$D^\ast_{\mathrm{IM}}$ (Doppler), damping ceiling $\Qtc^\ast$ (e.g.\ $0.55$),
 burst factor $C$ (\cref{lem:shape}, take 2), burst headroom $\kappa$:
 
 \begin{enumerate}
@@ -20,11 +20,12 @@ burst factor $C$ (\cref{lem:shape}, take 2), burst headroom $\kappa$:
 	\item \textbf{Split (Doppler):} 
 		choose $f_{\mathrm{sp}}$ with $\pi 
 		f_{\mathrm{sp}}X_1^{\max}/c\le D^\ast_{\mathrm{IM}}$ \eqref{eq:doppler}.
-	\item \textbf{Corner/settling/box:} 
-		$\Qts\le\Qtc^\ast$;
-		$F_s/\Qts\simeq f_{\mathrm{pz}}/\Qtc^\ast$ (sub) resp.\ $F_c\lesssim
-		f_{\mathrm{sp}}$ (attack); 
-		$\Vb=\Vas/((\Qtc^\ast/\Qts)^2-1)$; 
+	\item \textbf{Corner/settling/box:}
+		with $f_{\mathrm{corner}}=f_{\mathrm{pz}}$ (sub) or $f_{\mathrm{sp}}$
+		(attack), take $\Qtc=\min\!\big(\Qtc^\ast,\,f_{\mathrm{corner}}\Qts/F_s\big)$
+		(ceiling, not fixed target: undershoot is free, overshoot is taxed);
+		reject only if $\Qts\ge\Qtc$;
+		$\Vb=\Vas/((\Qtc/\Qts)^2-1)$;
 		box distortion \eqref{eq:boxHD} within budget.
 	\item \textbf{Regime map:} 
 		verify $f_x$ \eqref{eq:fx} and $p_{\max}(\omega)$

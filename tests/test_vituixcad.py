@@ -48,7 +48,7 @@ def selections(driver_s, driver_m, scenario) -> list[RoleSelection]:
                       doppler_ref=scenario.f_split)
     ev_attack = evaluate(driver_m, scenario, n_units=1,
                          band_low=scenario.f_split, band_high=scenario.f_high,
-                         doppler_ref=scenario.f_high)
+                         doppler_ref=scenario.f_high, role="attack")
     return [
         RoleSelection("sub", ev_sub, scenario.f_low, scenario.f_split),
         RoleSelection("attack", ev_attack, scenario.f_split, scenario.f_high),

@@ -112,7 +112,8 @@ def cmd_rank(args: argparse.Namespace) -> int:
           f"{n_units} unit(s), target {sc.target_spl_for(args.role):g} dB "
           f"@ {sc.r_listen:g} m (per-driver level)")
     print(f"Room {sc.v_room:g} m^3 (f_pz={sc.f_pz:.1f} Hz), "
-          f"D*={sc.distortion_budget:.1%}, Qtc={sc.qtc:g}\n")
+          f"D*={sc.distortion_budget:.1%}, Qtc<={sc.qtc:g} (ceiling; see "
+          f"Qtc column, some drivers use less)\n")
 
     _print_rank_table(evals[:args.top])
     return 0
@@ -120,8 +121,8 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
 def _print_rank_table(evals: list[Evaluation]) -> None:
     header = (f"{'#':>3} {'driver':<38} {'in':>4} {'Vd[L]':>6} {'Vb[L]':>6} "
-              f"{'Fc':>5} {'xi_x':>5} {'D%':>6} {'Dop%':>5} {'box%':>5} "
-              f"{'xi_P':>5} {'N*':>3} flags")
+              f"{'Fc':>5} {'Qtc':>5} {'xi_x':>5} {'D%':>6} {'Dop%':>5} "
+              f"{'box%':>5} {'xi_P':>5} {'N*':>3} flags")
     print(header)
     print("-" * len(header))
     for i, ev in enumerate(evals, 1):
@@ -132,7 +133,8 @@ def _format_row(i: int, ev: Evaluation) -> str:
     d = ev.driver
     flags = "" if ev.feasible else "; ".join(ev.reasons)
     return (f"{i:>3} {d.label():<38.38} {d.size_in:>4.0f} {d.vd*1e3:>6.2f} "
-            f"{ev.boxed.vb*1e3:>6.0f} {ev.boxed.fc:>5.1f} {ev.xi_x:>5.2f} "
+            f"{ev.boxed.vb*1e3:>6.0f} {ev.boxed.fc:>5.1f} "
+            f"{ev.boxed.qtc:>5.2f} {ev.xi_x:>5.2f} "
             f"{100*ev.hd:>6.2f} {100*ev.doppler_im:>5.2f} "
             f"{100*ev.box_hd2:>5.2f} {ev.xi_p:>5.2f} "
             f"{ev.n_units_required:>3} {flags}")
@@ -154,7 +156,7 @@ def cmd_pair(args: argparse.Namespace) -> int:
     print(f"Target sub={sc.sub_target_spl:g} dB / attack={sc.attack_target_spl:g} dB "
           f"@ {sc.r_listen:g} m (per-driver levels), room {sc.v_room:g} m^3 "
           f"(f_pz={sc.f_pz:.1f} Hz), D*={sc.distortion_budget:.1%}, "
-          f"Qtc={sc.qtc:g}, split {sc.f_split:g} Hz\n")
+          f"Qtc<={sc.qtc:g} (ceiling), split {sc.f_split:g} Hz\n")
 
     for i, pe in enumerate(pairs[:args.top], 1):
         print(f"--- pair #{i} "

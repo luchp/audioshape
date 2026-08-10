@@ -107,7 +107,8 @@ DRIVER_M = Driver(
 # The two are NOT interchangeable and every use below is explicit about
 # which one it needs.
 _BASE = Scenario(v_room=60.0, l_max=6.0, r_listen=1.0,
-                 target_spl=110.0, distortion_budget=0.03,
+                 sub_target_spl=110.0, attack_target_spl=110.0,
+                 distortion_budget=0.03,
                  qtc=0.55, f_low=15.0, f_split=80.0, f_high=250.0)
 SC_SUB = replace(_BASE, qtc=0.61, r_listen=3.0)  # S's sub-role alignment:
                                      # Qtc capped at the Mp<=1% ringing
@@ -145,7 +146,7 @@ def _ev_s():
 def _ev_m():
     return evaluate(DRIVER_M, SC_ATTACK, n_units=1,
                     band_low=SC_ATTACK.f_split, band_high=SC_ATTACK.f_high,
-                    doppler_ref=SC_ATTACK.f_high)
+                    doppler_ref=SC_ATTACK.f_high, role="attack")
 
 
 # ----------------------------------------------------------------------
@@ -320,7 +321,7 @@ def table_room_sizing() -> None:
 def table_port_velocity() -> None:
     sc = SC_ROOM
     fb = 23.0
-    p_t = sc.target_pressure
+    p_t = sc.target_pressure()
     area = vented.required_port_area(p_t, sc.r_listen, fb)
     diam = vented.port_diameter(area)
     typical_diam = 0.10
@@ -337,7 +338,7 @@ def table_port_velocity() -> None:
         r"\toprule",
         r"quantity & value\\",
         r"\midrule",
-        (rf"target & {sc.target_spl:g} dB, $r$={sc.r_listen:g} m, "
+        (rf"target & {sc.sub_target_spl:g} dB, $r$={sc.r_listen:g} m, "
          rf"$F_b$={fb:g} Hz\\"),
         (r"turbulence onset $v_{\max}$ (Dickason) & "
          rf"{vented.TURBULENCE_VELOCITY_MAX:g} m/s\\"),

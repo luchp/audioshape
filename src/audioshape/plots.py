@@ -160,7 +160,7 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(f"SPL at {sc.r_listen:g} m [dB]")
     ax.set_title(f"{d.label()}  |  {ev.boxed.n_units}x in {boxed.vb*1e3:.0f} L "
-                 f"(Qtc={sc.qtc:g}, Fc={boxed.fc:.1f} Hz)")
+                 f"(Qtc={boxed.qtc:g}, Fc={boxed.fc:.1f} Hz)")
     ax.grid(True, which="both", alpha=0.3)
 
     if not show_power_axis:
@@ -192,7 +192,11 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None,
 
     Curves: motor/suspension HD (eq:HDscale), Doppler IM onto the top of the
     band (eq:doppler), box air-spring HD2 (eq:boxHD), and their sum, against
-    the distortion budget D*.
+    the distortion budget D*. Also shows the total distortion 20 dB below
+    target (a factor-of-10 lower drive level, i.e. -20 dB SPL) as a proxy
+    for normal/continuous listening level: D* is a selection ceiling for the
+    momentary reference-level target, not a level the driver is expected to
+    sit at continuously, and the -20 dB curve is normally far below it.
 
     f_min overrides the default `f_low*0.7` plot-axis floor; crossover and
     crossover_shade mark/shade the sub/attack driver handoff f_split -- see
@@ -210,15 +214,28 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None,
     x1 = np.minimum(xi, 1.0) * d.xmax
     doppler = np.array([physics.doppler_im(sc.f_split, x) for x in x1])
     box = np.array([physics.box_hd2(min(v, boxed.n_units * d.vd) / boxed.n_units,
-                                    boxed.vb, d.qts, sc.qtc) for v in v_dem])
+                                    boxed.vb, d.qts, boxed.qtc) for v in v_dem])
+
+    # -20 dB SPL re target: a factor-of-10 lower demand volume, proxying
+    # normal/continuous listening level rather than the momentary
+    # reference-level target the budget D* is drawn against.
+    v_dem_20 = v_dem * 10.0 ** (-20.0 / 20.0)
+    xi_20 = v_dem_20 / boxed.vd_total
+    hd_20 = np.array([physics.harmonic_distortion(x) for x in xi_20])
+    x1_20 = np.minimum(xi_20, 1.0) * d.xmax
+    doppler_20 = np.array([physics.doppler_im(sc.f_split, x) for x in x1_20])
+    box_20 = np.array([physics.box_hd2(min(v, boxed.n_units * d.vd) / boxed.n_units,
+                                       boxed.vb, d.qts, boxed.qtc) for v in v_dem_20])
 
     ax.plot(f, 100 * hd, label="motor/suspension HD", lw=2)
     ax.plot(f, 100 * doppler,
             label=f"Doppler IM onto {sc.f_split:g} Hz", lw=2, ls="--")
     ax.plot(f, 100 * box, label="box air-spring HD2", lw=2, ls="-.")
     ax.plot(f, 100 * (hd + doppler + box), label="total", lw=2.5, color="k")
+    ax.plot(f, 100 * (hd_20 + doppler_20 + box_20),
+            label="total, -20 dB (normal listening)", lw=1.5, color="0.5", ls=":")
     ax.axhline(100 * sc.distortion_budget, color="r", lw=1,
-               label=f"budget $D^*$ = {100*sc.distortion_budget:g} %")
+               label=f"budget $D^*$ = {100*sc.distortion_budget:g} % (selection ceiling, rarely reached)")
     # Switch to log y before placing marker labels: annotate() below anchors
     # to ax.get_ylim()[0], which must reflect the final (log-scale) view, not
     # the linear-mode autoscale value, or the label silently lands off-plot.

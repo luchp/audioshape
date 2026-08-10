@@ -76,13 +76,19 @@ The tool assumes the physical layout from the paper's Part II: a mono bass
 `[f_split, f_high]`. These are evaluated as two *independent* roles, not a
 single driver spanning the whole range:
 
-- `evaluate(driver, scenario, band_low=..., band_high=..., doppler_ref=...)`
-  restricts the demand curve, corner-rate gate, inductance gate and Doppler
-  reference tone to a role's own band. Defaults (`band_low=f_low,
+- `evaluate(driver, scenario, band_low=..., band_high=..., doppler_ref=...,
+  role=...)` restricts the demand curve, inductance gate and Doppler
+  reference tone to a role's own band, and aligns the box to that role's own
+  corner target (`Scenario.target_corner_hz(role)`: `f_pz` for sub/full,
+  `f_split` for attack) rather than a single fixed Qtc -- see "Qtc is a
+  ceiling, not a fixed target" below. Defaults (`band_low=f_low,
   band_high=f_high, doppler_ref=f_split`) reproduce the original
   whole-range single-driver evaluation.
 - `cli._ROLE_BANDS` maps `--role {sub,attack,full}` to
-  `(band_low, band_high, doppler_ref)` Scenario attribute names.
+  `(band_low, band_high, doppler_ref)` Scenario attribute names. `role` is
+  also what `target_corner_hz`/the attack-only budget gates key off, so a
+  caller scoring a driver in the attack band must pass `role="attack"`
+  explicitly (it is not inferred from `band_low`).
 - `pair_rank(drivers, scenario, sub_units, attack_units, top_k_each)` ranks
   the sub band and attack band **separately** (own excursion/Doppler
   reference, own feasibility gates), takes each side's top-K, and returns
@@ -92,23 +98,66 @@ single driver spanning the whole range:
   reference is intrinsic to its own band (see
   `papers/26325/sealed_driver_criteria.tex` "Scope of the tool" note).
 
+### Qtc is a ceiling, not a fixed target
+
+`Scenario.qtc` is a **ceiling**: `ranking.evaluate()` never boxes a driver
+above it, but a driver whose corner rate `Fs/Qts` would overshoot its own
+role's corner target at that ceiling gets a *lower* Qtc (bigger box)
+instead of being rejected outright --
+`physics.qtc_for_target_corner(driver.corner_rate, f_target, sc.qtc) =
+min(sc.qtc, f_target / driver.corner_rate)`, where `f_target =
+sc.target_corner_hz(role)`. This mirrors the paper's own undershoot/
+overshoot asymmetry after `eq:Fsrule` (undershoot is a free EQ cut,
+overshoot is a taxed boost that costs excursion) applied to *both* roles'
+corners, not just the sub's `f_pz`. A driver is infeasible only when even
+this reduced Qtc can't clear its own Qts (`driver.qts >= qtc`) -- which
+algebraically also covers the case where `Fs` alone already exceeds the
+target corner (no box, however large, could place `Fc` there). `boxed.qtc`
+(not `sc.qtc`) is therefore the value to read/print/plot for any specific
+driver -- `cli.py`'s rank table has a `Qtc` column for this, and its summary
+line prints `sc.qtc` labeled as a ceiling, not as every row's actual value.
+
+### `distortion_budget` (D*) is a selection ceiling, not an operating point
+
+`Scenario.distortion_budget` (`D*`) is the distortion allowed **at the
+scenario's target SPL** -- itself a peak/reference-level condition, not a
+level a system is expected to sit at continuously (105 dB per channel
+stereo-summed coherently is already ~111 dB at the seat, which is only a
+momentary/occasional exposure level, not a sustained-listening one). So a
+driver selected to just clear `D*` at target should, in ordinary use, run
+at distortion levels far below `D*` -- `D*` bounds the worst case, not the
+typical case. `plots.distortion_figure` shows this directly: alongside the
+total-distortion curve at target and the `D*` line, it also plots the same
+total 20 dB down (a 10x lower demand volume) as a normal/continuous
+listening proxy, which is normally far under budget. This is why the
+attack role's `D*`-based infeasibility gate (see `ranking.py`) can
+reasonably use a generous budget: it only has to survive the rare peak,
+not typical playback.
+
 ## Scope assumptions (locked in; see `docs/plans/pair_ranking.md`)
 
 1. Half-space (2 pi, soffit-wall) radiation for every driver/role.
 2. Single fixed listening position ("the couch"); DSP linear-phase/EQ
    alignment is assumed, so only *non-correctable* (nonlinear) distortion
-   is scored — never distortion that a FIR filter could fix.
+   is scored — never distortion that a FIR filter could fix. This trades
+   away cinema-style multi-seat coverage (distributed arrays, diffuse-field/
+   dipole surrounds — which treat the room as a reverberant field and
+   don't need phase coherence at any one seat) for tighter phase/image
+   control at the one seat targeted; it's also why array size is a free
+   knob for the mono sub (no image to preserve) but not for the stereo
+   attack role.
 3. Room gain modeled only via the adiabatic pressure-zone corner `f_pz`.
-4. The system is stereo, but `Scenario.target_spl` is defined as the level
-   required from **one mono source/channel**, with no automatic stereo
-   summing credit applied:
-   - The sub is a single shared mono manifold -> must hit `target_spl`
+4. The system is stereo, but `Scenario.sub_target_spl`/`attack_target_spl`
+   are each defined as the level required from **one mono source/channel**
+   of that role, with no automatic stereo summing credit applied:
+   - The sub is a single shared mono manifold -> must hit `sub_target_spl`
      directly (no summing ambiguity at all).
    - The attack/tower is genuinely stereo (L/R can carry independent
-     content) -> each channel must hit `target_spl` **on its own**.
+     content) -> each channel must hit `attack_target_spl` **on its own**.
    - A design using two separate mono subs instead would gain +3 to +6 dB
      from correlated/decorrelated summing, but that architecture is out of
-     scope here (see `scenario.py`'s `target_spl` docstring).
+     scope here (see `scenario.py`'s `sub_target_spl`/`attack_target_spl`
+     docstrings, and `target_spl_for(role)` which selects between them).
 5. Configuration is via a hand-authored recipe TOML file
    (`recipe.load_recipe`), not many CLI flags.
 
@@ -129,10 +178,12 @@ single driver spanning the whole range:
   expressed at the listening position through this demand curve.
 - **Ranking = predicted non-correctable distortion at the target** (motor HD
   from excursion utilization, Doppler IM, box air-spring HD2), per the
-  paper's equivalence proposition.  Feasibility criteria (Qts < Qtc,
-  corner-rate rule Fs/Qts <= f_pz/Qtc, inductance corner f_L above the band,
-  excursion/thermal clip) are reported as flags; flagged drivers sort after
-  clean ones but are shown by default.
+  paper's equivalence proposition.  Feasibility criteria (Qts below the
+  *usable* Qtc -- the ceiling `Scenario.qtc`, reduced per-driver so `Fc`
+  never overshoots the role's own corner target, see "Qtc is a ceiling"
+  above --, inductance corner f_L above the band, excursion/thermal clip)
+  are reported as flags; flagged drivers sort after clean ones but are
+  shown by default.
 - **Distortion law anchoring**: `D(xi) = 0.05 xi + 0.05 xi^2` so that
   D(1) = 10 % at the IEC 62458 Xmax.  Ranking-grade, not absolute THD.
 - **Parser tolerance**: the community database is patchy; rows missing

@@ -249,6 +249,18 @@ def max_corner_rate(f_pz: float, qtc_target: float) -> float:
     return f_pz / qtc_target
 
 
+def qtc_for_target_corner(corner_rate: float, f_target: float,
+                          qtc_ceiling: float) -> float:
+    """Qtc to actually use: the smaller of a configured ceiling and the Qtc
+    that would land Fc exactly at f_target (box invariance Fc/Qtc =
+    corner_rate, eq:Fsrule). Undershooting a target corner is free (EQ cut);
+    overshooting it is taxed (EQ boost, costs excursion) -- Sec. "Sizing
+    rule and Fs criterion" -- so a driver whose corner rate would overshoot
+    f_target at the ceiling is better served by a lower Qtc (bigger box)
+    than by rejecting it or forcing the fixed ceiling regardless."""
+    return min(qtc_ceiling, f_target / corner_rate)
+
+
 # ----------------------------------------------------------------------
 # Motor materials bound (Sec. "EBP as coil-mass fraction", eq:thmbound)
 # ----------------------------------------------------------------------
