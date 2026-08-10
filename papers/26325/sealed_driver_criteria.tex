@@ -114,10 +114,14 @@ Sec.~\ref{sec:distortion}) -- not a general-purpose loudspeaker for arbitrary
 placement, multiple seats, or a live-sound audience. All drivers considered
 radiate into half space from a common baffle plane (a soffit wall,
 Sec.~\ref{sec:assumptions}). Stereo reproduction is the default listening
-scenario, but because the two channels are not a coherent point source at a
-single ear, every quantity below sizes a \emph{single} channel/driver's own
-output and distortion at the couch, never a hypothetical mono sum
-(App.~\ref{sec:tool-scope}).
+scenario; every quantity below sizes a \emph{single physical driver's} own
+output and distortion at the couch, but $N$ identical drivers on one
+correlated, common signal -- a mono sub manifold, or a stereo pair fed
+mono-panned content -- add coherently per A9, so a stereo pair need only
+reach $\mathrm{SPL}_{\mathrm{target}}-20\log_{10}2\approx-6$\,dB each
+(App.~\ref{sec:tool-scope}(e)); this coherent sum is never assumed
+\emph{between} the sub and attack roles, which remain acoustically
+uncoupled (App.~\ref{sec:tool-scope}(d)).
 
 Two physical facts, both invisible to a free-field-only treatment, decide the
 rest of the argument.
@@ -1652,14 +1656,22 @@ stay in sync:
   two roles are physically separate enclosures (e.g.\ a shared mono manifold
   for the sub vs.\ a stereo tower for the attack driver) sharing only the
   baffle plane, no acoustic coupling term between them is modeled.
-\item[(e)] \textbf{Mono target level, no automatic stereo summing credit.}
-  $\mathrm{SPL}_{\mathrm{target}}$ is defined as the level required from one
-  source/channel alone. A single shared mono sub manifold must reach it
-  directly; each channel of a genuinely stereo attack/tower must also reach it
-  \emph{on its own}, with no $+3$ to $+6$ dB summing credit assumed for
-  correlated/decorrelated stereo bass (that credit would only apply to an
-  architecture using two independent mono subs, which is not what is modeled
-  here).
+\item[(e)] \textbf{Per-driver target level; coherent A9 sum applies within
+  each role, never across roles.} $\mathrm{SPL}_{\mathrm{target}}$ is defined
+  as the level required from one physical driver/channel alone, at the
+  target's shared common signal. Within one role, its $N=$ (units per
+  channel) $\times$ (channels) identical, correlated drivers -- a mono sub
+  manifold ($N=$ units, one channel) or a stereo attack tower fed
+  correlated/mono-panned content ($N=$ units-per-channel $\times$ 2 channels)
+  -- add coherently per A9 ($\Vd\to N\Vd$, $+20\log_{10}N$ dB), so each
+  driver need only reach $\mathrm{SPL}_{\mathrm{target}}-20\log_{10}N$ dB on
+  its own; e.g.\ a stereo tower ($N=2$) needs only $104$\,dB per channel to
+  reach a $110$\,dB target. Electrical/thermal budget never receives this
+  credit: each physical driver dissipates only its own channel's power, so
+  A9's $N^2$ power-sharing is confined to units on the \emph{same} electrical
+  channel (the manifold), not applied across independently-driven stereo
+  channels. No coupling or summing term is modeled \emph{between} the sub and
+  attack roles (see (d)).
 \item[(f)] \textbf{Configuration is a recipe file, not a parameter sweep.}
   Room size, listening distance, target SPL, distortion budget and role
   bands are fixed per run by a hand-authored recipe; the tool ranks and pairs

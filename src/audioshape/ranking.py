@@ -18,7 +18,8 @@ from audioshape.scenario import Scenario
 
 @dataclass(frozen=True)
 class Evaluation:
-    """All criteria for one driver (n_units identical units) in one scenario."""
+    """All criteria for one driver (n_units identical units, n_channels
+    coherent-signal channels) in one scenario."""
 
     boxed: BoxedDriver
     scenario: Scenario
@@ -45,6 +46,7 @@ class Evaluation:
     f_x_burst: float                # transient boundary (eq:fxburst)
 
     n_units_required: int           # units to meet the distortion budget
+    n_channels: int = 1             # coherent-signal channels (see evaluate())
 
     @property
     def driver(self) -> Driver:
@@ -57,10 +59,11 @@ class Evaluation:
 
 def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
             band_low: float | None = None, band_high: float | None = None,
-            doppler_ref: float | None = None) -> Evaluation:
-    """Evaluate one driver (n identical units) against the scenario, over the
-    band [band_low, band_high] (default: [f_low, f_high], the whole range --
-    i.e. this driver alone covers everything).
+            doppler_ref: float | None = None, n_channels: int = 1) -> Evaluation:
+    """Evaluate one driver (n identical units, on n_channels coherent-signal
+    channels) against the scenario, over the band [band_low, band_high]
+    (default: [f_low, f_high], the whole range -- i.e. this driver alone
+    covers everything).
 
     Pass a role-restricted band to score a driver for only part of the range,
     e.g. band=(f_low, f_split) for a sub or (f_split, f_high) for an attack
@@ -70,6 +73,18 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     its own excursion modulating `doppler_ref` (default: band_high, the top
     of its own passband) -- no other driver's excursion is involved, since a
     physically separate sub and tower do not couple acoustically.
+
+    `n_units` is the number of identical drivers sharing one electrical
+    channel (a manifold): they add coherently both acoustically (Vd -> N*Vd)
+    and electrically (A9's N^2 power-sharing, since they share one signal
+    and one amplifier channel). `n_channels` is the number of separate,
+    independently-driven channels (e.g. stereo L/R) carrying a common-signal
+    (e.g. mono-panned) program: for genuinely correlated content these also
+    sum acoustically at the listening position, but each channel's own
+    driver(s) still only ever dissipate their own channel's power -- no
+    electrical/thermal credit crosses channels. So `n_units` scales both the
+    acoustic and thermal budget (A9 array), while `n_channels` scales only
+    the acoustic budget.
     """
     sc = scenario
     band_low = sc.f_low if band_low is None else band_low
@@ -79,9 +94,11 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
 
     if driver.qts >= sc.qtc:
         return _infeasible(driver, sc, n_units, band_low,
-                           f"Qts={driver.qts:.2f} >= target Qtc={sc.qtc:.2f}")
+                           f"Qts={driver.qts:.2f} >= target Qtc={sc.qtc:.2f}",
+                           n_channels=n_channels)
 
     boxed = BoxedDriver(driver, qtc=sc.qtc, n_units=n_units)
+    n_acoustic = n_units * n_channels  # coherent-sum units across channels
 
     # --- corner-rate gate (eq:Fsrule): only binds the driver that must ----
     # reach into the room's pressure zone; an attack driver starting above
@@ -97,14 +114,17 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
             f"f_L={driver.f_le:.0f} Hz inside band (< {band_high:.0f} Hz)")
 
     # --- excursion and distortion at the target, within this band ------
+    # (acoustic totals: coherent sum across both units-per-channel and
+    # channels -- see docstring above)
     v_dem = sc.demand_volume(band_low)
-    xi_x = physics.excursion_utilization(v_dem, boxed.vd_total)
+    vd_acoustic_total = n_channels * boxed.vd_total
+    xi_x = physics.excursion_utilization(v_dem, vd_acoustic_total)
     hd = physics.harmonic_distortion(xi_x)
 
     x1 = min(xi_x, 1.0) * driver.xmax  # own excursion, capped
     doppler = physics.doppler_im(doppler_ref, x1)
 
-    box_hd = physics.box_hd2(min(v_dem / n_units, driver.vd),
+    box_hd = physics.box_hd2(min(v_dem / n_acoustic, driver.vd),
                              boxed.vb, driver.qts, sc.qtc)
     total = hd + doppler + box_hd
 
@@ -113,9 +133,12 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
                        f"{sc.target_spl:.0f} dB, {band_low:.0f} Hz")
 
     # --- power at the target (EQ tax, worst at the bottom of the band) --
+    # thermal budget is per-channel only (n_units, A9 array) -- no credit
+    # for other channels, since heat never crosses channels.
     p_t = sc.target_pressure
     w_ac = physics.acoustic_power_halfspace(p_t, sc.r_listen)
-    p_passband = w_ac / (driver.eta0 * n_units * n_units)
+    p_passband = w_ac / (driver.eta0 * n_channels * n_channels
+                         * n_units * n_units)
     p_req = physics.eq_tax_power(max(band_low, sc.f_pz), p_passband,
                                  boxed.wc, driver.sigma_m)
     xi_p = p_req / driver.p_max
@@ -123,8 +146,8 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
         reasons.append(f"thermal clip: xi_P={xi_p:.2f} > 1")
 
     # --- ceilings at the listening position, referenced to band_low -----
-    spl_sine = _room_spl_ceiling(boxed.vd_total, sc, band_low, shape_factor=1.0)
-    spl_burst = _room_spl_ceiling(boxed.vd_total, sc, band_low,
+    spl_sine = _room_spl_ceiling(vd_acoustic_total, sc, band_low, shape_factor=1.0)
+    spl_burst = _room_spl_ceiling(vd_acoustic_total, sc, band_low,
                                   shape_factor=sc.burst_shape)
 
     f_x = physics.regime_boundary_fx(driver.fs, driver.p_max, driver.qes,
@@ -141,16 +164,18 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
         spl_sine_floor=spl_sine, spl_burst_floor=spl_burst,
         f_x=f_x, f_x_burst=f_x_burst,
         n_units_required=sc.units_required(driver.vd, band_low),
+        n_channels=n_channels,
     )
 
 
 def rank(drivers: list[Driver], scenario: Scenario, n_units: int = 1,
          min_size_in: float = 0.0, max_size_in: float = float("inf"),
          band_low: float | None = None, band_high: float | None = None,
-         doppler_ref: float | None = None) -> list[Evaluation]:
+         doppler_ref: float | None = None, n_channels: int = 1) -> list[Evaluation]:
     """Evaluate a size category and sort: feasible first, lowest total
     non-correctable distortion first."""
-    evals = [evaluate(d, scenario, n_units, band_low, band_high, doppler_ref)
+    evals = [evaluate(d, scenario, n_units, band_low, band_high, doppler_ref,
+                      n_channels=n_channels)
              for d in drivers if min_size_in <= d.size_in <= max_size_in]
     return sorted(evals, key=Evaluation.sort_key)
 
@@ -186,19 +211,25 @@ def pair_rank(drivers: list[Driver], scenario: Scenario,
              sub_units: int = 1, attack_units: int = 1,
              sub_size_min: float = 0.0, sub_size_max: float = float("inf"),
              attack_size_min: float = 0.0, attack_size_max: float = float("inf"),
-             top_k_each: int = 15) -> list[PairEvaluation]:
+             top_k_each: int = 15, sub_channels: int = 1,
+             attack_channels: int = 2) -> list[PairEvaluation]:
     """Rank sub and attack candidates independently within their own bands
     and size windows, then combine the top-K of each into pairs sorted by
-    combined distortion (feasible pairs first)."""
+    combined distortion (feasible pairs first).
+
+    `sub_channels` (default 1, mono manifold) and `attack_channels` (default
+    2, stereo L/R) scale the *acoustic* coherent-sum only -- see
+    `evaluate()`'s docstring for why thermal/power budget never gets that
+    credit."""
     sc = scenario
     sub_evals = rank(drivers, sc, n_units=sub_units,
                      min_size_in=sub_size_min, max_size_in=sub_size_max,
                      band_low=sc.f_low, band_high=sc.f_split,
-                     doppler_ref=sc.f_split)[:top_k_each]
+                     doppler_ref=sc.f_split, n_channels=sub_channels)[:top_k_each]
     attack_evals = rank(drivers, sc, n_units=attack_units,
                         min_size_in=attack_size_min, max_size_in=attack_size_max,
                         band_low=sc.f_split, band_high=sc.f_high,
-                        doppler_ref=sc.f_high)[:top_k_each]
+                        doppler_ref=sc.f_high, n_channels=attack_channels)[:top_k_each]
     pairs = [PairEvaluation(s, a) for s in sub_evals for a in attack_evals]
     return sorted(pairs, key=PairEvaluation.sort_key)
 
@@ -213,7 +244,7 @@ def _room_spl_ceiling(vd_total: float, sc: Scenario, band_low: float,
 
 
 def _infeasible(driver: Driver, sc: Scenario, n_units: int, band_low: float,
-                reason: str) -> Evaluation:
+                reason: str, n_channels: int = 1) -> Evaluation:
     """Driver cannot form the requested box at all."""
     inf = float("inf")
     boxed = BoxedDriver(driver, qtc=max(sc.qtc, driver.qts * 1.01) + 1e-9,
@@ -225,4 +256,5 @@ def _infeasible(driver: Driver, sc: Scenario, n_units: int, band_low: float,
         spl_sine_floor=-inf, spl_burst_floor=-inf,
         f_x=math.nan, f_x_burst=math.nan,
         n_units_required=sc.units_required(driver.vd, band_low),
+        n_channels=n_channels,
     )
