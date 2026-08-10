@@ -25,7 +25,7 @@ def driver_s() -> Driver:
 @pytest.fixture
 def scenario() -> Scenario:
     return Scenario(v_room=60.0, l_max=6.0, r_listen=1.0,
-                    target_spl=110.0, distortion_budget=0.03,
+                    sub_target_spl=110.0, attack_target_spl=110.0, distortion_budget=0.03,
                     qtc=0.55, f_low=15.0, f_split=80.0)
 
 
@@ -86,7 +86,7 @@ def test_pressure_zone(scenario):
 
 def test_eq_tax_passband_power(scenario, driver_s):
     # 110 dB @ 1 m half-space needs ~0.61 W acoustic -> ~143 W at eta0
-    w_ac = physics.acoustic_power_halfspace(scenario.target_pressure, 1.0)
+    w_ac = physics.acoustic_power_halfspace(scenario.target_pressure(), 1.0)
     assert w_ac == pytest.approx(0.61, abs=0.01)
     assert w_ac / driver_s.eta0 == pytest.approx(142.0, rel=0.02)
 
@@ -117,7 +117,7 @@ def test_power_and_voltage_at_target_worked_example(driver_s):
     boxed = BoxedDriver(driver_s, qtc=0.61, n_units=2)
     sigma_total = boxed.wc / 0.61  # total (mech+elec) box-invariant damping
     scenario = Scenario(v_room=60.0, l_max=6.0, r_listen=3.0,
-                        target_spl=110.0, distortion_budget=0.03,
+                        sub_target_spl=110.0, attack_target_spl=110.0, distortion_budget=0.03,
                         qtc=0.61, f_low=15.0, f_split=80.0, f_high=250.0)
 
     def per_unit(f):

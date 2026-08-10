@@ -149,7 +149,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     # --- excursion and distortion at the target, within this band ------
     # (acoustic totals: coherent sum across both units-per-channel and
     # channels -- see docstring above)
-    v_dem = sc.demand_volume(band_low)
+    v_dem = sc.demand_volume(band_low, role)
     vd_acoustic_total = n_channels * boxed.vd_total
     xi_x = physics.excursion_utilization(v_dem, vd_acoustic_total)
     hd = physics.harmonic_distortion(xi_x)
@@ -163,7 +163,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
 
     if xi_x > 1.0:
         reasons.append(f"excursion clip: xi_x={xi_x:.2f} > 1 at "
-                       f"{sc.target_spl:.0f} dB, {band_low:.0f} Hz")
+                       f"{sc.target_spl_for(role):.0f} dB, {band_low:.0f} Hz")
 
     # --- attack-role budget gates (sec_procedure.tex step 4/2): the paper
     # ranks attack drivers by maximizing eta0*Pmax "subject to" their own
@@ -185,7 +185,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
     # drivers share one amplifier signal, but n_channels never does --
     # each channel's own driver(s) dissipate only their own channel's power,
     # heat never crosses channels (this session's explicit design decision).
-    p_t = sc.target_pressure
+    p_t = sc.target_pressure(role)
     w_ac = physics.acoustic_power_halfspace(p_t, sc.r_listen)
     p_passband = w_ac / (driver.eta0 * n_units * n_units)
     p_req = physics.eq_tax_power(max(band_low, sc.f_pz), p_passband,
@@ -195,8 +195,9 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
         reasons.append(f"thermal clip: xi_P={xi_p:.2f} > 1")
 
     # --- ceilings at the listening position, referenced to band_low -----
-    spl_sine = _room_spl_ceiling(vd_acoustic_total, sc, band_low, shape_factor=1.0)
-    spl_burst = _room_spl_ceiling(vd_acoustic_total, sc, band_low,
+    spl_sine = _room_spl_ceiling(vd_acoustic_total, sc, band_low, role,
+                                 shape_factor=1.0)
+    spl_burst = _room_spl_ceiling(vd_acoustic_total, sc, band_low, role,
                                   shape_factor=sc.burst_shape)
 
     f_x = physics.regime_boundary_fx(driver.fs, driver.p_max, driver.qes,
@@ -212,7 +213,7 @@ def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
         thermal_compression_db=physics.thermal_compression_db(min(xi_p, 1.0)),
         spl_sine_floor=spl_sine, spl_burst_floor=spl_burst,
         f_x=f_x, f_x_burst=f_x_burst,
-        n_units_required=sc.units_required(driver.vd, band_low),
+        n_units_required=sc.units_required(driver.vd, band_low, role),
         n_channels=n_channels,
         role=role,
     )
@@ -289,10 +290,10 @@ def pair_rank(drivers: list[Driver], scenario: Scenario,
 
 
 def _room_spl_ceiling(vd_total: float, sc: Scenario, band_low: float,
-                      shape_factor: float) -> float:
+                      role: str, shape_factor: float) -> float:
     """Ceiling SPL at the listening position at band_low, including the room
     pressure zone: the SPL at which V_dem(band_low) equals Vd/C."""
-    v_dem_unit = sc.demand_volume(band_low) / sc.target_pressure  # per Pa
+    v_dem_unit = sc.demand_volume(band_low, role) / sc.target_pressure(role)  # per Pa
     p_max_rms = (vd_total / shape_factor) / v_dem_unit
     return physics.spl_from_pressure(p_max_rms)
 
@@ -309,7 +310,7 @@ def _infeasible(driver: Driver, sc: Scenario, n_units: int, band_low: float,
         xi_p=inf, thermal_compression_db=-inf,
         spl_sine_floor=-inf, spl_burst_floor=-inf,
         f_x=math.nan, f_x_burst=math.nan,
-        n_units_required=sc.units_required(driver.vd, band_low),
+        n_units_required=sc.units_required(driver.vd, band_low, role),
         n_channels=n_channels,
         role=role,
     )

@@ -278,8 +278,8 @@ def project_xml(selections: Sequence[RoleSelection], description: str = "") -> s
         ET.SubElement(root, name).text = value
 
     sc = selections[0].evaluation.scenario
-    _add_target(root, "AxialTarget", sc.f_low, sc.f_high, sc.target_spl)
-    _add_target(root, "PowerTarget", sc.f_low, sc.f_high, sc.target_spl)
+    _add_target(root, "AxialTarget", sc.f_low, sc.f_high, sc.sub_target_spl)
+    _add_target(root, "PowerTarget", sc.f_low, sc.f_high, sc.sub_target_spl)
 
     for di, sel in enumerate(selections):
         d = sel.evaluation.driver
@@ -301,7 +301,8 @@ def project_xml(selections: Sequence[RoleSelection], description: str = "") -> s
         ev = sel.evaluation
         xi = _add_driver_part(xover, xi, cx=33, cy=cy, model=ev.driver.label(),
                               part_id=f"D{row + 1}", band_low=sel.band_low,
-                              band_high=sel.band_high, target_spl=sc.target_spl,
+                              band_high=sel.band_high,
+                              target_spl=sc.target_spl_for(ev.role),
                               drv_n=ev.boxed.n_units)
         xi = _add_ground(xover, xi, cx=32, cy=cy)
 

@@ -20,19 +20,20 @@ class Scenario:
     l_max: float = 6.0          # largest room dimension [m] -> f_pz
     r_listen: float = 3.0       # listening distance [m], to the single
                                  # fixed listening position (the couch)
-    target_spl: float = 110.0   # rms-equivalent SPL at the listening
-                                 # position [dB], required from *this one
-                                 # source* (the mono sub manifold, or one
-                                 # tower channel on its own for worst-case
-                                 # panned content) -- no stereo summing
-                                 # correction is applied anywhere in this
-                                 # tool.  If a design instead used two
-                                 # separate stereo subs, their sum at the
-                                 # couch would exceed a single sub's
-                                 # target_spl by roughly +3 dB (decorrelated)
-                                 # to +6 dB (correlated/mono bass) -- not
-                                 # modeled here, not this tool's default
-                                 # architecture.
+    sub_target_spl: float = 115.0  # rms-equivalent SPL at the listening
+                                     # position [dB] required from the sub
+                                     # role's own manifold, per driver (THX
+                                     # reference: LFE/sub channel -20 dBFS ->
+                                     # 95 dB, peak headroom to 0 dBFS -> 115
+                                     # dB SPL, measured per channel alone).
+    attack_target_spl: float = 105.0  # same, for the attack role (THX main
+                                        # channel: -20 dBFS -> 85 dB, peak ->
+                                        # 105 dB SPL, per channel alone).
+                                        # Both are *per-driver* targets: A9
+                                        # coherent summing across n_units and
+                                        # n_channels is applied separately in
+                                        # evaluate()/ranking.py, not baked in
+                                        # here -- see that module's docstring.
     distortion_budget: float = 0.03   # allowed HD (fraction), D*
     doppler_budget: float = 0.02      # allowed Doppler FM index, D*_IM
                                         # (eq:doppler); attack-role feasibility
@@ -62,32 +63,36 @@ class Scenario:
         """Admissible Fs/Qts (eq:Fsrule)."""
         return physics.max_corner_rate(self.f_pz, self.qtc)
 
-    def demand_volume(self, f: float) -> float:
+    def target_spl_for(self, role: str) -> float:
+        """Per-driver target SPL for `role` ('sub' or 'attack')."""
+        return self.sub_target_spl if role == "sub" else self.attack_target_spl
+
+    def demand_volume(self, f: float, role: str = "sub") -> float:
         """Peak displaced volume [m^3] needed for the target SPL at f."""
-        return physics.demand_volume(f, self.target_spl, self.r_listen,
+        return physics.demand_volume(f, self.target_spl_for(role), self.r_listen,
                                      self.v_room, self.l_max)
 
-    @property
-    def v_dem_max(self) -> float:
+    def v_dem_max(self, role: str = "sub") -> float:
         """Worst-case (flat, below f_pz) demand volume [m^3]."""
-        return self.demand_volume(min(self.f_low, self.f_pz))
+        return self.demand_volume(min(self.f_low, self.f_pz), role)
 
     @property
     def utilization_budget(self) -> float:
         """xi* such that D(xi*) = D* (inverts eq:HDscale)."""
         return physics.utilization_for_distortion(self.distortion_budget)
 
-    @property
-    def target_pressure(self) -> float:
-        return physics.pressure_from_spl(self.target_spl)
+    def target_pressure(self, role: str = "sub") -> float:
+        return physics.pressure_from_spl(self.target_spl_for(role))
 
-    def required_vd(self, band_low: float | None = None) -> float:
+    def required_vd(self, band_low: float | None = None,
+                    role: str = "sub") -> float:
         """Total Vd [m^3] to hold the target SPL at the distortion budget
         down to `band_low` (default: f_low; boxed sizing rule eq:Vdreq)."""
         f = self.f_low if band_low is None else band_low
-        return self.demand_volume(f) / self.utilization_budget
+        return self.demand_volume(f, role) / self.utilization_budget
 
     def units_required(self, vd_per_unit: float,
-                       band_low: float | None = None) -> int:
+                       band_low: float | None = None,
+                       role: str = "sub") -> int:
         """Driver count for the sizing rule, rounded up."""
-        return max(1, math.ceil(self.required_vd(band_low) / vd_per_unit))
+        return max(1, math.ceil(self.required_vd(band_low, role) / vd_per_unit))

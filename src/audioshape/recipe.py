@@ -43,7 +43,8 @@ def load_recipe(path: str | Path) -> Recipe:
         v_room = 60.0
         l_max = 6.0
         r_listen = 3.0
-        target_spl = 110.0
+        sub_target_spl = 115.0
+        attack_target_spl = 105.0
         distortion_budget = 0.03
         qtc = 0.55
         f_low = 15.0

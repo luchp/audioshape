@@ -41,9 +41,9 @@ def _room_gain_factor(f: float, ev: Evaluation) -> float:
     at the listening distance (>= 1 below f_pz, 1 above)."""
     sc = ev.scenario
     w = 2.0 * np.pi * f
-    v_radiation = (np.sqrt(2.0) * sc.target_pressure * 2.0 * np.pi
+    v_radiation = (np.sqrt(2.0) * sc.target_pressure(ev.role) * 2.0 * np.pi
                    * sc.r_listen / (physics.RHO0 * w * w))
-    return v_radiation / sc.demand_volume(f)
+    return v_radiation / sc.demand_volume(f, ev.role)
 
 
 def _shade_crossover(ax, f: np.ndarray, crossover: float | None,
@@ -123,7 +123,7 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
 
     # Excursion ceilings: SPL at which V_dem(f) = Vd_total / C.
     spl_sine = np.array([
-        sc.target_spl + 20.0 * np.log10(boxed.vd_total / sc.demand_volume(x))
+        sc.target_spl_for(ev.role) + 20.0 * np.log10(boxed.vd_total / sc.demand_volume(x, ev.role))
         for x in f])
     spl_burst = spl_sine - 20.0 * np.log10(sc.burst_shape)
 
@@ -140,13 +140,13 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
             lw=2, ls="--")
     ax.plot(f, spl_thermal, label="thermal ceiling (driver $P_{max}$, EQ tax)",
             lw=2, ls="-.")
-    ax.axhline(sc.target_spl, color="k", lw=1,
-               label=f"target {sc.target_spl:g} dB")
+    ax.axhline(sc.target_spl_for(ev.role), color="k", lw=1,
+               label=f"target {sc.target_spl_for(ev.role):g} dB")
     # Fix the y-limits before placing marker labels: annotate() below anchors
     # to ax.get_ylim()[0], which must reflect the *final* view (not a
     # provisional pre-set_ylim autoscale value) or the label can land outside
     # the eventually-visible range and silently disappear.
-    ax.set_ylim(sc.target_spl - 25, None)
+    ax.set_ylim(sc.target_spl_for(ev.role) - 25, None)
 
     for x, name in ((sc.f_pz, "$f_{pz}$"), (boxed.fc, "$F_c$"), (ev.f_x, "$f_x$")):
         if np.isfinite(x) and f[0] <= x <= f[-1]:
@@ -169,7 +169,7 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
 
     # Secondary axis: per-unit electrical power actually needed to sit at
     # the target line (real demand curve, room gain included), not at Xmax.
-    x_dem = np.array([sc.demand_volume(x) for x in f]) / (boxed.n_units * d.sd)
+    x_dem = np.array([sc.demand_volume(x, ev.role) for x in f]) / (boxed.n_units * d.sd)
     p_req = physics.power_at_excursion_limit(f, d.mms, d.qes, d.fs, x_dem,
                                              boxed.wc, d.sigma_m)
     ax2 = ax.twinx()
@@ -204,7 +204,7 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None,
     sc, d, boxed = ev.scenario, ev.driver, ev.boxed
     f = _freq_axis(ev, f_min=f_min)
 
-    v_dem = np.array([sc.demand_volume(x) for x in f])
+    v_dem = np.array([sc.demand_volume(x, ev.role) for x in f])
     xi = v_dem / boxed.vd_total
     hd = np.array([physics.harmonic_distortion(x) for x in xi])
     x1 = np.minimum(xi, 1.0) * d.xmax
@@ -232,7 +232,7 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None,
     ax.set_xscale("log")
     _style_log_xaxis(ax)
     ax.set_xlabel("frequency [Hz]")
-    ax.set_ylabel(f"distortion at {sc.target_spl:g} dB target, r={sc.r_listen:g} m [%]")
+    ax.set_ylabel(f"distortion at {sc.target_spl_for(ev.role):g} dB target, r={sc.r_listen:g} m [%]")
     ax.set_title(f"{d.label()}  |  non-correctable distortion, "
                  f"{ev.boxed.n_units} unit(s)")
     ax.grid(True, which="both", alpha=0.3)
@@ -240,7 +240,8 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None,
     return fig
 
 
-def demand_figure(sc: Scenario, fig: Figure | None = None) -> Figure:
+def demand_figure(sc: Scenario, fig: Figure | None = None,
+                  role: str = "sub") -> Figure:
     """Required peak displaced volume V_dem(f) at the listening position
     (eq:demand): rises 12 dB/oct above f_pz (free-field/modal radiation),
     flat below it (adiabatic room pressure-zone) -- Sec. "Room closure"."""
@@ -248,7 +249,7 @@ def demand_figure(sc: Scenario, fig: Figure | None = None) -> Figure:
         fig = Figure(figsize=(9, 6), constrained_layout=True)
     ax = fig.add_subplot(111)
     f = np.geomspace(sc.f_pz * 0.25, sc.f_high, 400)
-    v_dem_l = np.array([sc.demand_volume(x) * 1e3 for x in f])
+    v_dem_l = np.array([sc.demand_volume(x, role) * 1e3 for x in f])
 
     ax.plot(f, v_dem_l, lw=2, color="tab:blue")
     # Switch to log/log before placing the marker label: annotate() below
@@ -264,7 +265,7 @@ def demand_figure(sc: Scenario, fig: Figure | None = None) -> Figure:
 
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(r"$V_{\mathrm{dem}}$ [L]")
-    ax.set_title(f"Required displaced volume at {sc.target_spl:g} dB, "
+    ax.set_title(f"Required displaced volume at {sc.target_spl_for(role):g} dB, "
                  f"{sc.r_listen:g} m  "
                  f"($V_{{\\mathrm{{room}}}}$={sc.v_room:g} m$^3$, "
                  f"$L_{{\\max}}$={sc.l_max:g} m)")
@@ -301,7 +302,7 @@ def vented_comparison_figure(driver: Driver, sc: Scenario, vb: float, fb: float,
     f_ref = sc.f_split
     p_ref_1v = physics.radiation_pressure_rms(
         f_ref, driver.sd * abs(sealed_x(f_ref, 1.0)), sc.r_listen)
-    e = 10.0 ** ((sc.target_spl - physics.spl_from_pressure(p_ref_1v)) / 20.0)
+    e = 10.0 ** ((sc.target_spl_for("sub") - physics.spl_from_pressure(p_ref_1v)) / 20.0)
 
     f = np.geomspace(sc.f_pz * 0.3, sc.f_split, 400)
     x_sealed = np.array([abs(sealed_x(x, e)) for x in f])
@@ -321,8 +322,8 @@ def vented_comparison_figure(driver: Driver, sc: Scenario, vb: float, fb: float,
                 f"$F_c$={boxed.fc:.1f} Hz")
     ax_spl.plot(f, spl_vented, lw=2, ls="--",
                 label=f"vented, $F_b$={fb:.1f} Hz")
-    ax_spl.axhline(sc.target_spl, color="k", lw=1,
-                   label=f"target {sc.target_spl:g} dB")
+    ax_spl.axhline(sc.target_spl_for("sub"), color="k", lw=1,
+                   label=f"target {sc.target_spl_for('sub'):g} dB")
     ax_spl.set_ylabel(f"SPL at {sc.r_listen:g} m [dB]")
     ax_spl.set_title(f"{driver.label()}  |  {vb*1e3:.0f} L, sealed vs. vented")
     ax_spl.grid(True, which="both", alpha=0.3)

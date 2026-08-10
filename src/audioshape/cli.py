@@ -41,10 +41,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="audioshape",
         description="Sealed-box bass driver selection from first principles. "
-                    "target_spl in the recipe is the level required from a "
-                    "single source (mono sub manifold, or one stereo tower "
-                    "channel on its own) -- no stereo summing correction is "
-                    "applied.")
+                    "sub_target_spl/attack_target_spl in the recipe are the "
+                    "per-driver level required from each role (coherent A9 "
+                    "summing across units/channels is applied separately).")
     sub = parser.add_subparsers(dest="command", required=True)
 
     def add_recipe_arg(p: argparse.ArgumentParser) -> None:
@@ -110,8 +109,8 @@ def cmd_rank(args: argparse.Namespace) -> int:
     print(f"Parsed {len(result.drivers)} drivers "
           f"({len(result.skipped)} skipped for missing data).")
     print(f"Role '{args.role}': band [{band_low:g}, {band_high:g}] Hz, "
-          f"{n_units} unit(s), target {sc.target_spl:g} dB @ {sc.r_listen:g} m "
-          f"(this source's own level; no stereo summing applied)")
+          f"{n_units} unit(s), target {sc.target_spl_for(args.role):g} dB "
+          f"@ {sc.r_listen:g} m (per-driver level)")
     print(f"Room {sc.v_room:g} m^3 (f_pz={sc.f_pz:.1f} Hz), "
           f"D*={sc.distortion_budget:.1%}, Qtc={sc.qtc:g}\n")
 
@@ -152,8 +151,8 @@ def cmd_pair(args: argparse.Namespace) -> int:
 
     print(f"Parsed {len(result.drivers)} drivers "
           f"({len(result.skipped)} skipped for missing data).")
-    print(f"Target {sc.target_spl:g} dB @ {sc.r_listen:g} m (this source's own "
-          f"level; no stereo summing applied), room {sc.v_room:g} m^3 "
+    print(f"Target sub={sc.sub_target_spl:g} dB / attack={sc.attack_target_spl:g} dB "
+          f"@ {sc.r_listen:g} m (per-driver levels), room {sc.v_room:g} m^3 "
           f"(f_pz={sc.f_pz:.1f} Hz), D*={sc.distortion_budget:.1%}, "
           f"Qtc={sc.qtc:g}, split {sc.f_split:g} Hz\n")
 

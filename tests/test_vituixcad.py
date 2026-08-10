@@ -37,7 +37,7 @@ def driver_m() -> Driver:
 @pytest.fixture
 def scenario() -> Scenario:
     return Scenario(v_room=60.0, l_max=6.0, r_listen=3.0,
-                    target_spl=110.0, distortion_budget=0.03,
+                    sub_target_spl=110.0, attack_target_spl=110.0, distortion_budget=0.03,
                     qtc=0.55, f_low=15.0, f_split=80.0, f_high=250.0)
 
 
