@@ -70,6 +70,18 @@ def _shade_crossover(ax, f: np.ndarray, crossover: float | None,
                 xytext=(2, 20), textcoords="offset points", fontsize=9)
 
 
+def _annotate_notes(ax, ev: Evaluation) -> None:
+    """Surface any non-blocking Evaluation.notes (e.g. the large-box + EQ
+    fallback used when ideal Fc-at-target-corner alignment is geometrically
+    unreachable, see MAX_VB_VAS_RATIO in ranking.py) as a small caveat text
+    in the lower-left corner of the axes, distinct from the blocking
+    `reasons` that make a driver infeasible."""
+    if not ev.notes:
+        return
+    ax.text(0.01, 0.01, "note: " + " / ".join(ev.notes), transform=ax.transAxes,
+             fontsize=7, color="tab:red", ha="left", va="bottom", wrap=True)
+
+
 def spl_figure(ev: Evaluation, fig: Figure | None = None,
               show_power_axis: bool = False, f_min: float | None = None,
               crossover: float | None = None,
@@ -162,6 +174,7 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
     ax.set_title(f"{d.label()}  |  {ev.boxed.n_units}x in {boxed.vb*1e3:.0f} L "
                  f"(Qtc={boxed.qtc:g}, Fc={boxed.fc:.1f} Hz)")
     ax.grid(True, which="both", alpha=0.3)
+    _annotate_notes(ax, ev)
 
     if not show_power_axis:
         ax.legend(loc=legend_loc, fontsize=9)
@@ -253,6 +266,7 @@ def distortion_figure(ev: Evaluation, fig: Figure | None = None,
     ax.set_title(f"{d.label()}  |  non-correctable distortion, "
                  f"{ev.boxed.n_units} unit(s)")
     ax.grid(True, which="both", alpha=0.3)
+    _annotate_notes(ax, ev)
     ax.legend(loc="upper right", fontsize=9)
     return fig
 
