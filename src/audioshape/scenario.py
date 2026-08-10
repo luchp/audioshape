@@ -34,6 +34,9 @@ class Scenario:
                                  # modeled here, not this tool's default
                                  # architecture.
     distortion_budget: float = 0.03   # allowed HD (fraction), D*
+    doppler_budget: float = 0.02      # allowed Doppler FM index, D*_IM
+                                        # (eq:doppler); attack-role feasibility
+                                        # gate only (sec_procedure.tex step 4)
     qtc: float = 0.55           # target closed-box alignment
     f_low: float = 15.0         # lowest analysis frequency [Hz]
     f_split: float = 80.0       # sub / attack split [Hz]
@@ -46,6 +49,8 @@ class Scenario:
             raise ValueError("room dimensions and distance must be positive")
         if not 0 < self.distortion_budget < 1:
             raise ValueError("distortion budget must be a fraction in (0, 1)")
+        if self.doppler_budget <= 0:
+            raise ValueError("doppler budget must be positive")
 
     @property
     def f_pz(self) -> float:

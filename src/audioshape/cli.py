@@ -102,7 +102,8 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
     evals = rank(result.drivers, sc, n_units=n_units,
                 min_size_in=size_min, max_size_in=size_max,
-                band_low=band_low, band_high=band_high, doppler_ref=doppler_ref)
+                band_low=band_low, band_high=band_high, doppler_ref=doppler_ref,
+                role=args.role)
     if args.feasible_only:
         evals = [e for e in evals if e.feasible]
 
@@ -187,7 +188,8 @@ def cmd_plot(args: argparse.Namespace) -> int:
     n_units = args.units if args.units is not None else default_units
 
     ev = evaluate(driver, sc, n_units=n_units,
-                 band_low=band_low, band_high=band_high, doppler_ref=doppler_ref)
+                 band_low=band_low, band_high=band_high, doppler_ref=doppler_ref,
+                 role=args.role)
     if not ev.feasible:
         print("note: " + "; ".join(ev.reasons), file=sys.stderr)
 
@@ -240,7 +242,7 @@ def cmd_export(args: argparse.Namespace) -> int:
             return 1
         band_low, band_high, doppler_ref = _band_for_role(sc, role)
         ev = evaluate(driver, sc, n_units=n_units, band_low=band_low,
-                     band_high=band_high, doppler_ref=doppler_ref)
+                     band_high=band_high, doppler_ref=doppler_ref, role=role)
         selections.append(vituixcad.RoleSelection(role, ev, band_low, band_high))
 
     if not selections:
