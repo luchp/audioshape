@@ -37,6 +37,7 @@ def load_recipe(path: str | Path) -> Recipe:
 
     Expected shape::
 
+        # Local database obtained/exported separately; not distributed.
         db = "../data/VituixCAD_driver_db.txt"   # relative to the recipe file
 
         [scenario]

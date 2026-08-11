@@ -37,7 +37,8 @@ remains day-to-day.
 - `src/audioshape/vituixcad.py` — export a driver selection to a VituixCAD `.vxp` project + driver-database TSV
 - `src/audioshape/cli.py` — `rank`, `pair`, `plot`, `export-vituixcad` subcommands
 - `tests/` — pytest, physics pinned to the paper's worked example
-- `data/` — `VituixCAD_driver_db.txt` driver database
+- `data/` — local driver-database location; the VituixCAD database is not
+  distributed by this repository
 - `examples/` — `example_recipe.toml` sample recipe config
 - `scripts/` — regenerates every figure and table in the papers; pass `-p <paperid>`, the directory name in `papers/`: `figures -p 26325`
 - `papers/` — LaTeX source of the papers
@@ -45,6 +46,10 @@ remains day-to-day.
 See `docs/architecture.md` for the full design.
 
 ## Quick start
+
+Obtain/export the VituixCAD driver database under its applicable terms and
+place the local file at `data/VituixCAD_driver_db.txt`. The path is ignored by
+Git and must not be committed.
 
 ```
 uv sync

@@ -30,7 +30,8 @@ src/audioshape/
     cli.py         argparse entry point: `rank`, `pair`, `plot`,
                    `export-vituixcad` subcommands
 tests/             pytest; physics pinned to the paper's worked example
-data/              VituixCAD_driver_db.txt (driver database)
+data/              local driver-database location; the VituixCAD database is
+                   intentionally not distributed and is ignored by Git
 examples/          example_recipe.toml (sample recipe config)
 docs/plans/        design notes for multi-step features (e.g. pair_ranking.md)
 scripts/           repo-level release tooling (mirrors mimoshape):

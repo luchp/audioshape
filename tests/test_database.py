@@ -1,4 +1,4 @@
-"""Database parser and ranking integration tests against the real DB file."""
+"""Optional integration tests against the separately obtained local DB."""
 
 from pathlib import Path
 
@@ -9,6 +9,10 @@ from audioshape.ranking import evaluate, rank
 from audioshape.scenario import Scenario
 
 DB_PATH = Path(__file__).resolve().parents[1] / "data" / "VituixCAD_driver_db.txt"
+pytestmark = pytest.mark.skipif(
+    not DB_PATH.is_file(),
+    reason="local VituixCAD database is not distributed with the repository",
+)
 
 
 @pytest.fixture(scope="module")
