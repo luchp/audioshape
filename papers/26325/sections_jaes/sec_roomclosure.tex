@@ -1,65 +1,126 @@
-\section{Room closure: pressure zone, required $\Vd$, and the choice of $F_s$}
-\label{sec:roomclose}
+\section{Room-specific demand}
+\label{sec:room}
 
-A real listening room changes the low-frequency boundary condition once
-wavelength exceeds room dimensions, for any driver, sealed or vented alike.
-Lumping the room below its first axial mode as an acoustic compliance with
-leakage \cite{beranek2012}, source volume velocity $U=\Sd\dot x$:
+Everything so far is a driver property. The demand side is a room property,
+and it dominates the low-bass sizing.
+
+\subsection{Demand from a declared room transfer}
+\label{sec:room-demand}
+
+In general the required displaced volume follows from the target pressure
+and a declared room transfer $H_{\mathrm{room}}$ from source displaced
+volume to pressure over the primary listening area,
 
 \begin{equation}
-	p_{\mathrm{room}}\ \xrightarrow[\ \omega\gg\omega_\ell\ ]{}\
-	\frac{\rho_0c^2\,\Sd x}{V_{\mathrm{room}}},
+	V_{\mathrm{dem}}(f)=\frac{\sqrt2\,p_t}{|H_{\mathrm{room}}(f)|} ,
+	\label{eq:demand-general}
+\end{equation}
+
+with $p_t$ the rms target pressure and the $\sqrt2$ converting to the peak
+convention of \cref{sec:scope-bases}. Three inputs are admissible: a
+measured transfer over the couch area reduced by a declared rule (centre,
+spatial average, or worst case); a parameterized room-gain model with
+declared slope and leakage corner; or the analytical limiting model below.
+The worked example of this report uses the analytical model and reports
+sensitivity to its parameters.
+
+\subsection{Leaky pressure-zone model}
+\label{sec:room-pz}
+
+Below the first axial mode the room behaves as an acoustic compliance
+shunted by leakage \cite{beranek2012}. With source volume velocity
+$U=\Sd\dot x$ this gives, for the pressure-zone branch,
+
+\begin{equation}
+	|H_{\mathrm{pz}}(f)|=\frac{\rho_0c^2}{V_{\mathrm{room}}}
+		\Big[1+(f_\ell/f)^2\Big]^{-1/2},
 	\qquad
-	f_{\mathrm{pz}}\simeq\frac{c}{2L_{\max}} .
+	f_{\mathrm{pz}}\simeq\frac{c}{2L_{\max}} ,
 	\label{eq:pzdyn}
 \end{equation}
 
-Below $f_{\mathrm{pz}}$, $p\propto x$ (not $\omega^2x$): the excursion demand
-is frequency-independent, giving a demand curve that rises at 12\,dB/oct
-down to $f_{\mathrm{pz}}$ and is flat below it. A sealed system with
-$F_c\simeq f_{\mathrm{pz}}$ is therefore flat in-room to the leakage corner
-\emph{without any EQ} --- the exact form of ``taper-off compensated by room
-gain.'' \Cref{app:vented} shows a vented system does not enjoy the same
-rescue.
-
-Combining the demand curve with the distortion cap $\xi^\ast$
-(\cref{sec:distortion}) gives the sizing rule
+a first-order high-pass relation from displacement to pressure with corner
+$f_\ell$ set by construction, commonly $10$--$\SI{20}{\hertz}$. Above
+$f_{\mathrm{pz}}$ the half-space radiation branch
+$|H_{\mathrm{rad}}(f)|=\rho_0\omega^2/(2\pi r_{\mathrm{listen}})$ applies,
+so the demand curve rises at $12$\,dB/oct going down, flattens near
+$f_{\mathrm{pz}}$, and rises again at $6$\,dB/oct below $f_\ell$:
 
 \begin{equation}
-	\boxed{\
-	\Vd\ \ge\ \frac{1}{\xi^\ast}\,\max\!
-	\left\{
-		\frac{\sqrt2\,p_t\,V_{\mathrm{room}}}{\rho_0c^2},\ \
-		C\,
-		\frac{\sqrt2\,p_t\,2\pi r}{\rho_0\,\omega_{\mathrm{pz}}^{2}}
-	\right\} \ }
-	\label{eq:Vdreq}
+	V_{\mathrm{dem}}(f)=
+	\begin{cases}
+		\dfrac{\sqrt2\,p_t\,2\pi r_{\mathrm{listen}}}{\rho_0\omega^2},
+			& f\ge f_{\mathrm{pz}},\\[2ex]
+		\max\big\{V_{\mathrm{rad}},\ V_{\mathrm{pz}}(f)\big\},
+			& f<f_{\mathrm{pz}},
+	\end{cases}
+	\label{eq:Vdem}
 \end{equation}
-with the pressure-zone branch the robust one (A11), and the corner
-criterion, from the alignment line \eqref{eq:alignment},
+
+where $V_{\mathrm{rad}}=V_{\mathrm{dem}}(f_{\mathrm{pz}})$ is the
+radiation branch frozen at the pressure-zone corner and
+$V_{\mathrm{pz}}(f)=\sqrt2\,p_tV_{\mathrm{room}}
+(\rho_0c^2)^{-1}\sqrt{1+f_\ell^2/f^2}$ is the leaky compliance branch.
+
+This is a deliberately low-order model of a prepared room over one band and
+one small area. It is \emph{not} a claim that the complete room is a
+low-order system: a room remains distributed and multimodal, and above
+$f_{\mathrm{pz}}$ individual modes are better treated as separate damped
+second-order sections fitted over the listening area, or replaced by a
+measured transfer \cite{toole2006,makivirta2003}. The value of the prepared
+architecture of \cref{sec:intro-arch}---soffit mounting, a compact source
+manifold, deliberate damping and leakage control---is that such a low-order
+description is defensible over the design band, not that it is universal.
+
+\subsection{Corner placement}
+\label{sec:room-corner}
+
+Combining \cref{eq:Vdem} with the alignment line \cref{eq:alignment} gives
+the corner-placement target
 
 \begin{equation}
-	\boxed{\ F_c\simeq f_{\mathrm{pz}}=\frac{c}{2L_{\max}}
+	F_c\simeq f_{\mathrm{pz}}
 	\quad\Longleftrightarrow\quad
-	\frac{F_s}{\Qts}\simeq\frac{f_{\mathrm{pz}}}{\Qtc^\ast}\ }.
+	\frac{F_s}{\Qts}\simeq\frac{f_{\mathrm{pz}}}{\Qtc^\ast} ,
 	\label{eq:Fsrule}
 \end{equation}
 
-$F_c$ below $f_{\mathrm{pz}}$ wastes only box volume; $F_c$ above it leaves
-a correctable sag taxed by \eqref{eq:EQtax}. 
-The two mistunings are not equally cheap: undershoot's shelf, 
-$20\log_{10}(f_{\mathrm{pz}}/F_c)$\,dB, comes out with a 
-free EQ \emph{cut}, while overshoot's sag needs a taxed \emph{boost} 
-that also eats excursion headroom 
---- so where \eqref{eq:Fsrule}'s exact match would push $\Qtc^\ast$ 
-past a comfortable ringing budget 
-	(\cref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
-the better choice is to fix $\Qtc$ there and let $F_c$ undershoot
-$f_{\mathrm{pz}}$ rather than chase exact alignment. \Cref{eq:Fsrule} is a
-box invariant, not room-specific, so the same ceiling-not-target treatment
-applies verbatim to the attack driver's split corner $f_{\mathrm{sp}}$
-(\cref{sec:procedure}).
+at which the sealed roll-off and the room's flat pressure-zone branch
+approximately complement one another. Two caveats apply. First, this is an
+idealization: real designs require measured verification and correction,
+because the complementarity holds only to the accuracy of
+\cref{eq:pzdyn}. Second, the enclosure limit
+$\Vb\le\min(10\Vas,V_{\mathrm{role}}/N)$ frequently prevents an exact
+match. A corner below $f_{\mathrm{pz}}$ costs only enclosure volume and
+leaves a shelf that a correction \emph{cut} removes; a corner above
+$f_{\mathrm{pz}}$ leaves a sag whose correction \emph{boost} is charged to
+\cref{eq:Preq} and to excursion, and is therefore checked against the gates
+rather than assumed acceptable.
 
-Real rooms leak below a construction-dependent $f_\ell$ (often $10$--$20$\,Hz), 
-below which \eqref{eq:Vdreq}'s pressure-zone branch is an upper bound 
-rather than exact.
+\subsection{Sensitivity and what it means for extension}
+\label{sec:room-sensitivity}
+
+The leakage corner is the least certain input in the entire procedure, so
+the demand is recomputed across a declared set of room models and the
+consequences for driver count and extension are reported
+(\cref{fig:room-sensitivity} and \cref{tab:room-sensitivity}).
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_room_sensitivity}
+	\caption{Required displaced volume at the couch-area target for the
+	declared room models: ideal pressure zone, and leaky pressure zone with
+	several leakage corners. Above $f_{\mathrm{pz}}$ the models coincide on
+	the half-space radiation branch; below it the assumed leakage corner
+	alone determines how fast the demand grows.}
+	\label{fig:room-sensitivity}
+\end{figure}
+
+\input{../tables/table_room_sensitivity}
+
+Extension towards the bottom of the design band is therefore
+\emph{conditional}: on the realized leakage corner, on sufficient total
+$\Vd$ at a utilization inside the gates, and on the amplifier headroom of
+\cref{eq:ampgates}. The procedure reports the lowest frequency at which all
+gates hold for the selected candidates rather than asserting a nominal
+extension figure.

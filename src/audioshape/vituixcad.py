@@ -5,25 +5,24 @@ Two output formats, matching what a user can hand straight to VituixCAD:
 
 - `driver_database_tsv` -- rows in VituixCAD's own driver-database TSV
   schema (the schema `database.parse_database` reads). The website's driver
-  picker only offers drivers already in *our* bundled copy of that
-  database; a user's local VituixCAD install may be on an older copy and
-  not have a given driver yet. Import/merge this file with VituixCAD's
+  picker uses a separately obtained local database; a user's VituixCAD
+  install may use a different snapshot and not have a selected driver.
+  Import/merge this file with VituixCAD's
   Driver Database Manager first so name-based lookups (Enclosure tool,
   "Copy T/S from database") resolve for it.
 - `project_xml` -- a `.vxp` crossover project. Its schema was confirmed by
   inspecting a real "File > New" project saved by VituixCAD3 (Save As,
   Ctrl+Shift+S): the `<DRIVER>` entry only carries a name/SPL/Z/response
   files, never Fs/Qts/Vas/etc. (those live in the driver database above),
-  so the sealed-box/distortion results computed here have no native field
+  so the sealed-box/risk results computed here have no native field
   to go into -- they are written into the project `Description` instead,
   the one free-text field meant for exactly this. One `Driver` PART is
   added per role, each wired to its own Generator/Ground pair like
   VituixCAD's own blank template (a real "File > New" project leaves
   Generator and Driver unconnected too -- the user wires up a crossover
-  from there), with `DrvN` set to that role's unit count so VituixCAD's own
-  SPL/power summing matches this tool's coherent-array model
-  (`BoxedDriver.n_units`), and `HalfSpace` on to match this tool's 2 pi
-  (soffit-wall) radiation model everywhere.
+  from there), with   `DrvN` set to that role's physical unit count, and `HalfSpace` on to match
+  this tool's 2 pi (soffit-wall) radiation model. Electrical feasibility in
+  audioshape remains a per-driver calculation.
 
 Pure string building, no file I/O (AGENTS.md: core stays I/O-free) -- the
 caller (CLI, web backend) decides where the bytes end up.
@@ -267,7 +266,7 @@ def project_xml(selections: Sequence[RoleSelection], description: str = "") -> s
     part per `(role, Evaluation, band)` in `selections`, each wired to its
     own Generator/Ground pair, `DrvN` set to that role's unit count, and
     `description` written verbatim into the project's `Description` field
-    (see module docstring for why: no other field fits box/distortion
+    (see module docstring for why: no other field fits box/risk
     results)."""
     if not selections:
         raise ValueError("need at least one RoleSelection")
@@ -278,8 +277,9 @@ def project_xml(selections: Sequence[RoleSelection], description: str = "") -> s
         ET.SubElement(root, name).text = value
 
     sc = selections[0].evaluation.scenario
-    _add_target(root, "AxialTarget", sc.f_low, sc.f_high, sc.sub_target_spl)
-    _add_target(root, "PowerTarget", sc.f_low, sc.f_high, sc.sub_target_spl)
+    # VituixCAD exposes only one global system target, but this architecture
+    # has different role bands and levels. Per-driver DriverTarget elements
+    # below carry the unambiguous role-specific values instead.
 
     for di, sel in enumerate(selections):
         d = sel.evaluation.driver

@@ -65,6 +65,23 @@ class Driver:
         return self.re / (2.0 * math.pi * self.le)
 
     @property
+    def effective_bl(self) -> float:
+        """Published Bl, or the value implied by the other T/S data."""
+        if math.isfinite(self.bl) and self.bl > 0.0:
+            return self.bl
+        return physics.force_factor_from_qes(
+            self.fs, self.qes, self.mms, self.re
+        )
+
+    @property
+    def has_inductance(self) -> bool:
+        return math.isfinite(self.le) and self.le > 0.0
+
+    @property
+    def has_force_factor(self) -> bool:
+        return math.isfinite(self.bl) and self.bl > 0.0
+
+    @property
     def sigma_m(self) -> float:
         """Mechanical damping rate sigma_m = ws/Qms [1/s]."""
         return 2.0 * math.pi * self.fs / self.qms

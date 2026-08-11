@@ -4,28 +4,19 @@ All functions are pure and use SI units (metres, kilograms, seconds, watts,
 pascals) unless a name says otherwise.  No I/O, no plotting, no globals other
 than physical constants -- this module must stay importable from a web backend.
 
-The equations implement `sealed_driver_criteria.tex` (v2).  Section/equation
-references in the docstrings point at that document.
+The equations implement `papers/26325/sealed_driver_criteria.tex`.
+Section/equation references in the docstrings point at that document.
 """
 
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 RHO0 = 1.2  # air density [kg/m^3]
 C_AIR = 343.0  # speed of sound [m/s]
 P0 = 2e-5  # reference pressure [Pa]
 GAMMA = 1.4  # adiabatic index of air
-
-# IEC 62458 anchoring of the harmonic-distortion law D(xi) = d2*xi + d3*xi^2
-# with D(1) = d2 + d3 = 0.10 at x = Xmax (Sec. "Non-correctable distortion").
-D2_DEFAULT = 0.05
-D3_DEFAULT = 0.05
-
-# Motor materials bound (Theorem "Motor materials bound", eq:thmbound):
-# K_mat = B^2 sigma_c/rho_c, conductivity/density of the coil conductor.
-K_MAT_CU_PER_B2 = 1059.0  # Hz/T^2 (copper, sigma_c/rho_c = 6.65e3 S m^2/kg)
-K_MAT_AL_PER_B2 = 2063.0  # Hz/T^2 (aluminium, sigma_c/rho_c = 1.30e4 S m^2/kg)
 
 
 def spl_from_pressure(p_rms: float) -> float:
@@ -64,15 +55,41 @@ def pressure_zone_pressure_rms(v_disp_peak: float, v_room: float) -> float:
     return RHO0 * C_AIR * C_AIR * v_disp_peak / v_room / math.sqrt(2.0)
 
 
+def room_leakage_displacement_factor(f: float,
+                                     leakage_corner_hz: float) -> float:
+    """Extra displacement required by a pressure-zone leakage corner.
+
+    A room compliance shunted by an acoustic leakage resistance gives a
+    first-order high-pass relation from source displacement to pressure.
+    The ideal pressure-zone demand is therefore multiplied by
+    ``sqrt(1 + (f_leak/f)^2)``.  This is a low-frequency limiting model, not
+    a claim that the complete room is one low-order system.
+    """
+    if f <= 0:
+        raise ValueError("frequency must be positive")
+    if leakage_corner_hz < 0:
+        raise ValueError("leakage corner must be non-negative")
+    return math.sqrt(1.0 + (leakage_corner_hz / f) ** 2)
+
+
 def demand_volume(f: float, target_spl: float, r: float,
-                  v_room: float, l_max: float) -> float:
+                  v_room: float, l_max: float,
+                  room_model: str = "leaky_pressure_zone",
+                  leakage_corner_hz: float = 10.0) -> float:
     """Peak displaced volume V_dem(f) [m^3] required to reach `target_spl`
-    [dB rms] at the listening position (eq:demand).
+    [dB rms] at the listening position.
 
     Above f_pz: radiation branch, V_dem ~ 1/f^2 (rises 12 dB/oct downward).
-    Below f_pz: flat -- the larger of the radiation demand frozen at f_pz and
-    the pressure-zone demand sqrt(2) p_t V_room / (rho0 c^2).
+    Below f_pz: the larger of the radiation demand frozen at f_pz and the
+    pressure-zone compliance demand.  ``ideal_pressure_zone`` leaves that
+    branch flat.  ``leaky_pressure_zone`` applies the declared first-order
+    leakage factor, so demand rises 6 dB/oct below the leakage corner.
     """
+    if f <= 0:
+        raise ValueError("frequency must be positive")
+    if room_model not in ("ideal_pressure_zone", "leaky_pressure_zone"):
+        raise ValueError(f"unknown room model {room_model!r}")
+
     p_t = pressure_from_spl(target_spl)
     f_pz = pressure_zone_frequency(l_max)
 
@@ -83,6 +100,8 @@ def demand_volume(f: float, target_spl: float, r: float,
     if f >= f_pz:
         return radiation_branch(f)
     v_pz = math.sqrt(2.0) * p_t * v_room / (RHO0 * C_AIR * C_AIR)
+    if room_model == "leaky_pressure_zone":
+        v_pz *= room_leakage_displacement_factor(f, leakage_corner_hz)
     return max(radiation_branch(f_pz), v_pz)
 
 
@@ -113,15 +132,13 @@ def fc_for_qtc(fs: float, qts: float, qtc: float) -> float:
 # SPL ceilings (Sec. frequency domain / time domain)
 # ----------------------------------------------------------------------
 
-def spl_excursion_ceiling(f: float, vd: float, r: float,
-                          shape_factor: float = 1.0) -> float:
-    """Displacement-limited SPL [dB rms-equivalent] at distance r.
+def spl_excursion_ceiling(f: float, vd: float, r: float) -> float:
+    """Steady-sine displacement-limited SPL [dB rms] at distance ``r``.
 
-    Sine: shape_factor C = 1.  Burst/pulse: C = 2 (cosine burst, Lemma shape),
-    which costs 20 log10 C dB of ceiling.  Independent of Qtc/Bl/Mms
-    (Cor. onlyVd).
+    Finite bursts are evaluated with :func:`sealed_burst_requirements`
+    rather than a universal shape factor.
     """
-    p = radiation_pressure_rms(f, vd / shape_factor, r)
+    p = radiation_pressure_rms(f, vd, r)
     return spl_from_pressure(p)
 
 
@@ -136,6 +153,15 @@ def eta0(fs: float, vas_m3: float, qes: float) -> float:
     return 9.78e-7 * fs ** 3 * vas_m3 / qes
 
 
+def force_factor_from_qes(fs: float, qes: float, mms: float, re: float) -> float:
+    """Force factor [T m] implied by Fs, Qes, Mms, and Re.
+
+    From ``Qes = omega_s Mms Re / Bl^2``.  This is used only when a public
+    record omits Bl; the evaluation reports that the value was derived.
+    """
+    return math.sqrt(2.0 * math.pi * fs * mms * re / qes)
+
+
 def regime_boundary_fx(fs: float, p_max: float, qes: float,
                        mms: float, xmax: float) -> float:
     """f_x [Hz]: excursion-limited below, dissipation-limited above (eq:fx).
@@ -144,11 +170,6 @@ def regime_boundary_fx(fs: float, p_max: float, qes: float,
     """
     val = 4.0 * math.pi * fs * p_max / (qes * mms * xmax * xmax)
     return val ** 0.25 / (2.0 * math.pi)
-
-
-def burst_boundary_fx(fx: float, kappa: float = 4.0, c_shape: float = 2.0) -> float:
-    """Transient boundary f^_x = f_x * (kappa * C^2)^(1/4) (eq:fxburst)."""
-    return fx * (kappa * c_shape * c_shape) ** 0.25
 
 
 def power_at_excursion_limit(f: float, mms: float, qes: float, fs: float,
@@ -183,6 +204,16 @@ def voltage_at_excursion_limit(f: float, mms: float, bl: float, re: float,
     return e_hat / math.sqrt(2.0)
 
 
+def current_at_excursion_limit(f: float, mms: float, qes: float, fs: float,
+                               re: float, xmax: float, wc: float,
+                               sigma_m: float) -> float:
+    """RMS coil current [A] needed for a peak displacement ``xmax``."""
+    power = power_at_excursion_limit(
+        f, mms, qes, fs, xmax, wc, sigma_m
+    )
+    return math.sqrt(power / re)
+
+
 def eq_tax_power(f: float, p_passband: float, wc: float, sigma_m: float) -> float:
     """Power [W] required at f after EQ to flat response (eq:EQtax):
     P_req = P_pb * ((wc^2 - w^2)^2 + sigma_m^2 w^2) / w^4."""
@@ -197,7 +228,7 @@ def acoustic_power_halfspace(p_rms: float, r: float) -> float:
 
 
 # ----------------------------------------------------------------------
-# Non-correctable distortion (Sec. distortion)
+# Transient response and separate nonlinear-risk indicators
 # ----------------------------------------------------------------------
 
 def excursion_utilization(v_dem: float, vd: float) -> float:
@@ -205,39 +236,237 @@ def excursion_utilization(v_dem: float, vd: float) -> float:
     return v_dem / vd
 
 
-def harmonic_distortion(xi_x: float,
-                        d2: float = D2_DEFAULT, d3: float = D3_DEFAULT) -> float:
-    """Motor/suspension HD estimate D(xi) = d2 xi + d3 xi^2 (eq:HDscale),
-    anchored so D(1) = 0.10 at the IEC 62458 Xmax."""
-    return d2 * xi_x + d3 * xi_x * xi_x
+@dataclass(frozen=True)
+class BurstRequirements:
+    """Worst phase of one declared voltage burst at a target output.
+
+    ``x_sine_peak`` is the steady-sine displacement that would produce the
+    target pressure at the same frequency.  The numerical sealed-box ODE is
+    scaled so the burst reaches the same peak acceleration during its active
+    window.  RMS voltage, current, and coil power are evaluated over that
+    active window; peak displacement includes the subsequent ring-down.
+    """
+
+    shape_factor: float
+    displacement_peak: float
+    voltage_rms: float
+    current_rms: float
+    coil_power_w: float
 
 
-def utilization_for_distortion(d_target: float,
-                               d2: float = D2_DEFAULT,
-                               d3: float = D3_DEFAULT) -> float:
-    """Invert D(xi) = d_target for xi (positive root of d3 xi^2 + d2 xi - D)."""
-    if d3 == 0.0:
-        return d_target / d2
-    return (-d2 + math.sqrt(d2 * d2 + 4.0 * d3 * d_target)) / (2.0 * d3)
+def sealed_burst_requirements(
+    f: float,
+    x_sine_peak: float,
+    fc: float,
+    qtc: float,
+    mms: float,
+    re: float,
+    bl: float,
+    *,
+    cycles: float = 1.0,
+    window: str = "rectangular",
+    phase_samples: int = 8,
+    steps_per_cycle: int = 96,
+    decay_time_constants: float = 8.0,
+) -> BurstRequirements:
+    """Numerically solve the sealed ODE for a finite voltage burst.
+
+    Start phases are sampled uniformly over one cycle.  A multiple of four
+    includes both sine and cosine starts.  This replaces a universal
+    free-mass burst constant with a frequency- and alignment-dependent
+    result.
+    """
+    positive = (f, x_sine_peak, fc, qtc, mms, re, bl, cycles)
+    if any(value <= 0 for value in positive):
+        raise ValueError("burst frequencies, parameters, and target must be positive")
+    if window not in ("rectangular", "hann"):
+        raise ValueError(f"unknown burst window {window!r}")
+    if phase_samples < 4 or phase_samples % 4:
+        raise ValueError("phase samples must be a multiple of four")
+    if steps_per_cycle < 32:
+        raise ValueError("steps per cycle must be at least 32")
+
+    omega = 2.0 * math.pi * f
+    desired_acceleration = omega * omega * x_sine_peak
+
+    shape_factor = 0.0
+    displacement_peak = 0.0
+    voltage_rms = 0.0
+    current_rms = 0.0
+    coil_power_w = 0.0
+
+    for phase_index in range(phase_samples):
+        phase = 2.0 * math.pi * phase_index / phase_samples
+        response = _sealed_burst_unit_voltage(
+            f=f,
+            fc=fc,
+            qtc=qtc,
+            mms=mms,
+            re=re,
+            bl=bl,
+            cycles=cycles,
+            window=window,
+            phase=phase,
+            steps_per_cycle=steps_per_cycle,
+            decay_time_constants=decay_time_constants,
+        )
+        scale = desired_acceleration / response.peak_active_acceleration
+        phase_displacement = response.peak_displacement * scale
+        phase_shape = phase_displacement / x_sine_peak
+        phase_voltage = response.voltage_rms * scale
+        phase_current = response.current_rms * scale
+        phase_power = response.coil_power_w * scale * scale
+
+        shape_factor = max(shape_factor, phase_shape)
+        displacement_peak = max(displacement_peak, phase_displacement)
+        voltage_rms = max(voltage_rms, phase_voltage)
+        current_rms = max(current_rms, phase_current)
+        coil_power_w = max(coil_power_w, phase_power)
+
+    return BurstRequirements(
+        shape_factor=shape_factor,
+        displacement_peak=displacement_peak,
+        voltage_rms=voltage_rms,
+        current_rms=current_rms,
+        coil_power_w=coil_power_w,
+    )
+
+
+@dataclass(frozen=True)
+class _UnitBurstResponse:
+    peak_active_acceleration: float
+    peak_displacement: float
+    voltage_rms: float
+    current_rms: float
+    coil_power_w: float
+
+
+def _sealed_burst_unit_voltage(
+    *,
+    f: float,
+    fc: float,
+    qtc: float,
+    mms: float,
+    re: float,
+    bl: float,
+    cycles: float,
+    window: str,
+    phase: float,
+    steps_per_cycle: int,
+    decay_time_constants: float,
+) -> _UnitBurstResponse:
+    omega = 2.0 * math.pi * f
+    wc = 2.0 * math.pi * fc
+    sigma = wc / qtc
+    forcing_gain = bl / (re * mms)
+    duration = cycles / f
+
+    def voltage(t: float) -> float:
+        if not 0.0 <= t < duration:
+            return 0.0
+        envelope = 1.0
+        if window == "hann":
+            envelope = 0.5 - 0.5 * math.cos(2.0 * math.pi * t / duration)
+        return envelope * math.sin(omega * t + phase)
+
+    def derivatives(t: float, x: float, velocity: float) -> tuple[float, float]:
+        acceleration = (
+            forcing_gain * voltage(t) - sigma * velocity - wc * wc * x
+        )
+        return velocity, acceleration
+
+    def rk4_step(t: float, x: float, velocity: float,
+                 dt: float) -> tuple[float, float]:
+        k1_x, k1_v = derivatives(t, x, velocity)
+        k2_x, k2_v = derivatives(
+            t + dt / 2.0,
+            x + dt * k1_x / 2.0,
+            velocity + dt * k1_v / 2.0,
+        )
+        k3_x, k3_v = derivatives(
+            t + dt / 2.0,
+            x + dt * k2_x / 2.0,
+            velocity + dt * k2_v / 2.0,
+        )
+        k4_x, k4_v = derivatives(
+            t + dt,
+            x + dt * k3_x,
+            velocity + dt * k3_v,
+        )
+        return (
+            x + dt * (k1_x + 2.0 * k2_x + 2.0 * k3_x + k4_x) / 6.0,
+            velocity + dt * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v) / 6.0,
+        )
+
+    x = 0.0
+    velocity = 0.0
+    t = 0.0
+    peak_acceleration = 0.0
+    peak_displacement = 0.0
+    voltage_squared = 0.0
+    current_squared = 0.0
+
+    active_steps = max(
+        steps_per_cycle,
+        math.ceil(duration * steps_per_cycle * max(f, fc)),
+    )
+    active_dt = duration / active_steps
+    for _ in range(active_steps):
+        e = voltage(t)
+        acceleration = forcing_gain * e - sigma * velocity - wc * wc * x
+        current = (e - bl * velocity) / re
+        peak_acceleration = max(peak_acceleration, abs(acceleration))
+        peak_displacement = max(peak_displacement, abs(x))
+        voltage_squared += e * e
+        current_squared += current * current
+        x, velocity = rk4_step(t, x, velocity, active_dt)
+        t += active_dt
+
+    # Avoid a floating-point value infinitesimally below the burst boundary:
+    # the first, much larger ring-down step must never sample active voltage.
+    t = duration
+    peak_displacement = max(peak_displacement, abs(x))
+    decay_duration = decay_time_constants * 2.0 / sigma
+    ring_steps = max(1, math.ceil(decay_duration * steps_per_cycle * fc))
+    ring_dt = decay_duration / ring_steps
+    for _ in range(ring_steps):
+        peak_displacement = max(peak_displacement, abs(x))
+        x, velocity = rk4_step(t, x, velocity, ring_dt)
+        t += ring_dt
+    peak_displacement = max(peak_displacement, abs(x))
+
+    if peak_acceleration <= 0:
+        raise RuntimeError("burst simulation produced no active acceleration")
+    voltage_rms = math.sqrt(voltage_squared / active_steps)
+    current_rms = math.sqrt(current_squared / active_steps)
+    return _UnitBurstResponse(
+        peak_active_acceleration=peak_acceleration,
+        peak_displacement=peak_displacement,
+        voltage_rms=voltage_rms,
+        current_rms=current_rms,
+        coil_power_w=current_rms * current_rms * re,
+    )
 
 
 def doppler_im(f_high: float, x1_peak: float) -> float:
-    """Doppler FM sideband index m/2 = pi f2 X1 / c (eq:doppler): the
-    fraction of f_high's amplitude thrown into sidebands by a bass excursion
-    X1 [m peak] on the same cone."""
+    """Small-index first-order Doppler sideband amplitude ratio.
+
+    The phase-modulation index is ``m = 2*pi*f_high*x1_peak/c``.  For
+    ``m << 1``, either first-order sideband has relative amplitude
+    ``J1(m)/J0(m) ~= m/2 = pi*f_high*x1_peak/c``.  This kinematic indicator
+    is not a perceptual distortion estimate.
+    """
     return math.pi * f_high * x1_peak / C_AIR
 
 
-def box_hd2(v_dem: float, vb: float, qts: float, qtc: float) -> float:
-    """Second harmonic of the box air spring (eq:boxHD):
-    HD2 = ((gamma+1)/4) (V_dem/Vb) (1 - (Qts/Qtc)^2)."""
+def box_spring_nonlinearity(v_dem: float, vb: float,
+                            qts: float, qtc: float) -> float:
+    """Leading dimensionless box air-spring nonlinearity indicator.
+
+    It is reported separately and is not interpreted or summed as acoustic
+    harmonic distortion.
+    """
     return (GAMMA + 1.0) / 4.0 * (v_dem / vb) * (1.0 - (qts / qtc) ** 2)
-
-
-def thermal_compression_db(xi_p: float, delta_t_rated: float = 100.0) -> float:
-    """Thermal AM level shift [dB]: -0.034 * xi_P * dT_rated (Sec. distortion).
-    xi_p is the power utilization P_req / Pmax."""
-    return -0.034 * xi_p * delta_t_rated
 
 
 # ----------------------------------------------------------------------
@@ -259,32 +488,8 @@ def qtc_for_target_corner(corner_rate: float, f_target: float,
                           qtc_ceiling: float) -> float:
     """Qtc to actually use: the smaller of a configured ceiling and the Qtc
     that would land Fc exactly at f_target (box invariance Fc/Qtc =
-    corner_rate, eq:Fsrule). Undershooting a target corner is free (EQ cut);
-    overshooting it is taxed (EQ boost, costs excursion) -- Sec. "Sizing
-    rule and Fs criterion" -- so a driver whose corner rate would overshoot
-    f_target at the ceiling is better served by a lower Qtc (bigger box)
-    than by rejecting it or forcing the fixed ceiling regardless."""
+    corner_rate, eq:Fsrule). A corner below the target needs no correction
+    boost but costs enclosure volume; a corner above it costs boost and
+    headroom. A driver that would overshoot at the ceiling is therefore
+    assigned a lower Qtc (larger box) when the box cap permits."""
     return min(qtc_ceiling, f_target / corner_rate)
-
-
-# ----------------------------------------------------------------------
-# Motor materials bound (Sec. "EBP as coil-mass fraction", eq:thmbound)
-# ----------------------------------------------------------------------
-
-def motor_bound_ebp_u2(ebp: float, u: float) -> float:
-    """EBP * u^2 [Hz]: the LHS of the motor materials bound (eq:thmbound),
-    given the driver's own EBP = Fs/Qes and an assumed overhang factor u
-    (u is not a datasheet field -- it is the coil/gap geometry ratio
-    h_c/h_g' of Sec. "materials", chosen illustratively per motor class)."""
-    return ebp * u * u
-
-
-def implied_coil_mass_fraction(ebp: float, u: float, b_field: float,
-                               k_mat_per_b2: float = K_MAT_CU_PER_B2) -> float:
-    """beta = m_c/Mms implied by matching the motor materials bound
-    (eq:thmbound) at equality, given an assumed flux density b_field [T]
-    and overhang factor u.  B and u are illustrative motor-topology
-    assumptions, not datasheet fields (Sec. "materials", "Numerical
-    content")."""
-    k_mat = k_mat_per_b2 * b_field * b_field
-    return motor_bound_ebp_u2(ebp, u) / k_mat

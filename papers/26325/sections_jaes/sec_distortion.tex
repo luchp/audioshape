@@ -1,114 +1,152 @@
-\section{Non-correctable distortion: scaling laws and the distortion-referenced criterion}
-\label{sec:distortion}
+\section{Nonlinear-risk indicators and ranking policy}
+\label{sec:risk}
 
-The invariants above rank drivers by \emph{output}. But a DSP-aligned system
-(\cref{sec:assumptions}) can move gain, phase, and group delay around almost for
-free, so the only distortion that should decide a ranking is the kind no
-filter can remove. Throughout this section, distortion estimates rank
-candidates under a common target and operating condition: per A10, they are
-leading-order, order-of-magnitude predictors, not $\pm1$\,dB absolute THD
-forecasts for an individual driver.
+The ceilings of \cref{sec:freq} rank candidates by output capability. What
+remains is the risk that a candidate, while formally inside its gates,
+operates closer to its nonlinear regions than an alternative. Linear
+correction does not help here: a linear pre-filter cannot reduce a
+nonlinear residual for all programme material, because if it did, scaling
+the input would force that residual to be linear.
 
-\begin{proposition}[FIR correctability boundary]
-	\label{prop:LTI}
-	(i)~In-band, the sealed-box transfer function is minimum-phase, so a
-		causal, stable LTI pre-filter $G\approx H^{-1}$ exists on any band: 
-		magnitude, phase, group delay, corner sag, and ring-down tail 
-		are all exactly	correctable (at the drive costs \eqref{eq:SPLL}, \eqref{eq:EQtax}).
-	(ii)~No LTI $G$ reduces the nonlinear residual $\mathcal{N}$ for all program:
-		if it did, scaling the input would force $\mathcal N$ linear on the signal
-		space --- contradiction unless $\mathcal N\equiv0$.
-\end{proposition}
+This report does \emph{not} convert $\Xmax$, or any of the indicators
+below, into an absolute distortion figure, and does not add unlike
+indicators into a scalar total. They occur at different frequencies, with
+different phases and different perceptual weights
+\cite{klippel2006,allison1982,fielder2019}, so a sum would not correspond
+to any measurable quantity. They are reported as a vector of separately
+named, dimensionless indicators.
 
-Three independent, first-principles mechanisms all reduce to the same
-headroom ranking, which is the central result of this section.
+\subsection{Reported indicators}
+\label{sec:risk-vector}
 
-\textbf{(1) Displacement-driven nonlinearity.} 
-Expanding motor and suspension nonlinearity to leading Taylor order (A10) 
-and anchoring at the distortion-defined $\Xmax$ (A7, $D(\Xmax)\approx10\%$) 
-gives, with utilization $\xi_x\equiv V_{\mathrm{dem}}/\Vd$,
+For each role evaluation the procedure reports
 
 \begin{equation}
-	\boxed{\ D(\xi_x)\approx d_2\,\xi_x+d_3\,\xi_x^{2},\quad d_2+d_3\approx0.1\ }.
-	\label{eq:HDscale}
+	\mathbf r=\big(\xi_x,\ \xi_x^{\mathrm{tr}},\ d_{\mathrm D},\
+		\xi_{\mathrm{box}},\ \xi_P,\ \xi_{\mathrm{amp}},\
+		f_{\mathcal B,\mathrm h}/f_L,\ V_{\mathrm b}^{\mathrm{tot}}\big) .
+	\label{eq:riskvec}
 \end{equation}
 
-Since $d_2,d_3\ge0$, this bounds $D$ between its two limiting orders,
-$0.1\,\xi_x^{2}\le D\le0.1\,\xi_x$. 
+\textbf{Excursion utilization} $\xi_x=X_{\mathrm{dem}}/\Xmax$ and its
+transient counterpart $\xi_x^{\mathrm{tr}}$ \cref{eq:xitr}. Expanding motor
+force factor and suspension compliance about the rest position gives
+even- and odd-order terms that grow with $\xi_x$, which is the motivation
+for using utilization as a screening indicator; the coefficients are not
+available from datasheets, so no distortion percentage is inferred.
+$\xi_x=1$ is the hard clipping boundary (A7). The value $0.80$ is a
+\emph{preferred} design margin---about $\SI{1.9}{dB}$ of excursion
+headroom---used as a lexicographic preference and to size unit counts, not
+as a rejection threshold and not as a distortion budget.
 
-At fixed target this distortion class is monotone in the headroom on the
-displacement ceiling \eqref{eq:SPLL}: sorting by it is sorting by $\Vd$. 
-A distortion budget $D^\ast$ converts to a utilization cap
-$\xi^\ast=D^\ast/0.1$ (even-order) or $\sqrt{D^\ast/0.1}$ (symmetric); 
-e.g. $D^\ast=3\%\Rightarrow\xi^\ast=0.3$--$0.55$, i.e.\ $\Vd$ must be $2$--$3\times$
-the bare SPL-ceiling requirement --- this factor, not the SPL math, sizes
-the sub. $D^\ast$ is a selection ceiling at the brief reference-level target
-(exposure-limited to about a minute), not a continuous operating point; the
-figures also plot the same total $20$~dB down as a normal-listening proxy,
-typically far under budget.
+\textbf{Doppler sideband indicator.} For a role band $\mathcal B$, define
+$X_{\mathcal B}=\max_{f\in\mathcal B}X_{\mathrm{dem}}(f)$ and let
+$f_{\mathcal B,\mathrm h}$ be its upper edge. A component at
+$f_{\mathcal B,\mathrm h}$ radiated from a cone moving with peak
+$X_{\mathcal B}$ acquires the phase-modulation index
+$m=2\pi f_{\mathcal B,\mathrm h}X_{\mathcal B}/c$. For small $m$, either
+first-order sideband has amplitude ratio $J_1(m)/J_0(m)\simeq m/2$, so the
+reported indicator is
 
-\textbf{(2) Doppler (FM) distortion, the second use of area.} 
-A component at $f_2$ riding on a cone at position $x_1(t)$ acquires phase modulation 
-index $m=2\pi f_2X_1/c$, giving sidebands
 \begin{equation}
-	\boxed{\ \frac{J_1(m)}{J_0(m)} \approx 
-			 \frac{\pi f_2}{c}\cdot\frac{V_{\mathrm{dem}}(f_1)}{\Sd}\ }.
+	d_{\mathrm D}\equiv\frac{J_1(m)}{J_0(m)}
+	\simeq\frac{\pi f_{\mathcal B,\mathrm h}X_{\mathcal B}}{c},
+	\qquad
+	X_{\mathcal B}=\max_{f\in\mathcal B}
+		\frac{V_{\mathrm{dem}}(f)}{N\Sd} .
 	\label{eq:doppler}
 \end{equation}
 
-This is FM, maximally non-LTI-correctable; at fixed output it scales as
-$1/\Sd$ and is independent of $\Xmax$, so among equal-$\Vd$ drivers the
-larger cone is strictly cleaner --- area enters selection a \emph{second}
-time. It vanishes identically under band splitting, since $f_2$ no longer
-rides on the cone doing $X_1$: \eqref{eq:doppler} evaluated at the top of a
-candidate band is the quantitative split criterion, provided the crossover
-itself is steep enough (e.g.\ a linear-phase FIR) that out-of-band
-excursion does not intermodulate back in --- implicit in the
-unconstrained-DSP premise (A6), but worth stating explicitly.
+The phase modulation is kinematic and exact within the rigid-piston model;
+the sideband approximation is its small-index limit. At fixed output,
+$d_{\mathrm D}$ falls as $1/\Sd$: among candidates with equal $\Vd$, the
+larger cone has the lower indicator. It is \emph{not} a perceived
+distortion value---the audibility of loudspeaker FM distortion has been
+disputed since \cite{klipsch1969,allison1982}---and is used only as a
+screen against a declared sideband-ratio budget. Splitting the bands
+removes cross-band modulation \emph{on the same radiator}; it does not
+remove self-modulation within a band, and finite crossover overlap leaves
+some residual.
 
-\textbf{(3) Sealed-box air-spring distortion.} Adiabatic box compression is
-an asymmetric spring; weighting by the box's share of total stiffness
-(\cref{prop:invariance}) gives
+\textbf{Box-spring indicator.} Adiabatic compression of the enclosed air is
+an asymmetric spring; weighting the leading term by the box's share of
+total stiffness gives
+
 \begin{equation}
-	\boxed{\ \mathrm{HD}_{2}^{\mathrm{box}} \approx
-		\frac{\gamma+1}{4}\, 
-		\frac{V_{\mathrm{dem}}}{\Vb}\Big(1-\frac{\Qts^2}{\Qtc^2}\Big)\ },
+	\xi_{\mathrm{box}} \approx
+		\frac{\gamma+1}{4}\,
+		\frac{V_{\mathrm{dem}}}{N\Vb}\Big(1-\frac{\Qts^2}{\Qtc^2}\Big),
 	\label{eq:boxHD}
 \end{equation}
-driver-independent at fixed output: a \emph{box} criterion, $\propto1/\Vb$,
-mitigated by larger $\Vb$ and stuffing ($\gamma_{\mathrm{eff}}\to1$).
 
-Two further mechanisms are real but not independently computable from
-datasheets: reluctance/flux modulation ($\propto i^2\,\dd\Le/\dd x$,
-growing toward the band top; proxy: shorting rings, low $\Le$, high $f_L$)
-and thermal AM ($\Delta L\approx-0.034\,\xi_P\Delta T_{\mathrm{rated}}$\,dB,
-$\xi_P=P_{\mathrm{dem}}/\Pmax$, slow and program-dependent, worse if one
-coil serves both regimes); the same coil heating shifts $\Re$ and hence
-$\Qtc,F_c$ (\cref{sec:freq}), a slow drift outside the strict LTI premise
-(A1). 
-Suspension creep/hysteresis is real, non-correctable, and absent from datasheets 
---- a quality prior, not a computable criterion.
+a property of the enclosure rather than the motor, reduced by larger
+$\Vb$ and by stuffing ($\gamma_{\mathrm{eff}}\to1$). It is reported
+separately and never added to \cref{eq:doppler} or to $\xi_x$.
 
-\begin{proposition}[Distortion-referenced selection $=$ headroom maximization]
-	\label{prop:equivdist}
-	At fixed band, room, and target, every non-correctable component above is
-	monotone decreasing in the headroom vector 
-	$h=(\Vd,\ \Sd,\ \Vb,\ \eta_0, \ \Pmax)$. 
-	Sorting candidates by predicted non-correctable distortion is
-	therefore the Pareto/lexicographic order on $h$: three independent
-	mechanisms (displacement, Doppler, box spring), one target, the same
-	headroom ranking, now with $\Sd$ and $\Vb$ entering separately from $\Vd$.
-\end{proposition}
+\textbf{Electrical and thermal utilization.} Let
+\begin{equation}
+	\begin{aligned}
+	\xi_P &={P_{\mathrm{req}}}/{\Pmax},\\
+	\xi_{\mathrm{amp}}&=\max\!\left\{
+		\frac{\max(E_{\mathrm{req}},E_{\mathrm{burst}})}
+		     {E_{\mathrm{amp}}},
+		\frac{\max(I_{\mathrm{req}},I_{\mathrm{burst}})}
+		     {I_{\mathrm{amp}}},\right.\\[-0.3ex]
+	&\hspace{4.5em}\left.
+		\frac{P_{\mathrm{req}}}{P_{\mathrm{amp,cont}}},
+		\frac{P_{\mathrm{burst}}}{P_{\mathrm{amp,burst}}}
+		\right\}.
+	\end{aligned}
+\end{equation}
+These follow from \cref{eq:ampgates}. $\xi_P$ is a warning indicator only:
+inferring coil temperature would require thermal resistances and time
+constants that datasheets do not publish \cite{button1992}, and $\Pmax$
+itself carries standard-dependent uncertainty (A5).
 
-Distortion tolerance is itself frequency-dependent: psychoacoustic masking
-of harmonics by their own fundamental is strongest at low frequencies,
-where critical bands are widest and absolute sensitivity is lowest
-\cite{fielder2019}. 
+\textbf{Inductive screen.} $f_{\mathcal B,\mathrm h}/f_L$ indicates how far the role's upper
+band edge intrudes into the region where $\Le$ and its position dependence
+matter. Since $\Le$ is frequency- and level-dependent, $f_L$ is a
+screening approximation rather than a model-validity boundary (A2). The
+declared policy nevertheless rejects a reported $f_L\le f_2$; a missing
+$\Le$ is recorded as unresolved rather than imputed, and is demoted in the
+upper-role order.
 
-This connects directly to the worked example: the non-correctable distortion 
-total (\cref{fig:distortion-sub}) is highest in the flat, $9$--$9.5\%$ 
-plateau at and below $f_{\mathrm{pz}}$ 
---- precisely the low-frequency range where \cite{fielder2019}'s masking 
-argument offers the most cover. Distortion, not the bare SPL ceiling, 
-is therefore the leading criterion specifically in the sub-bass band, 
-and it is worst exactly where it is least audible as such.
+\textbf{Enclosure size.} The total box volume $V_{\mathrm b}^{\mathrm{tot}}$
+of a role is reported and used as a late tie-break, because it is a real
+constraint of the application rather than a risk.
+
+\subsection{Ranking policy}
+\label{sec:risk-policy}
+
+The policy is deliberately non-compensatory and is declared in advance:
+
+\begin{enumerate}
+\item \textbf{Hard gates.} $\xi_x\le1$, $\xi_x^{\mathrm{tr}}\le1$,
+	\cref{eq:ampgates}, $\Qtc\le\Qtc^\ast$ achievable within the enclosure
+	limit, $d_{\mathrm D}$ within budget for the upper role, and
+	$f_L>f_{\mathcal B,\mathrm h}$ when $\Le$ is reported. Failure at any
+	band frequency rejects the candidate, with the
+	binding gate reported.
+\item \textbf{Pareto front.} Within a role, surviving candidates are sorted
+	into non-dominated fronts on the role's core objectives:
+	$\max(\xi_x,\xi_x^{\mathrm{tr}})$, $\xi_{\mathrm{amp}}$, and box volume
+	for the low-bass role, with $d_{\mathrm D}$ added for the upper-bass
+	role. Restricting the front to the core objectives avoids the degenerate
+	outcome in which almost every candidate is non-dominated; the full
+	vector \cref{eq:riskvec} remains reported.
+\item \textbf{Lexicographic order within a front.} The low-bass role
+	minimizes excursion utilization, then Doppler sideband ratio, then
+	electrical demand, then box-spring indicator, then total volume. The upper-bass
+	role first prefers candidates at or below the $0.80$ excursion margin,
+	then maximizes $\eta_0\Pmax$, then prefers a higher $f_L$, then
+	minimizes excursion and electrical demand.
+\item \textbf{Pairing.} A system candidate is a feasible low-bass manifold
+	plus a feasible upper-bass channel. Roles are compared by their own keys
+	in sequence, then by physical driver count and total enclosure volume.
+	Risk indicators of different roles are never summed.
+\end{enumerate}
+
+The lexicographic order is an engineering policy, not a derived optimum.
+Its influence on the outcome is therefore tested explicitly by re-running
+the ranking under alternative reasonable orders
+(\cref{sec:procedure-robustness}).

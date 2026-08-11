@@ -23,13 +23,22 @@ class Recipe:
 
     scenario: Scenario
     db: Path
-    sub_units: int = 2
+    sub_units: int = 4
     attack_units: int = 1
+    require_even_sub_units: bool = True
     sub_size_min: float = 0.0
-    sub_size_max: float = float("inf")
+    sub_size_max: float = 18.0
     attack_size_min: float = 0.0
     attack_size_max: float = float("inf")
     top_k_each: int = 15
+
+    def __post_init__(self) -> None:
+        if self.sub_units < 1 or self.attack_units < 1:
+            raise ValueError("role unit counts must be positive")
+        if self.require_even_sub_units and self.sub_units % 2:
+            raise ValueError(
+                "opposed-pair sub manifolds require an even unit count"
+            )
 
 
 def load_recipe(path: str | Path) -> Recipe:
@@ -44,18 +53,28 @@ def load_recipe(path: str | Path) -> Recipe:
         v_room = 60.0
         l_max = 6.0
         r_listen = 3.0
-        sub_target_spl = 115.0
+        sub_target_spl = 110.0
         attack_target_spl = 105.0
-        distortion_budget = 0.03
+        room_model = "leaky_pressure_zone"
+        leakage_corner_hz = 10.0
         qtc = 0.55
+        max_box_vas_ratio = 10.0
+        max_role_box_volume_m3 = 1.0
         f_low = 15.0
         f_split = 80.0
         f_high = 250.0
+        preferred_excursion = 0.80
+        amplifier_voltage_rms = 90.0
+        amplifier_current_rms = 15.0
+        amplifier_power_continuous = 500.0
+        amplifier_power_burst = 1000.0
 
         [pair]
-        sub_units = 2
+        sub_units = 4
         attack_units = 1
+        require_even_sub_units = true
         sub_size_min = 15
+        sub_size_max = 18
         attack_size_max = 10
         top_k_each = 15
     """

@@ -22,11 +22,13 @@
   \crefformat{table}{{Table~#2#1#3}}
   \Crefformat{table}{{Table~#2#1#3}}
 
-% jaes.cls defines \theoremname/\theoremfont/\theoremheadfont but leaves the
-% \newtheorem for "theorem" itself commented out; enable it here.
-\newtheorem{theorem}{\theoremname}[section]
-
 \numberwithin{equation}{section}
+
+% refs.bib writes month fields as jan # {\slash} # feb, which BibTeX emits
+% into the .bbl as "Jan.\slashFeb"; jaes.cls provides no such macro.
+\providecommand{\slash}{/}
+\providecommand{\slashFeb}{/Feb}
+\hyphenation{elec-tro-acous-ti-cal loud-speak-er non-lin-ear-i-ties}
 
 \newcommand{\Sd}{S_{\mathrm{d}}}
 \newcommand{\Xmax}{X_{\mathrm{max}}}
@@ -54,9 +56,10 @@
 \begin{document}
 
 % Title portion
-\title{Sealed-Box Loudspeaker Driver Selection Criteria}
+\title{Datasheet-Based Ranking of Sealed-Box Bass Drivers for a Small-Area
+DSP-Integrated Stereo System}
 
-\markboth{HOLTKAMP}{SEALED-BOX DRIVER SELECTION CRITERIA}
+\markboth{HOLTKAMP}{DATASHEET-BASED RANKING OF SEALED-BOX BASS DRIVERS}
 
 \authorgroup{
 \author{LUC HOLTKAMP\thanks{To whom correspondence should be addressed, email: luc@sensemagic.nl.}}
@@ -65,34 +68,30 @@
 }
 
 \abstract{%
-Selecting a sealed-box bass driver for a given room and level target is
-usually done by heuristics such as the efficiency-bandwidth product (EBP).
-We derive, from the lumped electromechanical model of a sealed
-direct-radiator loudspeaker, the maximum acoustic output as a function of
-frequency subject to linear excursion and continuous coil dissipation, with
-an unconstrained amplifier. Frequency-domain and time-domain (burst)
-analyses are shown to yield the same two figures of merit. The complete
-sealed-box selection problem reduces to four datasheet-computable
-invariants -- displacement volume, acoustic power, a corner-placement
-parameter, and an upper validity frequency -- plus one regime-boundary
-frequency. We show EBP is a legitimate enclosure-type screen but not an
-absolute ranking, and that a motor-materials bound -- evaluated against 1025
-bass-relevant drivers in the VituixCAD database -- forbids one driver from
-maximizing both the excursion and dissipation figures of merit at once. We
-further show that every non-linearly-correctable distortion mechanism --
-motor/suspension nonlinearity, Doppler frequency modulation, and box-spring
-distortion -- is monotone in the same headroom ratios, so
-distortion-referenced selection reduces to headroom maximization. Closing
-the low end with the room's own pressure-zone gain gives an explicit
-displacement-volume sizing rule and corner-frequency target, and we show
-why, under this paper's DSP-corrected, room-integrated premise, sealed is
-the stronger enclosure choice over vented. A worked numerical
-example and an open-source, unit-tested reference implementation
-accompany the results.}
+This Engineering Report describes a reproducible pre-purchase procedure
+that ranks sealed-box bass drivers from public datasheet fields for one
+declared architecture: a compact prepared living-room listening area,
+half-space soffit mounting, a shared mono low-bass manifold, independent
+stereo upper-bass channels, and finite-band DSP alignment. Established
+relations---the sealed-box lumped model, the alignment line, the
+displacement-limited output ceiling set by displacement volume, and the
+dissipation-limited ceiling set by reference efficiency and rated
+power---are assembled into explicit feasibility gates that also include
+finite amplifier voltage, current, continuous and burst power, enclosure
+volume, and an inductive screening frequency. Low-frequency demand follows
+from a leaky pressure-zone room model whose leakage corner is treated as an
+uncertain input, and transient demand from numerical solution of the
+sealed-box equation for declared single-cycle bursts. Nonlinear risk is
+reported as separate indicators rather than as a scalar distortion total.
+Candidates are ordered by hard gates, role-specific Pareto fronts, and a
+declared lexicographic policy. A worked example built from public
+manufacturer datasheets verifies every gate, and rank robustness under
+datasheet and room uncertainty is reported.}
 \maketitle
 
 \begin{keywords}
-distortion, loudspeaker design, room acoustics, sealed enclosure, transducer modeling
+loudspeaker driver selection, sealed enclosure, maximum acoustic output,
+datasheet screening, room gain, nonlinear headroom
 \end{keywords}
 
 \input{../sections_jaes/sec_intro.tex}
@@ -106,25 +105,36 @@ distortion, loudspeaker design, room acoustics, sealed enclosure, transducer mod
 \input{../sections_jaes/sec_procedure.tex}
 \input{../sections_jaes/sec_conclusion.tex}
 
-\section*{Acknowledgment}
-Driver parameters used throughout this paper and its worked example are
-drawn from the VituixCAD driver database; we thank its maintainers for
-making this data publicly available. 
-An interactive web application implementing the selection procedure of 
-\cref{sec:procedure} is available from SenseMagic. 
-A complete, unit-tested reference implementation, 
-figure/table generation scripts, and the companion explanatory preprint are
-open-sourced at \url{https://github.com/luchp/audioshape}.
+\section*{Acknowledgment, Data, and Code Availability}
+The candidate population analysed in \cref{sec:procedure} is a locally held
+export of the VituixCAD community driver database. That file is obtained
+separately and is \emph{not} redistributed with this report: only its
+source description, SHA-256 hash, parser metadata, filter definitions, and
+aggregate counts and population plots are published, in
+\path{papers/26325/data/driver_database_manifest.json}. The driver
+records used in the worked example of \cref{app:example} are taken from the
+manufacturers' public datasheets; the exact source URLs and SI inputs are
+recorded in the manifest, and the computed results are summarized in
+\cref{tab:worked-pair}. The reference implementation, the figure and table
+generation script, the canonical scenario file, the unit tests, and the
+companion explanatory preprint \cite{audioshape-preprint}, which carries the
+full derivations omitted here, are available at
+\url{https://github.com/luchp/audioshape}; the version used here is
+identified in the archived release accompanying this report.
+The author declares a competing interest: he develops loudspeaker
+design software commercially at SenseMagic.
 
 \appendix
-\input{../sections_jaes/appx_vented.tex}
 \input{../sections_jaes/appx_example.tex}
+\input{../sections_jaes/appx_vented.tex}
 
 \bibliography{../refs}
 \bibliographystyle{jaes}
 
-\clearpage
-\biography{Luc Holtkamp}{no-photo}
-{Luc Holtkamp is the founder of SenseMagic, Netherlands, where he develops signal-processing tools for loudspeaker system design.}
+% Suppress the class's black missing-photo placeholder in the review draft.
+% Add \biography with an actual photo for the final publication package.
+\makeatletter
+\authorgdtrue
+\makeatother
 
 \end{document}

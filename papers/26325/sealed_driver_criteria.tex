@@ -1,32 +1,29 @@
-%using article instead of report: no need for chapters, only sections
+% Extended explanatory companion to the JAES Engineering Report.
 \documentclass[11pt,a4paper]{article}
 
-% Essential packages
-\usepackage{amsmath,amssymb,amsthm}
+\usepackage{amsmath,amssymb}
 \usepackage{graphicx,booktabs,array}
-\usepackage[top=3cm, bottom=4cm, left=25mm, right=25mm]{geometry}
-\usepackage[square, comma, numbers, sort&compress]{natbib}
+\usepackage[top=3cm,bottom=4cm,left=25mm,right=25mm]{geometry}
+\usepackage[square,comma,numbers,sort&compress]{natbib}
 \usepackage[T1]{fontenc}
-
-% Optional customisation packages
-\usepackage{mathtools} % Required for automated delimiter scaling
-\usepackage{newpxtext} % Palatino clone for body text
-\usepackage{newpxmath} % Matching mathematical symbols
+\usepackage{mathtools}
+\usepackage{newpxtext}
+\usepackage{newpxmath}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
-
 \usepackage[mathlines]{lineno}
+\usepackage{siunitx}
+\usepackage{xurl}
 
-% Metadata
+% Metadata loads hyperref.
 \input{meta/metadata.tex}
+\usepackage[capitalise]{cleveref}
 
-% Build toggle: 0 = branded preprint build (default), 1 = plain journal-
-% submission build. Set via a driver file that does
-% \newcommand{\ELSVIERBUILD}{1} then \input{sealed_driver_criteria.tex} --
-% e.g. sealed_driver_criteria_journal.tex -- rather than editing this file.
+% Build toggle: 0 = branded explanatory preprint (default), 1 = plain
+% journal-style companion.  A driver file may define \ELSVIERBUILD before
+% inputting this file.
 \providecommand{\ELSVIERBUILD}{0}
 
-% Page layout
 \parindent 0pt
 \parskip 1ex
 \setlength{\headheight}{40pt}
@@ -37,13 +34,10 @@
 \renewcommand{\contentsname}{Contents}
 \bibliographystyle{unsrtnat}
 
-%=============================================================================================================================
-\newtheorem{prop}{Proposition}
-\newtheorem{lem}{Lemma}
-\newtheorem{thm}{Theorem}
-\newtheorem{cor}{Corollary}
-\theoremstyle{remark}
-\newtheorem{rmk}{Remark}
+% refs.bib contains a month expression that produces these commands.
+\providecommand{\slash}{/}
+\providecommand{\slashFeb}{/Feb}
+\providecommand{\slashFebruary}{/February}
 
 \newcommand{\Sd}{S_{\mathrm{d}}}
 \newcommand{\Xmax}{X_{\mathrm{max}}}
@@ -68,27 +62,42 @@
 \newcommand{\sm}{\sigma_{\mathrm{m}}}
 \newcommand{\dd}{\mathrm{d}}
 
-%=============================================================================================================================
 \begin{document}
-%=============================================================================================================================
 
-%=============================================================================================================================
 \ifnum\ELSVIERBUILD=1
 	\input{frontmatter/journal_titlepage.tex}
 \else
 	\input{frontmatter/preprint_titlepage.tex}
 \fi
-%=============================================================================================================================
 
 \linenumbers
 
-%=============================================================================================================================
 \section*{Abstract}
-%=============================================================================================================================
-We derive, from the lumped electromechanical model of a sealed direct-radiator loudspeaker, the maximum acoustic output as a function of frequency subject to the two intrinsic driver limits: linear excursion and continuous coil dissipation. The amplifier is assumed unconstrained. Both a frequency-domain (steady sine) and a time-domain (burst/attack) analysis are carried out; they are shown to yield the \emph{same} two figures of merit, differing only by computable shape constants. The complete driver characterization for the sealed-box low-frequency problem reduces to four datasheet-computable invariants: the displacement volume set by cone area and excursion limit, the acoustic power set by reference efficiency and thermal power limit, a corner-placement parameter set by the resonance frequency and total quality factor, and an upper-validity frequency set by voice-coil resistance and inductance -- plus a regime-boundary frequency that follows from the first two. We review the widely used efficiency-bandwidth-product heuristic and show it is a legitimate enclosure-\emph{type} screen but not an absolute performance ranking; the four invariants above supply that ranking directly. A motor-materials bound, evaluated against 1025 bass-relevant drivers in the VituixCAD database, proves that the displacement figure of merit and the corner-rate parameter cannot be simultaneously large, which is the rigorous form of the statement ``the sub and the attack driver cannot be the same driver.'' We further show that every distortion mechanism that no linear time-invariant filter can correct scales monotonically with the same headroom ratios, so \emph{distortion-referenced} selection reduces to headroom maximization anchored at the IEC-62458 definition of maximum linear excursion, plus two new geometric criteria: Doppler frequency modulation inversely proportional to cone area, and box-spring distortion proportional to the ratio of demanded displacement to enclosure volume. We also close the low end of the room-coupled regime: below the room pressure zone the excursion demand flattens, giving an explicit sizing rule for the displacement volume and a corresponding corner-frequency target. Finally, we extend the same lumped model by one port and prove, rather than assume, why this paper restricts itself to sealed enclosures: a vented alignment's low-frequency pressure asymptote is a provably steeper roll-off than sealed, its cone excursion is provably \emph{not} bounded by the box at all below tuning (unlike sealed, where the box caps it), and the port air velocity needed to reach the same in-room target routinely exceeds the empirical turbulence-onset threshold by an order of magnitude at realistic port sizes -- three independent, first-principles reasons the two-regime, two-driver, sealed criteria derived here are the object of this paper. A complete, unit-tested reference implementation is open-sourced at \url{https://github.com/luchp/audioshape}; every figure and table in this paper is regenerated from it.
+
+This document is the extended explanatory companion to the stabilized JAES
+Engineering Report.  It presents a reproducible pre-purchase procedure for
+screening and ranking sealed-box bass drivers for one declared system: a
+compact prepared living-room couch area, half-space soffit mounting, a shared
+mono low-bass manifold, independent stereo upper-bass channels, and
+finite-band DSP alignment.  Classical sealed-box relations are derived in
+detail and placed on explicit reference bases.  Feasibility is checked across
+each complete role band against excursion, enclosure volume, voice-coil
+dissipation, amplifier voltage, amplifier current, continuous power, burst
+power, and a rough inductive screen.  Low-frequency demand is obtained from a
+leaky pressure-zone limiting model and tested for sensitivity to room leakage.
+Transient demand is obtained by numerical integration of the sealed ODE for a
+declared one-cycle waveform family, including ring-down.  Excursion, Doppler
+sideband ratio, box-spring asymmetry, electrical utilization, and inductive
+uncertainty remain separately reported indicators.  Surviving candidates
+receive role-specific Pareto fronts and lexicographic orders.  Aggregate
+evidence comes from a hash-identified private database without redistributing
+its rows; the worked system uses public manufacturer records.  The result is
+an application-specific shortlist, not a new physical limit or a claim about
+all loudspeaker architectures.
 
 \vspace{1em}
-\noindent\textbf{Keywords:} loudspeaker design; sealed enclosure; excursion limit; power compression; distortion; vented enclosure; driver selection
+\noindent\textbf{Keywords:} loudspeaker driver selection; sealed enclosure;\\
+maximum acoustic output; datasheet screening; room gain; nonlinear headroom
 
 \ifnum\ELSVIERBUILD=1
 	\input{frontmatter/journal_header.tex}
@@ -96,1711 +105,1368 @@ We derive, from the lumped electromechanical model of a sealed direct-radiator l
 	\input{frontmatter/preprint_header.tex}
 \fi
 
-%======================================================================
-\section{Introduction}
+\tableofcontents
+\clearpage
+
+\section{Purpose, status, and system architecture}
 \label{sec:intro}
 
-\subsection*{Problem statement}
+\subsection{Status of this document}
 
-The problem addressed is deliberately narrow. Given a room, a single fixed
-listening position in it (``the couch''), a target sound-pressure level, a
-database of driver datasheet parameters, and a DSP crossover/equalizer of
-unlimited complexity between amplifier and driver: select the bass
-driver(s) and sealed enclosure(s) that reproduce that target with the least
-\emph{non-correctable} distortion. ``Monitor'' is used in this precise sense
-throughout -- one listener, one seat, one target curve, corrected in the
-digital domain wherever an LTI filter can do so (made precise in
-Sec.~\ref{sec:distortion}) -- not a general-purpose loudspeaker for arbitrary
-placement, multiple seats, or a live-sound audience. All drivers considered
-radiate into half space from a common baffle plane (a soffit wall,
-Sec.~\ref{sec:assumptions}). Stereo reproduction is the default listening
-scenario; every quantity below sizes a \emph{single physical driver's} own
-output and distortion at the couch, but $N$ identical drivers on one
-correlated, common signal -- a mono sub manifold, or a stereo pair fed
-mono-panned content -- add coherently per A9, so a stereo pair need only
-reach $\mathrm{SPL}_{\mathrm{target}}-20\log_{10}2\approx-6$\,dB each
-(App.~\ref{sec:tool-scope}(e)); this coherent sum is never assumed
-\emph{between} the sub and attack roles, which remain acoustically
-uncoupled (App.~\ref{sec:tool-scope}(d)).
+This is a detailed explanatory companion, not the submitted JAES manuscript.
+The condensed Engineering Report is the publication document; this companion
+retains intermediate algebra, implementation details, and additional
+interpretation that would be too long for the journal format.  Both documents
+use the same canonical scenario, generated figures, generated tables,
+public-driver records, and ranking policy.  The equations below distinguish
+three kinds of statements:
 
-Two physical facts, both invisible to a free-field-only treatment, decide the
-rest of the argument.
+\begin{itemize}
+	\item established small-signal loudspeaker and room relations that are
+	rederived to fix notation and conventions;
+	\item exact consequences of the stated lumped model;
+	\item declared engineering choices, empirical observations, and risk
+	indicators whose scope is narrower than the equations.
+\end{itemize}
+
+The method is intended for the stage before drivers are purchased, when the
+available evidence is principally public Thiele/Small fields and manufacturer
+ratings.  It narrows a population to defensible candidates.  It does not
+replace impedance, near-field, large-signal, thermal, or in-room measurement
+of the purchased units.
+
+\subsection{Fixed application}
+\label{sec:intro-arch}
+
+\Cref{fig:architecture} fixes the system to which every result applies:
+
+\begin{itemize}
+	\item a compact primary listening area centred on a prepared living-room
+	couch and represented by a declared reference response or an aggregate
+	over a small declared measurement set;
+	\item half-space soffit-wall mounting for the bass sources;
+	\item a common mono low-bass manifold covering
+	\SIrange{15}{80}{\hertz};
+	\item independent left and right upper-bass channels covering
+	\SIrange{80}{250}{\hertz};
+	\item finite-band crossover, magnitude correction, phase alignment, and
+	delay alignment;
+	\item one amplifier channel per physical driver.
+\end{itemize}
+
+The low-bass target is \SI{110}{dB} for the complete four-driver manifold.
+Its drivers share one signal, so each supplies one quarter of the required
+peak displaced volume.  The upper-bass target is \SI{105}{dB} for each
+stereo channel independently.  The opposite channel contributes no sizing
+credit because ordinary stereo programme is not guaranteed to be correlated.
+Electrical demand is always calculated for each physical driver.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.92\textwidth]{figures/fig_architecture}
+	\caption{Canonical architecture and data flow.  The procedure accepts
+	public datasheet fields, a declared room and couch-area basis, separate
+	role targets, enclosure constraints, amplifier limits, and a transient
+	test specification.  It returns separate low-bass and upper-bass orders;
+	the role indicators are not collapsed into one cross-role score.}
+	\label{fig:architecture}
+\end{figure}
+
+\subsection{Scene fidelity and its boundary}
+\label{sec:intro-fidelity}
+
+The architectural aim is high fidelity to the recorded two-channel scene
+over the primary couch area: stable localization and image focus, accurate
+direct- and early-field timbre, controlled low-frequency summation, and
+coherent integration across the crossover.  In a small room these attributes
+depend on the direct sound and early reflections \cite{toole2006,bech1998},
+on the relative phase and delay of noncoincident sources
+\cite{linkwitz1976}, and on group-delay error \cite{blauert1978}.  Soffit
+mounting, room preparation, compact source geometry, and finite-band DSP make
+those variables more controllable over a small area than an objective based
+only on diffuse-field level.
+
+That rationale is not a listening-test result.  It also concerns scene
+fidelity rather than listener envelopment.  Envelopment depends strongly on
+late lateral energy \cite{bradley1995,rumsey2002} and may be better served by
+multichannel or deliberately diffuse reproduction \cite{francombe2017}.
+Likewise, multi-seat low-frequency uniformity is a different optimization
+problem \cite{welti2006}.  The present architecture accepts reduced off-area
+robustness in exchange for tighter control of one prepared couch area.
+
+\subsection{Contribution}
+\label{sec:intro-contribution}
+
+No new motor law or enclosure physics is claimed.  The contribution is the
+integration of established relations into a complete decision path:
 
 \begin{enumerate}
-\item[(i)] \textbf{Room gain.} At wavelengths long compared with the room,
-the air in front of the driver stops radiating and starts behaving as a lossy
-pneumatic spring: below a corner frequency $f_{\mathrm{pz}}$ set by the
-room's largest dimension, sound pressure at the listening position tracks
-cone \emph{displacement} directly, rather than its second time derivative
-(Sec.~\ref{sec:roomclose}). A sealed system whose own corner coincides with
-$f_{\mathrm{pz}}$ therefore tapers off below that corner \emph{for free},
-letting the room supply the last octave rather than a bigger box, a port, or
-more electrical power.
-\item[(ii)] \textbf{Two regimes, two different jobs.} Near its own resonance
-$F_s$, a sealed driver's ceiling is set by how far its cone can move before
-distortion-defined $\Xmax$ is reached: displaced volume $\Vd=\Sd\Xmax$ is what
-matters, and the economical driver is large, compliant, and long-throw. An
-octave or more above $F_s$, the same driver's excursion at fixed acoustic
-output falls as $1/f^2$, and the driver is instead limited by how much
-electrical power its coil can dissipate continuously: efficiency-referenced
-power $\eta_0\Pmax$ is what matters there, and the economical driver is
-light, stiff, and strongly motored -- the opposite recipe.
-Section~\ref{sec:invariants} proves (Theorem~\ref{thm:bound}) that no single
-voice-coil motor can make both quantities large at once: the two regimes want
-physically different drivers, not just different alignments of the same
-driver.
+	\item normalize public records and preserve uncertainty about rating
+	conventions;
+	\item choose a realizable sealed alignment under a finite box cap;
+	\item convert a declared couch-area target and room transfer into required
+	displaced volume over each complete role band;
+	\item compute steady and finite-burst displacement, voltage, current, and
+	coil dissipation per driver;
+	\item reject any record that crosses a hard gate;
+	\item report separate nonlinear-risk and implementation indicators;
+	\item construct role-specific Pareto fronts and then apply a declared
+	lexicographic order;
+	\item test whether the resulting shortlist is stable under plausible
+	datasheet, room, and policy perturbations.
 \end{enumerate}
 
-\noindent These two facts jointly motivate the two design choices this
-document argues for, rather than assumes: (1) a two-way bass system -- one
-large, long-throw driver (or driver pair/manifold) for the excursion-limited
-band near $F_s$, one smaller, strongly motored driver for the
-dissipation-limited band above it -- and (2) a \emph{sealed} enclosure for
-both, so the room-gain mechanism of (i) is available to every band and the
-excursion ceiling stays bounded at every frequency down to DC
-(Appendix~\ref{sec:vented} shows a vented alignment forfeits both
-properties). Sections~\ref{sec:freq}--\ref{sec:roomclose} derive this from
-the driver's own electromechanical model, Sec.~\ref{sec:procedure} turns the
-result into an ordered, datasheet-only selection procedure, and
-Sec.~\ref{sec:conclusion} restates the verdict compactly.
-
-\subsection*{Roadmap}
-
-Sec.~\ref{sec:prevwork} reviews Thiele/Small alignment theory and the $EBP$
-heuristic built on top of it, and states precisely what it gets right (a
-first-pass enclosure-type screen) and where it falls short (no absolute
-performance ranking) -- the gap the rest of the paper closes.
-Sec.~\ref{sec:assumptions} fixes SI units, the datasheet-input table, and the
-numbered assumptions (A1--A11) referenced throughout. Sec.~\ref{sec:model}
-writes the single second-order ODE that everything else is read off from,
-and isolates the one box-invariant rate $\sigma$ that drives the rest of the
-argument. Sec.~\ref{sec:freq} solves it in steady sine to get the two output
-ceilings (displacement- and dissipation-limited) and the frequency $f_x$
-where one hands off to the other. Sec.~\ref{sec:time} redoes the same solve
-for transient (attack/burst) drive and shows the frequency-domain result was
-not an artifact of the sine assumption -- only the constants move.
-Sec.~\ref{sec:invariants} collects the resulting datasheet-computable
-invariants and proves, via the motor materials bound (Thm.~\ref{thm:bound}),
-that no single motor can make both FOMs large at once -- the rigorous form
-of fact (ii) above. Sec.~\ref{sec:distortion} reframes all of this in terms
-of \emph{non-correctable} distortion rather than raw SPL, which is the
-criterion actually wanted and turns out to be equivalent to headroom
-maximization. Sec.~\ref{sec:roomclose} brings in the room: below the
-pressure zone $f_{\mathrm{pz}}$ the excursion demand stops rising, which
-sets both a sizing rule and an $F_s$ criterion, and lets a sealed system
-taper off below its corner for free -- the rigorous form of fact (i) above.
-Sec.~\ref{sec:procedure} assembles all of the above into a single ordered
-selection procedure, worked through concretely in Sec.~\ref{sec:example}.
-Sec.~\ref{sec:conclusion} closes with the design verdict and its relation to
-the previous work of Sec.~\ref{sec:prevwork}. Appendix~\ref{sec:vented}
-extends the same model by one port to prove, rather than assume, why this
-document restricts itself to sealed enclosures; Appendix~\ref{sec:limits}
-records model limitations and the reference implementation's scope; and
-Appendices~\ref{app:room}--\ref{app:formulas} collect a supporting
-room-pressure derivation and a formula sheet, none of which gate the main
-argument.
-
-%======================================================================
-\section{Previous work}
+\section{Previous work and positioning}
 \label{sec:prevwork}
 
-\noindent Thiele/Small small-signal parameters and the sealed-box alignment
-line \eqref{eq:alignment} \cite{small1972} are the common starting point for
-every driver/box choice below; nothing in this section revisits that theory.
-What is reviewed here is the $EBP$ heuristic commonly built on top of it for
-enclosure-type screening, and a few related shorthands worth correcting --
-because the gap they leave open, an absolute datasheet-computable
-performance ranking, is what Sec.~\ref{sec:freq} onward fills.
+\input{tables/table_prior_art}
 
-\subsection*{$EBP$ as an enclosure-type heuristic}
+Closed-box synthesis, alignment, reference efficiency, and maximum-output
+relations follow Small \cite{small1972,small1972direct}.  Fielder and
+Benjamin \cite{fielder1988} connect subwoofer displacement to programme and
+room requirements and are the nearest precedent for the sizing side of this
+work.  The present contribution is not a replacement for either body of
+work; it is a reproducible policy layer that carries those relations through
+to a finite enclosure, finite electronics, a declared room, and a candidate
+order.
 
-The efficiency-bandwidth product $EBP\equiv F_s/\Qes$ is a widely used single
-number for a first-pass sealed-vs-vented screening: $EBP\lesssim50$ suggests
-sealed, $EBP\gtrsim100$ suggests vented, the interval between either
-\cite{dickason2006}. As Sec.~\ref{sec:materials} shows, $EBP$ is a genuine
-motor/mass ratio, $EBP=\dfrac{B^2\sigma_c}{2\pi\rho_c}\cdot\dfrac{m_c}{\Mms}\cdot
-u^{-2}$ \eqref{eq:sebound} (conductor material, conductor mass over moving
-mass, overhang factor) -- a legitimate, physically grounded screening tool for
-enclosure \emph{type}. It says nothing, however, about \emph{how much} SPL or
-how little distortion either enclosure choice delivers once the type is
-chosen: in this document $EBP$ enters only through the regime-boundary
-frequency $f_x$ \eqref{eq:fx} and the corner rate \eqref{eq:cornerrate}, never
-as a standalone performance ranking.
+The efficiency-bandwidth product
+\begin{equation}
+	EBP=\frac{F_s}{\Qes}
+	\label{eq:ebp}
+\end{equation}
+is widely used as a first enclosure-type screen \cite{dickason2006}.  It is
+related to electrical damping and therefore contains useful motor-to-mass
+information.  It does not state target distance, room transfer, box volume,
+available stroke, rated dissipation, or amplifier headroom.  This procedure
+uses the exact corner rate $F_s/\Qts$ for alignment and never uses $EBP$ as a
+standalone performance order.
 
-\subsection*{Three points about $\Qtc$}
+Published $\Xmax$ values may be geometric, distortion-defined, or based on a
+manufacturer-specific rule \cite{iec62458,klippel2003xmax,klippel2006}.
+Power ratings likewise depend on test standard and duration \cite{aes2}.
+The procedure therefore records the source and basis when available and
+perturbs both fields during robustness analysis.
 
-\noindent Three points about $\Qtc$ bear directly on the sections that
-follow:
+Large-signal motor and suspension behaviour is described by parameters such
+as $Bl(x)$, $K_{\mathrm{ms}}(x)$, and $L_{\mathrm e}(x,i)$
+\cite{klippel2006}.  Datasheet fields do not provide those curves.  The
+indicators used here consequently express proximity to declared boundaries,
+not a predicted acoustic percentage.  Doppler frequency modulation has a
+long literature and a disputed audibility interpretation
+\cite{klipsch1969,allison1982}; only the kinematic first-sideband ratio is
+used.  Thermal compression requires resistances and time constants that are
+not recoverable from a continuous-power number alone \cite{button1992}.
+
+Room response is spatially distributed.  Toole \cite{toole2006} describes
+the distinction between direct/early-field behaviour and the modal region;
+Welti and Devantier \cite{welti2006} optimize low-frequency response over a
+defined seating region; modal equalization and multi-position correction are
+bounded by measurement geometry and regularization
+\cite{makivirta2003,cecchi2018}.  Those results motivate the explicit
+couch-area reference and the refusal to treat DSP as exact inversion.
+
+Finally, vented loading is established fourth-order practice
+\cite{small1973vented}.  Port compression and turbulence are design
+constraints with known mitigations \cite{salvatti2002,vanderkooy1998}.
+\Cref{sec:vented} therefore compares sealed and vented loading only under
+the present system constraints.
+
+\section{Scope, conventions, and canonical scenario}
+\label{sec:scope}
+
+\subsection{Notation and reference bases}
+\label{sec:scope-bases}
+
+SI units are used.  Unless otherwise stated,
+$\rho_0=\SI{1.20}{\kilogram\per\cubic\meter}$,
+$c=\SI{343}{\meter\per\second}$, and $p_0=\SI{20}{\micro\pascal}$.
+Sound pressure levels use rms pressure.  Cone displacement, displaced
+volume, and sinusoidal phasor amplitudes marked with a hat are peak values.
+Voltage and current limits are rms values; power is mean coil dissipation
+over the stated interval.
+
+\begin{center}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+$F_s$ & free-air resonance & $\Mms$ & moving mass\\
+$\Qes,\Qms,\Qts$ & quality factors & $\Re$ & dc resistance\\
+$\Vas$ & compliance volume & $\Bl$ & force factor\\
+$\Sd$ & effective piston area & $\Le$ & voice-coil inductance\\
+$\Xmax$ & one-way excursion boundary & $\Pmax$ & rated dissipation\\
+$\Vd$ & $\Sd\Xmax$ & $\Vb$ & net sealed-box volume\\
+$F_c,\Qtc$ & in-box resonance and Q & $f_L$ & inductive screen\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Four pressure bases must remain distinct:
+
 \begin{enumerate}
-\item \textbf{Overshoot.} Values of order $1$--$2\%$ are often quoted for
-a $\Qtc=0.55$ (Bessel-like) alignment; the exact step response gives
-$M_p(0.55)=0.11\%$ \eqref{eq:Mp}, and $M_p\le1\%$ is in fact already
-satisfied up to $\Qtc\le0.61$.
-\item \textbf{Excursion vs.\ frequency.} $X\propto1/f^2$ only above the
-sealed corner $F_c$. Below $F_c$, excursion at fixed drive
-\emph{saturates} at the compliance limit \eqref{eq:PL}; the driver reaches
-$\Xmax$ at any $f<F_c$ only if the required drive $P_{\mathrm{L}}(0)$ exceeds
-$\Pmax$ \eqref{eq:PL0} -- a drive limit, not an excursion one.
-\item \textbf{SPL ceiling vs.\ $\Qtc$.} The excursion-limited ceiling
-\eqref{eq:SPLL} does not depend on $\Qtc$ at all (Cor.~\ref{cor:onlyVd}).
-$\Qtc$ governs corner placement and settling (Sec.~\ref{sec:time}, step 3
-of Sec.~\ref{sec:procedure}), not how loud the driver can ultimately play.
+	\item[B1.] \textbf{Intrinsic ceiling}: one driver, half space,
+	$r=\SI{1}{\meter}$.  This characterizes a driver only.
+	\item[B2.] \textbf{Couch-area demand}: required pressure at the declared
+	listening distance and response aggregation.
+	\item[B3.] \textbf{Mono-manifold total}: aggregate low-bass pressure at
+	B2.  The common displaced-volume demand is divided among the manifold
+	drivers.
+	\item[B4.] \textbf{One stereo channel}: the pressure required from one
+	upper-bass channel at B2.
 \end{enumerate}
 
-\subsection*{The gap}
+\subsection{Canonical numerical scenario}
+\label{sec:scope-scenario}
 
-Neither $EBP$'s enclosure-type screen nor the assorted shorthands above
-produces a single, datasheet-computable ranking that (a) is derived rather
-than guessed, (b) is referenced to \emph{non-correctable} distortion rather
-than raw SPL, and (c) accounts for the room gain that determines how much
-low-frequency output is even needed from the driver in the first place.
-Supplying that ranking, from first principles and in a form a spreadsheet
-can evaluate, is the subject of Secs.~\ref{sec:assumptions}--\ref{sec:example}.
+\begin{center}
+\small
+\begin{tabular}{@{}p{4.0cm}p{9.4cm}@{}}
+\toprule
+room & $V_{\mathrm{room}}=\SI{60}{\cubic\meter}$,
+$L_{\max}=\SI{6}{\meter}$; prepared for the stated source/listening area\\
+couch-area distance & $r_{\mathrm{listen}}=\SI{3}{\meter}$\\
+room limiting model & leaky pressure zone, $f_\ell=\SI{10}{\hertz}$\\
+role bands & mono low bass \SIrange{15}{80}{\hertz};
+upper bass \SIrange{80}{250}{\hertz}\\
+targets & \SI{110}{dB} complete mono manifold;
+\SI{105}{dB} independently per stereo channel\\
+mounting and correction & half space; finite-band DSP\\
+alignment & $\Qtc\le0.55$\\
+box cap per driver &
+$\Vb\le\min(10\Vas,\ \SI{1.0}{\cubic\meter}/N)$;
+\SI{1.0}{\cubic\meter} total per role\\
+amplifier per driver & \SI{90}{\volt} rms, \SI{15}{\ampere} rms,
+\SI{500}{\watt} continuous, \SI{1}{\kilo\watt} burst\\
+excursion & $\Xmax$ hard boundary; $0.80\Xmax$ preferred marker\\
+Doppler screen & small-index first-sideband amplitude ratio $0.02$\\
+transient family & one-cycle rectangular voltage burst; eight uniformly
+spaced start phases; ring-down retained\\
+\bottomrule
+\end{tabular}
+\end{center}
 
-%======================================================================
-\section{Scope, conventions, assumptions}
+The targets are short-duration maximum-output design tests, not recommended
+continuous exposure levels.  For this room
+\begin{equation}
+	f_{\mathrm{pz}}=\frac{c}{2L_{\max}}\simeq\SI{28.6}{\hertz}.
+	\label{eq:fpz}
+\end{equation}
+
+\subsection{Assumptions and data limits}
 \label{sec:assumptions}
 
-All quantities SI unless noted. Sound pressure levels are dB values
-computed from the rms sound pressure relative to $p_0=20\,\mu\mathrm{Pa}$,
-on axis, at $r=1\,$m, radiation into half space
-($2\pi$~sr). Constants: $\rho_0=1.204\,\mathrm{kg/m^3}$, $c=343\,$m/s
-(so $\rho_0 c^2=1.416\times10^{5}\,$Pa).
-
-\noindent\emph{Two distances, kept distinct throughout.} $r=1\,$m is a fixed,
-driver-\emph{intrinsic} reference: every SPL ceiling in
-Secs.~\ref{sec:freq}--\ref{sec:distortion} (displacement/dissipation ceilings,
-distortion-vs-output curves, the worked-example table) is quoted at $r=1\,$m
-purely so that two drivers can be compared on neutral ground, independent of
-any particular room or seat. From Sec.~\ref{sec:roomclose} on, a second,
-unrelated distance $r_{\mathrm{listen}}$ appears: the actual distance from
-baffle to the one fixed listening position the system is being designed for
-(A11, A-list item (b) below). The two are not interchangeable and are never
-equal by construction in the worked example ($r=1\,$m vs.\
-$r_{\mathrm{listen}}=3\,$m, Sec.~\ref{sec:roomclose}): mixing them (e.g.\
-plotting a $r=1\,$m ceiling against a $r_{\mathrm{listen}}$ demand curve)
-silently changes the answer by $20\log_{10}r_{\mathrm{listen}}$ and is a
-common bookkeeping error this document avoids by never using a bare ``$r$''
-past this point without saying which one.
-
-\medskip
-\noindent Datasheet inputs used below:
-\begin{center}
-\begin{tabular}{llll}
-\toprule
-$F_s$ & free-air resonance [Hz] & $\Mms$ & moving mass incl.\ air load ($M_{\mathrm{ms}}$) [kg]\\
-$\Qes,\ \Qms,\ \Qts$ & free-air quality factors & $\Re$ & DC voice-coil resistance [$\Omega$]\\
-$\Vas$ & equivalent compliance volume [m$^3$] & $\Bl$ & force factor [T\,m]\\
-$\Sd$ & effective piston area [m$^2$] & $\Le$ & voice-coil inductance [H]\\
-$\Xmax$ & linear excursion, peak one-way [m] & $\Pmax$ & rated continuous power [W]\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent Assumptions (referenced as A1--A9):
 \begin{enumerate}
-\item[A1.] Lumped-parameter LTI model; ``linear operation'' $\equiv |x|\le\Xmax$.
-      All nonlinear mechanisms ($\Bl(x)$, $\Cms(x)$, flux modulation) are absorbed
-      into the single number $\Xmax$.
-\item[A2.] Voice-coil inductance neglected: valid for $f\ll f_L\equiv\Re/(2\pi\Le)$.
-      $f_L$ is retained as an explicit validity/selection criterion
-      (Sec.~\ref{sec:invariants}).
-\item[A3.] Baffled rigid piston, far field, $ka\lesssim1$
-      ($a=\sqrt{\Sd/\pi}$): $p(r,t)=\dfrac{\rho_0\Sd\,\ddot{x}(t-r/c)}{2\pi r}$.
-\item[A4.] Lossless sealed box ($Q_L\to\infty$), adiabatic air spring.
-\item[A5.] $\Pmax$ is interpreted as the maximum \emph{continuous coil dissipation}
-      $\langle i^2\rangle \Re$. Datasheet AES/IEC ratings \cite{aes2} approximate this
-      within a factor $\sim$2; comparisons are meaningful only within one rating
-      standard. Short-term (burst) dissipation capability is $\kappa\Pmax$ with
-      $\kappa\in[2,4]$ (Sec.~\ref{sec:time}).
-\item[A6.] The amplifier is unconstrained: any voltage/current the driver limits
-      allow is available. (User premise: home system, driver limits bind first.)
-\item[A7.] $\Xmax$ peak one-way, \emph{distortion-defined} per IEC 62458 /
-      Klippel \cite{iec62458,klippel2006}:
-      the displacement at which equivalent input distortion reaches $10\%$
-      ($\Bl(x)$ fallen to $\approx82\%$, or $\Cms(x)$ to $\approx75\%$, or
-      $\Le(x)$ swing $17\%$). Geometric $\Xmax$ values must be converted or the
-      comparison is void; Sec.~\ref{sec:distortion} depends on this anchoring.
-\item[A8.] Room effects excluded from all ceilings; the pressure-zone bound is
-      quantified separately in Appendix~\ref{app:room}.
-\item[A9.] Single driver by default. For $N$ identical, common-signal drivers in a
-      compact array (unit spacing $\ll$ wavelength, consistent with A3's
-      $ka\lesssim1$): volume velocities sum \emph{linearly} in the far field,
-      $\Vd\to N\Vd$ (already the scaling used in \eqref{eq:SPLL}). The same linear
-      summation gives $N^2$, not $N$, for power: driving every unit at its own
-      $\Pmax$ radiates $N^2\eta_0\Pmax$ ($+20\log_{10}N$\,dB per doubling, the
-      standard coherent sub-array/mutual-coupling gain --- not the $+10\log_{10}N$
-      of $N$ incoherent sources); conversely, a \emph{fixed} acoustic target needs
-      only $1/N^2$ of the single-driver-equivalent electrical power from each unit
-      (used in Sec.~\ref{sec:distortion}'s thermal term). Only the change this
-      induces in each unit's own radiation loading ($F_s$, $Q_{ts}$ shift with
-      proximity) is neglected as second order.
-\item[A10.] Distortion analysis (Sec.~\ref{sec:distortion}) works to leading Taylor
-      order in $x/\Xmax$; frequency-dependent transfer weightings of the distortion
-      products, which are $O(1)$ in band, are suppressed. Results are ranking laws
-      and order-of-magnitude predictors, not $\pm1$\,dB THD predictions.
-\item[A11.] Targets are peak-equivalent levels at the listening position; near and
-      below $f_{\mathrm{pz}}$ the robust demand basis is the pressure-zone relation
-      (Sec.~\ref{sec:roomclose}), since the free-field formula with $r=$ listening
-      distance under- or over-estimates by the modal gain in $[f_{\mathrm{pz}},
-      \,{\sim}4f_{\mathrm{pz}}]$.
+	\item[A1.] The driver is represented by a lumped, linear,
+	time-invariant model up to the declared $\Xmax$ boundary.  Remaining
+	below that boundary does not establish negligible nonlinearity.
+	\item[A2.] Coil inductance is omitted from the transfer equations.
+	$f_L=\Re/(2\pi\Le)$ is a rough screen because $\Le$ varies with
+	frequency, level, and position.
+	\item[A3.] Radiation uses a baffled rigid-piston monopole approximation
+	in half space over bands for which $ka$ remains suitable.
+	\item[A4.] The sealed air spring is adiabatic and enclosure losses are
+	omitted from the ranking model.
+	\item[A5.] $\Pmax$ is treated as a continuous coil-dissipation rating.
+	Its test basis is retained as uncertainty; thermal compression is
+	reported as unresolved rather than reconstructed.
+	\item[A6.] Amplifier voltage, current, continuous-power, and burst-power
+	limits are hard inputs for every physical driver.
+	\item[A7.] $\Xmax$ is the excursion boundary.  The $0.80$ marker is a
+	preference, providing approximately \SI{1.9}{dB} of displacement
+	headroom, not a rejection threshold.
+	\item[A8.] Free-field ceilings and room-specific demand are kept
+	separate until feasibility is evaluated.
+	\item[A9.] Drivers in the compact mono manifold carry the same signal,
+	and their volume velocities are assumed coherent at the couch-area
+	reference.  Only displaced volume is shared by the unit count.  Mutual
+	radiation impedance and total radiated-power scaling are not inferred;
+	each driver's electrical demand is evaluated directly.
+	\item[A10.] Nonlinear-risk quantities are separately named indicators.
+	No arithmetic combination of unlike mechanisms is defined.
+	\item[A11.] DSP is finite-band and regularized.  Correction consumes
+	displacement and electrical headroom, cannot remove nonlinear residuals,
+	and must be verified over the listening area.
 \end{enumerate}
 
-%======================================================================
-\section{Model and exact transfer relations}
+Records missing a required field are skipped and counted.  A missing $\Bl$
+may be derived from consistent $F_s,\Qes,\Mms,\Re$ and is flagged as derived.
+A missing $\Le$ is not imputed: inductive confidence remains unresolved.
+When $\Le$ is reported and $f_L$ lies below the role's upper band edge, the
+record fails the inductive screen.  In the upper-bass policy, unresolved
+inductance is ordered behind a valid reported value.
+
+\section{Sealed-box model and alignment}
 \label{sec:model}
 
-Everything below is read off one lumped-parameter ODE, so it is written down once,
-exactly, before any regime-specific approximation is made.
+\subsection{Coupled electrical and mechanical equations}
 
-Terminal voltage $e(t)$, current $i(t)$, cone displacement $x(t)$ (outward positive).
-Electrical side (A2): $e=\Re i+\Bl\dot{x}$. Force on cone: $F=\Bl\, i$.
-Mechanics with total stiffness $k_t$ (suspension $+$ box):
-\begin{equation}
-\Mms\ddot{x}+\Rms\dot{x}+k_t x=\Bl\, i ,\qquad
-k_t=\frac{1}{\Cms}+\frac{\rho_0c^2\Sd^2}{\Vb}
-=\frac{1}{\Cms}\,(1+\alpha),\qquad
-\alpha\equiv\frac{\Vas}{\Vb},
-\label{eq:newton}
-\end{equation}
-using $\Vas\equiv\rho_0c^2\Cms\Sd^2$. Eliminating $i$:
-\begin{equation}
-\boxed{\ \ddot{x}+\sigma\dot{x}+\wc^2 x=\frac{\Bl}{\Re \Mms}\,e(t)\ }
-\qquad
-\sigma\equiv\sm+\se,\quad
-\sm\equiv\frac{\Rms}{\Mms},\quad
-\se\equiv\frac{\Bl^2}{\Re \Mms},\quad
-\wc^2\equiv\frac{k_t}{\Mms}.
-\label{eq:ode}
-\end{equation}
-Free-air values: $\ws=2\pi F_s=\sqrt{1/(\Mms\Cms)}$, and by definition
-\begin{equation}
-\Qes=\frac{\ws}{\se},\qquad \Qms=\frac{\ws}{\sm},\qquad \Qts=\frac{\ws}{\sigma},
-\qquad EBP\equiv\frac{F_s}{\Qes}=\frac{\se}{2\pi}.
-\label{eq:Qdefs}
-\end{equation}
-In-box values: $\wc=\ws\sqrt{1+\alpha}$, $\Qtc=\wc/\sigma$, $\Qmc=\wc/\sm$.
-
-\begin{prop}[Alignment line; box invariance of the damping rate --
-after \cite{small1972}]
-\label{prop:invariance}
-The damping rate $\sigma$ contains no stiffness and is therefore independent of the
-enclosure. Hence for every sealed alignment of a given driver
-\begin{equation}
-\boxed{\ \frac{\wc}{\Qtc}=\frac{\ws}{\Qts}=\sigma\quad\Longleftrightarrow\quad
-F_c = \Qtc\,\frac{F_s}{\Qts}\ },
-\qquad
-\Vb=\frac{\Vas}{(\Qtc/\Qts)^2-1},\qquad \Qtc>\Qts .
-\label{eq:alignment}
-\end{equation}
-\end{prop}
-\begin{proof}
-$\sigma=(\Rms+\Bl^2/\Re)/\Mms$; the box adds only $k_t$. Then
-$\wc/\Qtc=\sigma=\ws/\Qts$ and
-$F_c/F_s=\sqrt{1+\alpha}=\Qtc/\Qts$, giving $\alpha=(\Qtc/\Qts)^2-1$.
-\end{proof}
-
-\noindent Consequences: (i) a sealed driver owns exactly \emph{one} free parameter,
-the position along the line $\wc=\Qtc\sigma$; (ii) choosing the damping $\Qtc$
-\emph{fixes} the corner: $F_c=\Qtc\,(F_s/\Qts)$. The driver constant
-\begin{equation}
-\frac{\sigma}{2\pi}=\frac{F_s}{\Qts}=EBP\left(1+\frac{\Qes}{\Qms}\right)\approx EBP
-\label{eq:cornerrate}
-\end{equation}
-will be called the \emph{corner rate}. This is the rigorous content of $EBP$: it does
-not measure output capability; it measures where the corner lands for a chosen
-$\Qtc$ (and, Sec.~\ref{sec:time}, how fast transients settle).
-
-Steady sine at $\omega$, phasor amplitudes ($\hat{x}$ peak):
+With terminal voltage $e$, current $i$, cone displacement $x$, and positive
+velocity $\dot x$, neglecting $\Le$ gives
 \begin{align}
-\hat{x}(\omega)&=\frac{\Bl}{\Re\Mms}\,
-\frac{\hat{e}}{\sqrt{(\wc^2-\omega^2)^2+\sigma^2\omega^2}},
-\label{eq:xofe}\\
-\hat{\imath}(\omega)&=\frac{\Mms}{\Bl}\,
-\hat{x}\,\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2}
-\qquad\text{(from \eqref{eq:newton}: only \emph{mechanical} damping enters)},
-\label{eq:iofx}\\
-\hat{p}(\omega)&=\frac{\rho_0\Sd\,\omega^2\hat{x}}{2\pi r}\qquad\text{(A3)}.
-\label{eq:pofx}
+	e(t)&=\Re i(t)+\Bl\dot x(t), \label{eq:electrical}\\
+	\Mms\ddot x(t)+\Rms\dot x(t)+k_t x(t)&=\Bl i(t).
+	\label{eq:mechanical}
 \end{align}
-Equation \eqref{eq:iofx} is Newton's law read backwards: whatever the source does,
-the current must supply cone inertia, mechanical loss, and spring force. The
-electrical damping $\se$ appears in \eqref{eq:xofe} (voltage drive) but never in
-\eqref{eq:iofx}.
+The total stiffness is the sum of suspension and box stiffness:
+\begin{equation}
+	k_t=\frac{1}{\Cms}+\frac{\rho_0c^2\Sd^2}{\Vb}
+	=\frac{1+\alpha}{\Cms},
+	\qquad
+	\alpha\equiv\frac{\Vas}{\Vb},
+	\label{eq:stiffness}
+\end{equation}
+where $\Vas=\rho_0c^2\Sd^2\Cms$.  Eliminating current between
+\cref{eq:electrical,eq:mechanical} gives
+\begin{equation}
+	\boxed{
+	\ddot{x}+\sigma\dot{x}+\wc^2x
+	=\frac{\Bl}{\Re\Mms}e(t)}
+	\label{eq:ode}
+\end{equation}
+with
+\begin{equation}
+	\sm=\frac{\Rms}{\Mms},\qquad
+	\se=\frac{\Bl^2}{\Re\Mms},\qquad
+	\sigma=\sm+\se,\qquad
+	\wc^2=\frac{k_t}{\Mms}.
+	\label{eq:damping}
+\end{equation}
 
-%======================================================================
-\section{Frequency domain: the two ceilings}
+In free air,
+\begin{equation}
+	\ws=2\pi F_s=\frac{1}{\sqrt{\Mms\Cms}},\quad
+	\Qms=\frac{\ws}{\sm},\quad
+	\Qes=\frac{\ws}{\se},\quad
+	\Qts=\frac{\ws}{\sigma}.
+	\label{eq:freeair}
+\end{equation}
+In the sealed box,
+\begin{equation}
+	\wc=\ws\sqrt{1+\alpha},\qquad
+	\Qtc=\frac{\wc}{\sigma}.
+	\label{eq:boxed}
+\end{equation}
+
+\subsection{Alignment line and enclosure volume}
+\label{sec:model-alignment}
+
+Changing $\Vb$ changes stiffness but not either damping coefficient.
+Therefore
+\begin{equation}
+	\boxed{
+	\frac{\wc}{\Qtc}=\frac{\ws}{\Qts}=\sigma
+	\quad\Longleftrightarrow\quad
+	F_c=\Qtc\frac{F_s}{\Qts}}
+	\label{eq:alignment}
+\end{equation}
+and
+\begin{equation}
+	\boxed{
+	\Vb=\frac{\Vas}{(\Qtc/\Qts)^2-1}},
+	\qquad \Qtc>\Qts .
+	\label{eq:boxvolume}
+\end{equation}
+These are classical closed-box relations \cite{small1972}.  A driver has
+one sealed alignment line in the $(F_c,\Qtc)$ plane.  The exact corner rate
+is
+\begin{equation}
+	\frac{\sigma}{2\pi}=\frac{F_s}{\Qts}
+	=EBP\left(1+\frac{\Qes}{\Qms}\right).
+	\label{eq:cornerrate}
+\end{equation}
+The implementation uses $F_s/\Qts$, not its $EBP$ approximation.
+
+The homogeneous response has envelope $\exp(-\sigma t/2)$.  Thus box volume
+changes damped frequency and overshoot but not the exponential decay rate of
+a given driver.  For an underdamped second-order step response,
+\begin{equation}
+	M_p=\exp\left[
+	-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}
+	\right],\qquad \zeta=\frac{1}{2\Qtc}.
+	\label{eq:overshoot}
+\end{equation}
+At $\Qtc=0.55$, $M_p$ is approximately $0.11\%$.  This is an alignment
+diagnostic, not a perceptual quality score.
+
+\subsection{Steady-sine transfer relations}
+\label{sec:model-steady}
+
+For $e(t)=\hat e\cos\omega t$, the peak displacement follows directly from
+\cref{eq:ode}:
+\begin{equation}
+	\boxed{
+	\hat x(\omega)=
+	\frac{\Bl}{\Re\Mms}
+	\frac{\hat e}
+	{\sqrt{(\wc^2-\omega^2)^2+\sigma^2\omega^2}}}.
+	\label{eq:xofe}
+\end{equation}
+Substituting $\hat e=\Re\hat\imath+j\omega\Bl\hat x$ into the mechanical
+equation gives the current required for a specified peak displacement:
+\begin{equation}
+	\boxed{
+	\hat\imath(\omega)=
+	\frac{\Mms}{\Bl}\hat x
+	\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2}}.
+	\label{eq:iofx}
+\end{equation}
+Only mechanical damping appears here.  Electrical damping is generated by
+the current supplied by the voltage source; it is not a second mechanical
+load to add when current is already the independent quantity.
+
+For a compact half-space radiator at distance $r$,
+\begin{equation}
+	\hat p(\omega)=
+	\frac{\rho_0\Sd\omega^2\hat x}{2\pi r},
+	\qquad
+	p_{\mathrm{rms}}=\frac{\hat p}{\sqrt2}.
+	\label{eq:pofx}
+\end{equation}
+This relation establishes the conversion between displaced volume and
+pressure used throughout.
+
+\section{Classical output ceilings and finite electrical demand}
 \label{sec:freq}
 
-Solve \eqref{eq:ode} in steady sine and ask, at each frequency, which of the two
-driver limits ($\Xmax$ or $\Pmax$) is reached first under an unconstrained
-amplifier (A6) -- the answer is one ceiling per limit, and a crossover frequency
-between them.
+\subsection{Displacement-limited ceiling}
+\label{sec:freq-displacement}
 
-\subsection{Displacement ceiling}
-
-\begin{prop}[Excursion-limited SPL]
-\label{prop:xceiling}
-With A6, the maximum sine pressure under $|x|\le\Xmax$ is, at every frequency,
+At the excursion boundary $\hat x=\Xmax$, define peak displacement volume
 \begin{equation}
-\hat{p}_{\mathrm{L}}(\omega)=\frac{\rho_0\,\omega^2 \Vd}{2\pi r},
-\qquad \Vd\equiv\Sd\Xmax,
-\qquad
-\boxed{\ \mathrm{SPL}_{\mathrm{L}}(f)=108.5+20\log_{10}\!\big(f^2\,\Vd\big)\ \mathrm{dB}\ }
-\label{eq:SPLL}
+	\Vd=\Sd\Xmax.
+	\label{eq:vd}
 \end{equation}
-($+12$\,dB/oct; constant $=20\log_{10}(\sqrt{2}\pi\rho_0/p_0)-3.01$, i.e.\ rms at
-$r=1$\,m).
-\end{prop}
-
-\begin{cor}[Irrelevance of everything else]
-\label{cor:onlyVd}
-$\mathrm{SPL}_{\mathrm{L}}$ is independent of $\Qtc$, $F_c$, $\Bl$, $\Re$, $\Mms$,
-$\Pmax$. Under A6 the alignment determines only the \emph{drive} required to reach
-$\Xmax$, never the pressure produced at $\Xmax$. In the excursion regime the complete
-driver ranking is the single number $\Vd$.
-\end{cor}
-
-This corrects the intuition that ``max SPL at $(f,\Qtc)$'' depends on $\Qtc$: it does
-not, until a drive limit is added. The drive actually required to sit at the ceiling
-is, from \eqref{eq:iofx} with $\hat{x}=\Xmax$ and $P=\tfrac12\hat{\imath}^2\Re$:
+Using \cref{eq:pofx} at $r=\SI{1}{\meter}$ and converting rms pressure to
+SPL gives the intrinsic half-space ceiling
 \begin{equation}
-\boxed{\
-P_{\mathrm{L}}(\omega)=\frac{\Re\Mms^2\Xmax^2}{2\,\Bl^2}
-\Big[(\wc^2-\omega^2)^2+\sm^2\omega^2\Big]
-=\frac{\Mms \Qes \Xmax^2}{4\pi F_s}
-\Big[(\wc^2-\omega^2)^2+\sm^2\omega^2\Big]\ }
-\label{eq:PL}
+	\boxed{
+	\mathrm{SPL}_{\mathrm L}(f)
+	=108.5+20\log_{10}\!\left(f^2\Vd\right)\ \mathrm{dB}}
+	\label{eq:SPLL}
 \end{equation}
-a ``bathtub'': minimum near $\wc$ (at resonance only $\Rms$ must be fed), finite DC
-limit
-\begin{equation}
-P_{\mathrm{L}}(0)=\frac{\Mms\Qes\Xmax^2\,\wc^4}{4\pi F_s},
-\label{eq:PL0}
-\end{equation}
-and $\propto\omega^4$ growth above $\wc$. Equation \eqref{eq:PL0} is the exact
-price of the ``sealed $+$ DSP boost'' strategy: holding $\Xmax$ arbitrarily far below
-the corner costs a \emph{finite, computable} power (worked example:
-Sec.~\ref{sec:example}). More generally, the power to hold a flat target pressure
-$p_t$ (rms) below the corner follows from
-\eqref{eq:xofe}--\eqref{eq:pofx}:
-\begin{equation}
-P_{\mathrm{req}}(\omega)=P_{\mathrm{pb}}\cdot
-\frac{(\wc^2-\omega^2)^2+\sm^2\omega^2}{\omega^4},
-\qquad
-P_{\mathrm{pb}}=\frac{2\pi r^2 p_t^2}{\rho_0 c\,\eta_0},
-\label{eq:EQtax}
-\end{equation}
-i.e.\ an EQ tax of $(\wc/\omega)^4$ (12\,dB/oct in power) below the corner. FIR/DSP
-correction is ``free'' in fidelity (LTI, invertible) but pays \eqref{eq:EQtax} in heat
-and \eqref{eq:SPLL} in excursion. Taken at face value, \eqref{eq:EQtax} diverges as
-$\omega\to0$ for a flat target; in practice the room's own pressure-zone gain
-(Sec.~\ref{sec:roomclose}) flattens the \emph{required} SPL below $f_{\mathrm{pz}}$,
-so the real demand curve --- and the power and voltage needed to sit on it ---
-saturates instead. The worked example (Fig.~\ref{fig:spl-sub}) needs only
-$7.8$--$316$~W and $29$--$50$~V per unit across the plotted band, comfortably
-inside a common Class-D amplifier's rating: an unconstrained amplifier (A6) costs
-nothing exotic here.
+for $f$ in hertz and $\Vd$ in cubic metres.  The $12$-dB/octave rise is a
+radiation result.  $\Qtc$, $F_c$, $\Bl$, $\Re$, $\Mms$, and $\Pmax$ do not
+appear: they determine the drive needed to reach the boundary, not the
+pressure produced by a specified piston acceleration.
 
-\subsection{Dissipation ceiling}
+\subsection{Dissipation-limited ceiling}
+\label{sec:freq-thermal}
 
-\begin{prop}[Thermally limited SPL]
-\label{prop:thermal}
-At coil dissipation $P$ (rms current $\sqrt{P/\Re}$), the achievable pressure is
+Well above resonance, the inertial force dominates and
+$\Bl\hat\imath\simeq\Mms\omega^2\hat x$.  Combining this with
+\cref{eq:pofx}, setting
+$I_{\mathrm{rms}}=\sqrt{\Pmax/\Re}$, and defining the reference efficiency
 \begin{equation}
-p_{\mathrm{T}}(\omega)=\frac{\rho_0\Sd \Bl}{2\pi r \Mms}\sqrt{\frac{P}{\Re}}\;
-\frac{\omega^2}{\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2}}
-\ \xrightarrow[\ \omega\gg\wc\ ]{}\
-p_{\mathrm{T}\infty}=\frac{\rho_0\Sd \Bl}{2\pi r \Mms}\sqrt{\frac{P}{\Re}} .
-\label{eq:pT}
+	\eta_0=
+	\frac{\rho_0}{2\pi c}
+	\frac{\Bl^2\Sd^2}{\Re\Mms^2}
+	=9.78\times10^{-7}
+	\frac{F_s^3\Vas[\mathrm{m^3}]}{\Qes},
+	\label{eq:eta0}
 \end{equation}
-The passband value is exactly the classical efficiency relation: with
+gives the intrinsic passband ceiling
 \begin{equation}
-\eta_0=\frac{\rho_0}{2\pi c}\,\frac{\Bl^2\Sd^2}{\Re\Mms^2}
-=\frac{4\pi^2}{c^3}\,\frac{F_s^3\Vas}{\Qes}
-=9.78\times10^{-7}\ \frac{F_s^3\,\Vas[\mathrm{m^3}]}{\Qes},
-\label{eq:eta0}
+	\boxed{
+	\mathrm{SPL}_{\mathrm T}
+	=112.2+10\log_{10}(\eta_0\Pmax)\ \mathrm{dB}}.
+	\label{eq:SPLT}
 \end{equation}
-one has $p_{\mathrm{T}\infty}^2=\rho_0 c\,\eta_0 P/(2\pi r^2)$ and
+This is a continuous-dissipation descriptor on B1.  It is not a prediction
+of temperature or compression.
+
+\subsection{Combined envelope and \texorpdfstring{$f_x$}{fx} equivalence}
+
+For a finite current, \cref{eq:iofx} gives the thermally admissible
+displacement
 \begin{equation}
-\boxed{\ \mathrm{SPL}_{\mathrm{T}}=112.2+10\log_{10}\!\big(\eta_0\Pmax\big)\ \mathrm{dB}\ }
-\label{eq:SPLT}
+	X_{\mathrm T}(\omega)=
+	\frac{\Bl}{\Mms}
+	\frac{\sqrt{2\Pmax/\Re}}
+	{\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2}} .
+	\label{eq:XT}
 \end{equation}
-(flat above $F_c$; $112.2=10\log_{10}\!\big(\rho_0c/(2\pi p_0^2)\big)$).
-\end{prop}
-\begin{proof}
-Insert $\hat\imath=\sqrt{2P/\Re}$ into \eqref{eq:iofx}, then \eqref{eq:pofx}; the
-identity in \eqref{eq:eta0} follows from
-$\Qes=\ws\Mms\Re/\Bl^2$, $\ws^2=1/(\Mms\Cms)$, $\Vas=\rho_0c^2\Cms\Sd^2$.
-\end{proof}
-
-\noindent Hence in the dissipation regime the complete ranking is the single number
-$\eta_0\Pmax$ (acoustic watts), datasheet-computable via \eqref{eq:eta0}. In
-mechanical terms $\eta_0\Pmax\propto\big(\Sd\Bl/(\Mms\sqrt{\Re})\big)^2\Pmax$.
-
-\subsection{Master equation and the regime boundary}
-
-Both limits combine into one statement:
+The exact model envelope is then
 \begin{equation}
-\boxed{\
-p_{\max}(\omega)=\frac{\rho_0\Sd\,\omega^2}{2\pi r}\;
-\min\!\Big\{\Xmax,\ \ X_{\mathrm{T}}(\omega)\Big\},\qquad
-X_{\mathrm{T}}(\omega)=\frac{\Bl\sqrt{2\Pmax/\Re}}
-{\Mms\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2}} \ }
-\label{eq:master}
+	p_{\max}(\omega)=
+	\frac{\rho_0\Sd\omega^2}{2\pi r}
+	\min\{\Xmax,X_{\mathrm T}(\omega)\}.
+	\label{eq:master}
 \end{equation}
-(peak quantities; rms $=/\sqrt2$). Near $\wc$, $X_{\mathrm{T}}$ is large (little
-current needed at resonance) so excursion always binds there; far above $\wc$,
-$X_{\mathrm{T}}\propto\omega^{-2}$ and dissipation binds. The crossover
-($X_{\mathrm{T}}=\Xmax$, $\omega\gg\wc$), equivalently
-$\mathrm{SPL}_{\mathrm{L}}(f_x)=\mathrm{SPL}_{\mathrm{T}}$:
+In the passband approximation, equating
+\cref{eq:SPLL,eq:SPLT} yields
 \begin{equation}
-\boxed{\
-f_x=\frac{1}{2\pi}\left(\frac{2\,\Pmax \Bl^2}{\Re\Mms^2\Xmax^2}\right)^{1/4}
-=\frac{1}{2\pi}\left(\frac{4\pi\,EBP\;\Pmax}{\Mms\,\Xmax^{2}}\right)^{1/4}
-=\frac{1}{2\pi}\left(\frac{4\pi c\,\eta_0\Pmax}{\rho_0\,\Vd^{2}}\right)^{1/4}
-\ }
-\label{eq:fx}
+	\boxed{
+	f_x=\frac{1}{2\pi}
+	\left(
+	\frac{4\pi c\,\eta_0\Pmax}{\rho_0\Vd^2}
+	\right)^{1/4}}
+	\label{eq:fx}
 \end{equation}
-(the three forms are identical by \eqref{eq:eta0}; note where $EBP$
-\emph{legitimately} appears). Interpretation:
-\[
-f<f_x:\ \text{ceiling}=\mathrm{SPL}_{\mathrm{L}}(f)\ \ (\text{improve }\Vd),
-\qquad
-f>f_x:\ \text{ceiling}=\mathrm{SPL}_{\mathrm{T}}\ \ (\text{improve }\eta_0\Pmax).
-\]
+which is algebraically equivalent to
+\begin{equation}
+	f_x=\frac{1}{2\pi}
+	\left(
+	\frac{4\pi F_s\Pmax}
+	{\Qes\Mms\Xmax^2}
+	\right)^{1/4}.
+	\label{eq:fx-ts}
+\end{equation}
+Below this crossover, additional $\Vd$ raises the limiting envelope most
+directly; above it, additional $\eta_0\Pmax$ does.  The crossover is a
+descriptor, not a role boundary and not a complete ranking.
 
-\begin{rmk}[Ceiling regime vs.\ target regime]
-\label{rmk:target}
-$f_x$ ranks ceilings. Whether a driver is adequate is decided at the \emph{target}
-$L_t$: requirement $\mathrm{SPL}_{\mathrm{L}}(f_1)\ge L_t$ at the band bottom $f_1$
-and $\mathrm{SPL}_{\mathrm{T}}\ge L_t$ (Sec.~\ref{sec:procedure}). A driver can be
-``thermally limited above 33\,Hz'' at its ceiling yet never approach thermal limits
-at a 110\,dB home target.
-\end{rmk}
+\subsection{Demand inversion and amplifier gates}
+\label{sec:freq-gates}
 
-%======================================================================
-\section{Time domain: attack, overshoot, settling}
+Let $V_{\mathrm{dem}}(f)$ be the peak displaced volume required by the room
+model at the couch basis.  For $N$ identical drivers sharing one role signal,
+\begin{equation}
+	X_{\mathrm{dem}}(f)=
+	\frac{V_{\mathrm{dem}}(f)}{N\Sd}.
+	\label{eq:Xdem}
+\end{equation}
+Inverting \cref{eq:xofe,eq:iofx} gives per-driver rms requirements:
+\begin{align}
+	E_{\mathrm{req}}(\omega)
+	&=\frac{\Re\Mms}{\sqrt2\Bl}X_{\mathrm{dem}}
+	\sqrt{(\wc^2-\omega^2)^2+\sigma^2\omega^2},
+	\label{eq:Ereq}\\
+	I_{\mathrm{req}}(\omega)
+	&=\frac{\Mms}{\sqrt2\Bl}X_{\mathrm{dem}}
+	\sqrt{(\wc^2-\omega^2)^2+\sm^2\omega^2},
+	\label{eq:Ireq}\\
+	P_{\mathrm{req}}(\omega)
+	&=I_{\mathrm{req}}^2\Re \nonumber\\
+	&=\frac{\Mms\Qes X_{\mathrm{dem}}^2}{4\pi F_s}
+	\left[(\wc^2-\omega^2)^2+\sm^2\omega^2\right].
+	\label{eq:Preq}
+\end{align}
+
+$P_{\mathrm{req}}$ is generally bathtub-shaped: finite toward dc, low near
+the box corner, and increasing again at high frequency.  The frequencies of
+worst voltage, current, and power need not coincide.  The implementation
+therefore samples the complete role band and explicitly includes band edges,
+$F_c$, $f_{\mathrm{pz}}$, and $f_\ell$ when they fall inside it.
+
+The hard steady gates are
+\begin{equation}
+	\boxed{
+	\begin{aligned}
+	X_{\mathrm{dem}}(f)&\le\Xmax,\\
+	E_{\mathrm{req}}(f)&\le E_{\mathrm{amp}},\\
+	I_{\mathrm{req}}(f)&\le I_{\mathrm{amp}},\\
+	P_{\mathrm{req}}(f)&\le
+	\min\{\Pmax,P_{\mathrm{amp,cont}}\}
+	\end{aligned}
+	\quad \text{for all }f\text{ in the role band}.}
+	\label{eq:steady-gates}
+\end{equation}
+The finite-burst gate is added in \cref{sec:time}.  Flattening a sealed
+response below $F_c$ is charged directly to these equations.  In the
+low-frequency asymptote, required displacement grows approximately as
+$(\wc/\omega)^2$ and required dissipation as $(\wc/\omega)^4$ relative to a
+flat passband reference.  Correction is consequently an allocation of
+headroom, not a costless operation.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.96\textwidth]{figures/fig_output_electrical}
+	\caption{Output margin and finite electrical utilization across both
+	complete role bands.  The upper row compares the combined ceiling with
+	the couch-area target.  The lower row shows per-driver voltage, current,
+	and coil-power utilization against the declared limits.  The left
+	column is the complete mono low-bass role; the right column is one
+	independent upper-bass channel.}
+	\label{fig:output-electrical}
+\end{figure}
+
+\section{Room-specific displaced-volume demand}
+\label{sec:room}
+
+\subsection{General room-transfer statement}
+
+Let $H_{\mathrm{room}}(f)$ map source peak displaced volume to peak pressure
+under a declared spatial reduction of the couch-area responses.  Then
+\begin{equation}
+	V_{\mathrm{dem}}(f)=
+	\frac{\sqrt2\,p_t}{|H_{\mathrm{room}}(f)|},
+	\qquad
+	p_t=p_0\,10^{L_t/20}.
+	\label{eq:demand-general}
+\end{equation}
+A measured transfer is preferred once a system or suitable source exists.
+Before purchase, an analytical or parameterized room model can supply a
+first sizing estimate.  Whatever transfer is used must preserve the same
+reference basis throughout the role evaluation.
+
+\subsection{Pressure-zone compliance with leakage}
+\label{sec:room-pz}
+
+Below the first axial mode, a net source displacement $\Delta V$ changes
+room pressure approximately by the adiabatic compliance relation
+\begin{equation}
+	\Delta p=\frac{\rho_0c^2}{V_{\mathrm{room}}}\Delta V.
+	\label{eq:room-compliance}
+\end{equation}
+Leakage prevents static pressure from being retained.  Representing it by a
+first-order high-pass from source displacement to pressure gives
+\begin{equation}
+	H_{\mathrm{pz}}(s)=
+	\frac{\rho_0c^2}{V_{\mathrm{room}}}
+	\frac{s}{s+\omega_\ell},
+	\label{eq:Hpz}
+\end{equation}
+and therefore
+\begin{equation}
+	|H_{\mathrm{pz}}(f)|=
+	\frac{\rho_0c^2}{V_{\mathrm{room}}}
+	\left[1+\left(\frac{f_\ell}{f}\right)^2\right]^{-1/2}.
+	\label{eq:pzdyn}
+\end{equation}
+The ideal pressure-zone result is recovered for $f_\ell=0$.  Below the
+leakage corner, the required displacement rises at approximately
+\SI{6}{dB} per octave.
+
+Above
+$f_{\mathrm{pz}}\simeq c/(2L_{\max})$, the half-space radiation transfer is
+\begin{equation}
+	|H_{\mathrm{rad}}(f)|=
+	\frac{\rho_0(2\pi f)^2}{2\pi r_{\mathrm{listen}}}.
+	\label{eq:Hrad}
+\end{equation}
+To avoid an optimistic discontinuity below the first-mode boundary, the
+implementation freezes the radiation demand at $f_{\mathrm{pz}}$ and takes
+the larger demand:
+\begin{equation}
+	V_{\mathrm{dem}}(f)=
+	\begin{cases}
+	\dfrac{\sqrt2 p_t\,2\pi r_{\mathrm{listen}}}
+	{\rho_0(2\pi f)^2},
+	& f\ge f_{\mathrm{pz}},\\[2.2ex]
+	\max\{V_{\mathrm{rad}}(f_{\mathrm{pz}}),V_{\mathrm{pz}}(f)\},
+	& f<f_{\mathrm{pz}},
+	\end{cases}
+	\label{eq:Vdem}
+\end{equation}
+where
+\begin{equation}
+	V_{\mathrm{pz}}(f)=
+	\frac{\sqrt2p_tV_{\mathrm{room}}}{\rho_0c^2}
+	\sqrt{1+\left(\frac{f_\ell}{f}\right)^2}.
+	\label{eq:Vpz}
+\end{equation}
+
+This is a low-frequency limiting model for a prepared room and a small
+listening area.  The complete room remains distributed and multimodal.
+Above the first axial mode, individual modes require fitted damped sections
+or a measured transfer \cite{toole2006,makivirta2003}.  Room preparation is
+therefore essential to the scenario: placement, damping, leakage control,
+and soffit geometry are what make a low-order limiting model useful over its
+declared range.
+
+\subsection{Corner placement and sensitivity}
+
+Combining \cref{eq:alignment} with the pressure-zone transition suggests
+\begin{equation}
+	F_c\simeq f_{\mathrm{pz}}
+	\quad\Longleftrightarrow\quad
+	\frac{F_s}{\Qts}\simeq
+	\frac{f_{\mathrm{pz}}}{\Qtc^\ast}.
+	\label{eq:Fsrule}
+\end{equation}
+This is a placement target, not a rejection rule by itself.  If the chosen
+box cap forces $F_c$ above the target, the resulting correction boost is
+evaluated by \cref{eq:Ereq,eq:Ireq,eq:Preq}.  If $F_c$ falls below it, a
+response shelf can be reduced with a cut, at the cost of extra enclosure
+volume.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.88\textwidth]{figures/fig_room_sensitivity}
+	\caption{Required peak displaced volume for the canonical target under
+	the ideal pressure-zone case and several leakage corners.  Above
+	$f_{\mathrm{pz}}$ all variants use the same radiation branch; below it,
+	the assumed leakage controls the demand growth.}
+	\label{fig:room-sensitivity}
+\end{figure}
+
+\input{tables/table_room_sensitivity}
+
+The table demonstrates why extension is conditional.  It depends on the
+realized leakage corner, total available $\Vd$, the hard and preferred
+excursion utilizations, and finite electrical headroom.  A nominal low
+frequency is reported only where all gates hold.
+
+\section{Finite-burst demand from the sealed ODE}
 \label{sec:time}
 
-Model a bass attack as a one-cycle acceleration burst of amplitude $A$ and angular
-frequency $\omega\gg\wc$: $p$-peak $\hat p=\rho_0\Sd A/(2\pi r)$. Over the burst
-duration the spring and damping act only at $O((\wc/\omega)^2)$, $O(\sigma/\omega)$
-(free-mass limit), so $x\simeq\iint a$.
+\subsection{Why a numerical factor is needed}
 
-\begin{lem}[Burst shape factor]
-\label{lem:shape}
-Define $C\equiv \omega^2\max_t|x(t)|/A$ for a burst of peak acceleration $A$.
-Then $C=1$ for steady sine, and for one-cycle bursts $a(t)=A\sin\omega t$ resp.\
-$A\cos\omega t$ on $[0,2\pi/\omega]$:
-\[
-x_{\sin}(t)=\frac{A}{\omega}t-\frac{A}{\omega^2}\sin\omega t
-\ \Rightarrow\ C_{\sin}=2\pi;
-\qquad
-x_{\cos}(t)=\frac{A}{\omega^2}(1-\cos\omega t)
-\ \Rightarrow\ C_{\cos}=2 .
-\]
-For $n$ cycles in sine phase, $C=2\pi n$. Hence transient program demands
-$C\in[2,\,2\pi]$ ($6$--$16$\,dB) \emph{more excursion per unit peak pressure} than
-steady sine; the sine-phase penalty is the residual velocity DC
-$\langle\dot x\rangle=A/\omega>0$ during the burst.
-\end{lem}
+A short waveform can require more displacement than a steady sinusoid that
+reaches the same peak acceleration.  Free-mass arguments produce simple
+constants only when the excitation frequency is far above $F_c$.  Both
+roles here include frequencies near their box corners, where stiffness,
+damping, start phase, and ring-down materially affect the result.
 
-Consequences (peak-equivalent level $\hat L\equiv20\log_{10}(\hat p/(\sqrt2 p_0))$,
-which coincides with rms SPL for steady sine):
-\begin{align}
-\text{excursion ceiling:}\quad
-&\hat L_{\mathrm{L,burst}}(f)=108.5+20\log_{10}(f^2\Vd)-20\log_{10}C,
-\label{eq:burstL}\\
-\text{force ceiling:}\quad
-&\hat A\le \frac{\Bl}{\Mms}\sqrt{\frac{2\kappa\Pmax}{\Re}}
-\ \Rightarrow\
-\hat L_{\mathrm{T,burst}}=112.2+10\log_{10}(\eta_0\,\kappa\Pmax),
-\label{eq:burstT}
-\end{align}
-where $\kappa$ (A5) is the short-term dissipation headroom.
-
-\begin{prop}[Equivalence of the two analyses; boundary shift]
-\label{prop:equiv}
-Time-domain and frequency-domain limits produce the same two figures of merit,
-$\Vd$ and $\eta_0\Pmax$, rescaled by the constants $C$ and $\kappa$. The regime
-boundary for transients moves \emph{up} to
+For a windowed burst
 \begin{equation}
-\hat f_x=f_x\,(\kappa C^2)^{1/4}
-\qquad(\kappa=4,\ C=2\ \Rightarrow\ \hat f_x=2f_x).
-\label{eq:fxburst}
+	e(t)=w(t)\sin(\omega t+\phi)
+	\label{eq:burst}
 \end{equation}
-\end{prop}
-
-\noindent So for attack-type program the excursion regime extends roughly an octave
-higher than the sine analysis suggests: even a ``power-limited'' midbass band is,
-for kicks, largely $\Vd$-limited. Both drivers therefore need both FOMs checked, each
-at its own band edge (Sec.~\ref{sec:procedure}).
-
-\subsection{Ring-down: overshoot, decay, spectral tail}
-
-After the burst the state $(x_0,v_0)\neq(0,0)$ relaxes along the homogeneous
-solution of \eqref{eq:ode}: $x\propto e^{-\sigma t/2}\cos(\omega_d t+\varphi)$,
-$\omega_d=\wc\sqrt{1-\zeta^2}$, $\zeta=1/(2\Qtc)$.
-
-\begin{prop}[Settling is a driver constant; ring shape is a box choice]
-\label{prop:decay}
-The envelope decay rate of every sealed alignment of a given driver equals
-$\sigma/2=\pi F_s/\Qts$ (box-invariant, Prop.~\ref{prop:invariance}); the box selects
-only $\omega_d$ and thus the overshoot pattern. Cycles to $-60$\,dB
-$\simeq 2.2\,\Qtc$. Step-response (displacement) overshoot:
+and the solution of \cref{eq:ode} from rest, define
 \begin{equation}
-M_p=\exp\!\left(-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}\right),\qquad \zeta=\frac{1}{2\Qtc}:
-\qquad
-\begin{array}{c|ccccccc}
-\Qtc & 0.50 & 0.55 & 0.60 & 0.65 & 0.707 & 0.80 & 1.00\\\hline
-M_p\,[\%] & 0 & 0.11 & 0.95 & 2.3 & 4.3 & 8.1 & 16.3
-\end{array}
-\label{eq:Mp}
+	\boxed{
+	C_{\mathrm{tr}}\left(
+	\frac{f}{F_c},\Qtc,w,n,\phi
+	\right)
+	=
+	\frac{\omega^2\max_{t\ge0}|x(t)|}
+	{\max_{t\in\mathcal A}|\ddot x(t)|}}
+	\label{eq:ctr}
 \end{equation}
-Thresholds: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$;
-$M_p\le5\%\Leftrightarrow\Qtc\le0.72$.
-\end{prop}
+where $\mathcal A$ is the active burst interval.  The numerator includes
+ring-down; the denominator is active-window acceleration, which sets peak
+radiated pressure through \cref{eq:pofx}.  A steady sinusoid has
+$C_{\mathrm{tr}}=1$ under the same normalization.
 
-\noindent\emph{Spurious tail pressure.} The ring radiates
-$p_{\mathrm{tail}}\propto\ddot x_{\mathrm{tail}}$. Worst case (sine-phase burst,
-$x_0=CA/\omega^2$, $v_0=0$):
-\begin{equation}
-\frac{\hat p_{\mathrm{tail}}}{\hat p_{\mathrm{burst}}}
-\;\le\; C\left(\frac{\wc}{\omega}\right)^{2},
-\qquad\text{best phase: } O\!\big((\wc/\omega)^{3}\big).
-\label{eq:tail}
-\end{equation}
-Transient cleanliness improves 12\,dB per octave of corner-below-band. This, not
-group delay per se, is the quantitative argument for placing the sub's corner well
-under the kick band, and it is LTI --- FIR can pre-compensate it exactly, at the cost
-\eqref{eq:EQtax}, \eqref{eq:SPLL}. The invariants FIR cannot touch remain
-$\Vd$, $\eta_0\Pmax$, $\sigma$.
+\subsection{Implemented numerical method}
+\label{sec:time-method}
 
-%======================================================================
-\section{The driver invariants, and what $EBP$ actually is}
-\label{sec:invariants}
+The reference implementation performs the following calculation for every
+sampled role frequency:
 
-Secs.~\ref{sec:freq}--\ref{sec:time} produced four quantities that survived both
-the sine and the transient analysis unchanged; collecting them turns the whole
-model into a short, datasheet-computable checklist. A sealed-box LF driver is
-characterized, for selection purposes, by
-\begin{center}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{clll}
-\toprule
-\# & invariant & regime & datasheet formula\\
-\midrule
-1 & $\Vd=\Sd\Xmax$ & excursion ($f<f_x$; transients $f<\hat f_x$) & direct\\
-2 & $\eta_0\Pmax$ & dissipation ($f>f_x$) & $9.78\!\times\!10^{-7}F_s^3\Vas\Pmax/\Qes$\\
-3 & $\sigma/2\pi=F_s/\Qts$ & corner placement, settling rate & direct\\
-4 & $f_L=\Re/(2\pi\Le)$ & upper validity of (1)--(3) & direct\\
-5 & $\Sd$ (alone) & Doppler FM at fixed output, Sec.~\ref{sec:doppler} & direct\\
-\midrule
--- & $f_x$, eq.~\eqref{eq:fx} & boundary between 1 and 2 & derived\\
--- & $F_c=\Qtc F_s/\Qts$, $\Vb=\dfrac{\Vas}{(\Qtc/\Qts)^2-1}$ & box, given target $\Qtc$ & derived\\
--- & $V_{\mathrm{dem}}/\Vb$, eq.~\eqref{eq:boxHD} & box-spring distortion (box-level) & derived\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\subsection{$EBP$ as coil-mass fraction; the motor materials bound}
-\label{sec:materials}
-
-A common rule of thumb states $EBP\propto V_c/\Mms$ (coil volume over moving
-mass) as a motor-strength proxy (Sec.~\ref{sec:prevwork}); it is correct in
-spirit. Here is the exact, dimensionally consistent version. Overhung motor:
-gap height $h_g$, coil height $h_c=h_g+2\Xmax$
-(geometric $\Xmax$), wire length $\ell$, cross-section $A_w$, conductivity
-$\sigma_c$, material density $\rho_c$, coil conductor mass $m_c=\rho_c\ell A_w$.
-Only the in-gap fraction contributes to $\Bl$; fringing extends the effective gap to
-$h_g'\approx 2h_g$ (model statement, $\pm$; this is the one non-first-principles
-constant here). With $u\equiv h_c/h_g'$ (effective overhang factor, $u\ge1$ for
-overhung):
-\begin{equation}
-\Bl=B\,\ell/u,\qquad \Re=\frac{\ell}{\sigma_c A_w}
-\quad\Longrightarrow\quad
-\se=\frac{\Bl^2}{\Re\Mms}=\frac{B^2\sigma_c}{\rho_c}\cdot\frac{m_c}{\Mms}\cdot\frac{1}{u^2}.
-\label{eq:sebound}
-\end{equation}
-
-\begin{thm}[Motor materials bound]
-\label{thm:bound}
-For an overhung motor,
-\begin{equation}
-\boxed{\
-EBP\cdot u^{2}
-=\frac{\se}{2\pi}\,u^2
-=\frac{B^{2}\sigma_c}{2\pi\rho_c}\cdot\frac{m_c}{\Mms}
-\;\le\;
-\underbrace{\frac{B^{2}\sigma_c}{2\pi\rho_c}}_{K_{\mathrm{mat}}}\,\beta_{\max}\ }
-\qquad \beta_{\max}=\Big(\tfrac{m_c}{\Mms}\Big)_{\max}\lesssim0.35 .
-\label{eq:thmbound}
-\end{equation}
-Copper: $K_{\mathrm{mat}}=1059\,B^2$ Hz; aluminium: $2063\,B^2$ Hz
-($\sigma_c/\rho_c=6.65\times10^{3}$ resp.\ $1.30\times10^{4}$ S\,m$^2$/kg).
-\end{thm}
-
-\noindent\emph{Numerical content} ($B=1.0$--$1.2$ T, Cu, $\beta_{\max}=0.35$: bound
-$\approx 370$--$530$ Hz):
-\[
-\text{sub class: } u\approx3\ (\Xmax\!\approx\!2.5h_g)\Rightarrow EBP\lesssim45\,\mathrm{Hz};
-\qquad
-\text{attack class: } EBP\approx135\,\mathrm{Hz}\Rightarrow u\lesssim1.8\
-(\Xmax\lesssim1.4\,h_g).
-\]
-A single driver with sub-class stroke ($u=3$) \emph{and} attack-class corner rate
-(135 Hz) would need $EBP\cdot u^2\approx1200$ Hz, i.e.\ $\beta B^2\approx1.1$ ---
-impossible for $\beta<1$, $B\lesssim1.4$ T. This is the theorem behind the empirical
-observation that the ideal drivers of the two regimes are different physical objects.
-Three independent mechanisms enforce the split:
 \begin{enumerate}
-\item \eqref{eq:thmbound}: stroke $u$ suppresses the corner rate $\sigma$
-      quadratically at fixed coil fraction;
-\item Prop.~\ref{prop:invariance}: one driver has one $\sigma$, hence one
-      $(F_c,\Qtc)$ line --- it cannot put a damped corner both at 23 Hz and at 80 Hz;
-\item A2: stroke requires a tall coil, hence large $\Le$, hence low
-      $f_L=\Re/(2\pi\Le)$ intruding into the attack band (worked example: 139 Hz for
-      the 18'', 1.2 kHz for the 12'').
+	\item apply a unit-amplitude voltage burst to \cref{eq:ode};
+	\item integrate displacement and velocity with fourth-order
+	Runge--Kutta, using at least 96 integration steps per relevant cycle;
+	\item sample eight phases uniformly over $0\le\phi<2\pi$, which includes
+	sine and cosine starts;
+	\item retain active-window peak acceleration and active-window rms
+	voltage and current;
+	\item continue the zero-input integration for eight envelope time
+	constants and retain peak displacement through the ring-down;
+	\item scale the unit response so its active acceleration equals
+	$\omega^2X_{\mathrm{dem}}$, then compute displacement, voltage, current,
+	and coil power;
+	\item retain the worst result over phase and then over the sampled role
+	band.
 \end{enumerate}
-Escape routes (underhung/XBL$^2$, dual gap, neo focusing, shorting rings, aluminium
-coils) buy factors of $\sim\!\!2$, not the required $\sim\!5$, and trade against
-$\beta$ or $B$ inside the same bound.
 
-$\beta_{\max}$ is an observed ceiling on real motor construction (coil formers,
-adhesives, winding density), not a law of electromagnetism, and neither $m_c$
-nor $B$ is a standalone datasheet field. Since $u\ge1$, however,
-\eqref{eq:thmbound}'s equality also gives a lower bound computable from $EBP$
-alone: $m_c/\Mms\ge EBP/K_{\mathrm{mat}}(B)$, independent of the otherwise
-unmeasurable $u$. Table~\ref{tab:ebp-census} applies this to $N=1025$
-bass-relevant drivers (VituixCAD database, Type S/W/WM): at a conservative
-$B=1.0$ T (copper), only $0.3\%$ approach $\beta_{\max}$, and the
-material-agnostic (aluminium) bound is never exceeded; the single outlier needs
-only $B\approx1.4$ T (a plausible neodymium motor) to reach the ceiling, not
-exceed it.
-
-\input{tables/table_ebp_census}
-
-%======================================================================
-\section{Non-correctable distortion: scaling laws and the distortion-referenced criterion}
-\label{sec:distortion}
-
-The invariants above rank drivers by \emph{output}. But the premise of this
-document is that output is not the right currency: a DSP-aligned system
-(App.~\ref{sec:tool-scope}) can move gain, phase, and even group delay around
-almost for free, so the only distortion that should decide a ranking is the kind
-no filter can remove. Throughout this section, distortion estimates rank
-candidates under a common target and operating condition: per A10, they are
-leading-order, order-of-magnitude predictors, not $\pm1$\,dB absolute THD
-forecasts for an individual driver. This section makes that precise, then shows it reduces
-back to a headroom criterion -- so nothing above is wasted, but the answer it
-gives is different in general from ranking on SPL alone.
-
-\subsection{What LTI correction can and cannot do}
-
-Write the plant as $p = H\ast e + \mathcal{N}[e]$, with $H$ the small-signal
-response \eqref{eq:xofe}--\eqref{eq:pofx} and $\mathcal{N}$ the nonlinear residual.
-
-\begin{prop}[FIR correctability boundary]
-\label{prop:LTI}
-(i) In-band, $H$ is minimum-phase (the sealed-box $p/e$ transfer
-$\propto s^2/(s^2+\sigma s+\wc^2)$ has all zeros/poles in the closed left half
-plane), so a causal, stable LTI pre-filter $G\approx H^{-1}$ exists on any band
-$[f_1,f_2]$, $f_1>0$: magnitude, phase, group delay, corner sag, and ring-down tail
-\eqref{eq:tail} are all exactly correctable (at the drive costs
-\eqref{eq:SPLL}, \eqref{eq:EQtax}).
-(ii) No LTI $G$ reduces $\mathcal{N}$ for all program: if it did, then from
-linearity of $G$ and of the corrected small-signal path, scaling the input
-$e\to a e$ would require $\mathcal{N}[a\,Ge]=a\,\mathcal{N}[Ge]$ for all $a$,
-i.e.\ $\mathcal{N}$ linear on the signal space --- contradiction unless
-$\mathcal{N}\equiv0$.
-\end{prop}
-
-\noindent Hence the selection-relevant driver property is exactly the
-signal-level-dependent part. (Nonlinear model-based pre-distortion --- Klippel
-controllers, delay modulation for Doppler --- can attack $\mathcal{N}$, but that is
-not an FIR filter and requires per-unit parameter identification; excluded here.)
-Linear-phase (rather than minimum-phase) inversion additionally trades the tail for
-pre-ring; a choice of taste, not of physics.
-
-\subsection{Displacement-driven nonlinearity: the headroom law}
-
-Expand motor and suspension about rest:
-\begin{equation}
-\Bl(x)=\Bl_0\,(1-\beta_1 x-\beta_2 x^2-\dots),\qquad
-\frac{1}{\Cms(x)}=\frac{1}{C_0}\,(1+\gamma_1 x+\gamma_2 x^2+\dots).
-\label{eq:taylor}
-\end{equation}
-For $x=X\cos\omega t$, the leading distortion products (transfer weights suppressed,
-A10) are
-\begin{equation}
-\mathrm{HD}_2 \sim \tfrac12\,|\beta_1^{\mathrm{eff}}|\,X,\qquad
-\mathrm{HD}_3 \sim \tfrac14\,|\beta_2^{\mathrm{eff}}|\,X^2,
-\qquad
-\text{IMD}_{2}(\text{bass}\to\text{mid}) \sim |\beta_1^{\mathrm{eff}}|\,X_1 ,
-\label{eq:HDproducts}
-\end{equation}
-with $\beta^{\mathrm{eff}}$ the appropriate combinations of
-$\beta_i,\gamma_i$ (asymmetries $\to$ even order, symmetric droop $\to$ odd order).
-By A7 the distortion-defined $\Xmax$ \emph{anchors} the sum at
-$D(\Xmax)\approx10\%$. Therefore, with the \textbf{utilization}
-\begin{equation}
-\boxed{\ \xi_x(f)\equiv\frac{X_{\mathrm{dem}}(f)}{\Xmax}
-=\frac{V_{\mathrm{dem}}(f)}{\Vd},\qquad
-D(\xi_x)\approx d_2\,\xi_x+d_3\,\xi_x^{2},\quad d_2+d_3\approx0.1\ }
-\label{eq:HDscale}
-\end{equation}
-and the rigorous bounds $0.1\,\xi_x^{2}\le D\le 0.1\,\xi_x$. Consequences:
-\begin{itemize}
-\item At fixed target and frequency, $X_{\mathrm{dem}}\propto p_t/(\Sd f^2)$, so
-motor/suspension distortion is a \emph{monotone function of the headroom on the
-displacement ceiling} \eqref{eq:SPLL}: sorting by this distortion class $=$ sorting
-by $\Vd$. The v1 FOM survives unchanged; its meaning sharpens from ``max SPL'' to
-``distortion at given SPL.''
-\item A distortion budget $D^\ast$ converts to a utilization cap
-$\xi^\ast=D^\ast/0.1$ (conservative, even-order-dominated driver) or
-$\sqrt{D^\ast/0.1}$ (symmetric driver). E.g.\ $D^\ast=3\%$:
-$\xi^\ast=0.3$--$0.55$; the $\Vd$ requirement is $1/\xi^\ast\approx2$--$3\times$
-the bare SPL-ceiling requirement. \textbf{This factor, not the SPL math, sizes the
-sub.}
-\item $D^\ast$ is a \emph{selection ceiling at the reference-level target}, not
-an operating point: the reference target itself is a brief, high-SPL condition
-(peak playback at that level is typically limited to a minute or so before
-hearing-damage exposure limits are reached), so a driver sized to meet $D^\ast$
-at that target should, in normal use, sit far below it. Reading the same
-distortion curves $20$~dB down (a $\times10$ lower demand volume, i.e.\ normal
-continuous listening level rather than the reference peak) is the relevant
-check for everyday distortion; Figs.~\ref{fig:distortion-sub}--\ref{fig:distortion-attack}
-plot both.
-\end{itemize}
-
-\subsection{Doppler (FM) distortion: the second use of area}
-\label{sec:doppler}
-
-A cone at instantaneous position $x_1(t)$ radiating a component at $f_2$ delivers it
-with propagation phase $\varphi=\omega_2(t-(r-x_1)/c)$: phase modulation with index
-$m=k_2X_1=2\pi f_2X_1/c$, i.e.\ sideband pairs at $f_2\pm f_1$ of relative level
-\begin{equation}
-\boxed{\ \frac{J_1(m)}{J_0(m)}\approx\frac{m}{2}=\frac{\pi f_2X_1}{c}
-=\frac{\pi f_2}{c}\cdot\frac{V_{\mathrm{dem}}(f_1)}{\Sd}\ }
-\label{eq:doppler}
-\end{equation}
-Properties, all first-principles: (i) it is FM --- maximally non-LTI-correctable;
-(ii) at fixed output it scales as $1/\Sd$ and is \emph{independent of} $\Xmax$:
-among equal-$\Vd$ drivers, the larger cone is strictly cleaner --- area enters
-selection a second time, separately from $\Vd$; (iii) it vanishes identically under
-band splitting, because $f_2$ no longer rides on the cone doing $X_1$. Equation
-\eqref{eq:doppler} evaluated at the top of a candidate band \emph{is} the
-quantitative split criterion: choose the split $f_{\mathrm{sp}}$ such that
-$\pi f_{\mathrm{sp}}X_1^{\max}/c\le D^\ast_{\mathrm{IM}}$.
-
-\subsection{Sealed-box air-spring distortion}
-
-Adiabatic compression of the box gives the restoring pressure
-$\Delta P=P_0[(1-\Sd x/\Vb)^{-\gamma}-1]
-=\gamma P_0\frac{\Sd x}{\Vb}\big[1+\frac{\gamma+1}{2}\frac{\Sd x}{\Vb}+\dots\big]$,
-an asymmetric spring. Weighting by the box share of total stiffness
-$\alpha/(1+\alpha)=1-(\Qts/\Qtc)^2$ (Prop.~\ref{prop:invariance}):
-\begin{equation}
-\boxed{\ \mathrm{HD}_{2}^{\mathrm{box}}\approx\frac{\gamma+1}{4}\,
-\frac{\Sd X}{\Vb}\Big(1-\frac{\Qts^2}{\Qtc^2}\Big)
-=\frac{\gamma+1}{4}\,\frac{V_{\mathrm{dem}}}{\Vb}\Big(1-\frac{\Qts^2}{\Qtc^2}\Big)\ }
-\label{eq:boxHD}
-\end{equation}
---- driver-independent at fixed output: a \emph{box} criterion, $\propto1/\Vb$.
-Stuffing helps twice: $\gamma_{\mathrm{eff}}\to1$ lowers the prefactor and raises
-the effective volume by up to $\gamma=1.4$. A sealed spring at
-$V_{\mathrm{dem}}/\Vb\sim1\%$ distorts at the $0.1$--$0.3\%$ level
-\eqref{eq:boxHD} (worked example, Sec.~\ref{sec:example}: $0.11\%$); the vented
-port's own, considerably larger, air-velocity-driven distortion is quantified
-separately in App.~\ref{sec:vented} rather than asserted here.
-
-\subsection{Flux modulation, thermal AM, creep}
-\label{sec:otherdist}
-
-\emph{Reluctance/flux modulation.} Coil current modulates gap flux
-($\Bl(i)$) and creates reluctance force $F=\tfrac12 i^2\,\dd\Le/\dd x$: distortion
-$\propto i^2$, growing toward the band top where $i$ is large and $x$ small ---
-the complement of the displacement mechanisms. Not computable from standard
-datasheets ($\dd\Le/\dd x$, $\Le(i)$ unpublished); proxies: shorting
-rings/copper cap declared, small $\Le$, high $f_L$ --- the same $f_L$ already in the
-invariant list. Where Klippel scans \cite{klippel2006} are published, use them
-directly.
-
-\emph{Thermal AM.} Coil heating modulates sensitivity:
-$\Delta L=-8.69\ln(1+\alpha_{\mathrm{Cu}}\Delta T)\approx-0.034\,\Delta T$ dB
-($\alpha_{\mathrm{Cu}}=3.9\times10^{-3}/$K), with coil time constants of seconds:
-a slow, program-dependent AM, plus \emph{cross-band} modulation if one coil serves
-both regimes (bass heating compresses the attack band) --- a further independent
-argument for the two-driver split. Datasheet proxy: thermal utilization
-$\xi_P=P_{\mathrm{dem}}/\Pmax$; $\Delta T\approx\xi_P\,\Delta T_{\mathrm{rated}}$.
-
-\emph{Suspension creep/hysteresis} (viscoelastic memory): real, non-correctable,
-absent from datasheets; a quality prior on the suspension, not a computable
-criterion. Listed for completeness.
-
-\subsection{Taxonomy and the equivalence of distortion- and headroom-sorting}
-
-\begin{center}
-\renewcommand{\arraystretch}{1.25}
-\small
-\begin{tabular}{lllll}
-\toprule
-mechanism & scaling @ fixed target & datasheet? & LTI-corr.? & mitigation\\
-\midrule
-$\Bl(x),\Cms(x)$ HD/IMD & $d_2\xi_x+d_3\xi_x^2$, \eqref{eq:HDscale} & yes ($\Vd$, A7) & no & $\Vd$ headroom\\
-Doppler FM & $\pi f_2V_{\mathrm{dem}}/(c\,\Sd)$, \eqref{eq:doppler} & yes ($\Sd$) & no & split; large $\Sd$\\
-box air spring & $\frac{\gamma+1}{4}\frac{V_{\mathrm{dem}}}{\Vb}(1-\frac{\Qts^2}{\Qtc^2})$ & yes (box) & no & large $\Vb$; stuffing\\
-flux modulation & $\propto i^2\,\dd\Le/\dd x$ & no & no & rings; low $\Le$\\
-thermal AM & $-0.034\,\xi_P\Delta T_{\mathrm{rated}}$ dB & proxy ($\xi_P$) & no & $P$ headroom; split\\
-creep/hysteresis & --- & no & no & suspension quality\\
-linear response $H$ & --- & yes (TS) & \textbf{yes} & FIR (costs \eqref{eq:EQtax})\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{prop}[Distortion-referenced selection $=$ headroom maximization]
-\label{prop:equivdist}
-At fixed band, room, and target, every non-correctable component above is monotone
-decreasing in the headroom vector
-$h=(\Vd,\ \Sd,\ \Vb,\ \eta_0\Pmax)$. Hence sorting candidates by predicted
-non-correctable distortion is the Pareto/lexicographic order on $h$: the v1 FOMs
-are retained and \emph{reinterpreted as distortion predictors}; new relative to v1
-are only the separate appearance of $\Sd$ (Doppler) and $\Vb$ (box spring), and the
-sizing factor $1/\xi^\ast$ from the distortion budget.
-\end{prop}
-
-\noindent\textbf{Sorting recipe} (within a category fixed by nominal size $\Sd$
-or by target $(L_t,\ \mathrm{room})$): compute
-\[
-\Big(\;\underbrace{d\,\xi_x(f_{\mathrm{pz}})}_{\mathrm{HD,\ IMD}},\quad
-\underbrace{\pi f_2 X_1^{\max}/c}_{\mathrm{Doppler}},\quad
-\underbrace{\tfrac{\gamma+1}{4}\tfrac{V_{\mathrm{dem}}}{\Vb}(1-\tfrac{\Qts^2}{\Qtc^2})}_{\mathrm{box}},\quad
-\underbrace{0.034\,\xi_P\Delta T_{\mathrm{rated}}}_{\mathrm{thermal\ AM}}\;\Big)
-\]
-and rank by the dominant component (or lexicographically, largest first). Feasible
-$\Leftrightarrow$ every component $\le$ its budget.
-
-%======================================================================
-\section{Room closure: pressure zone, required $\Vd$, and the choice of $F_s$}
-\label{sec:roomclose}
-
-Secs.~\ref{sec:freq}--\ref{sec:distortion} priced every driver in free space
-($r=1$\,m, A8). A real listening room changes the low-frequency boundary
-condition itself once the acoustic wavelength exceeds the room's own
-dimensions, and it does so for \emph{any} driver, sealed or vented alike; this
-section makes that pressure-zone effect precise, turns it into the $\Vd$-sizing
-and corner-placement rule actually used in Sec.~\ref{sec:procedure}, and gives
-the abstract ``room'' a concrete face.
-
-\subsection{Demand flattens below the pressure zone}
-
-Lump the room (below its first axial mode) as an acoustic compliance
-$C_R=V_{\mathrm{room}}/(\rho_0c^2)$ with leakage conductance $G_\ell$ ---
-the standard low-frequency room lumped-element model \cite{beranek2012} ---
-with source volume velocity $U=\Sd\dot x$:
-\begin{equation}
-p_{\mathrm{room}}=\frac{U}{j\omega C_R+G_\ell}
-\ \xrightarrow[\ \omega\gg\omega_\ell\ ]{}\
-\frac{\rho_0c^2\,\Sd x}{V_{\mathrm{room}}},
-\qquad \omega_\ell=G_\ell/C_R,
-\qquad f_{\mathrm{pz}}\simeq\frac{c}{2L_{\max}} .
-\label{eq:pzdyn}
-\end{equation}
-Two structural consequences:
-\begin{enumerate}
-\item $p\propto x$ (not $\omega^2x$): the excursion demanded for a fixed target is
-\emph{frequency-independent} below $f_{\mathrm{pz}}$. The total demand curve is
-\begin{equation}
-V_{\mathrm{dem}}(f)=\sqrt2\,p_t\times
-\begin{cases}
-\dfrac{2\pi r}{\rho_0\,(2\pi f)^2}\cdot C, & f\gtrsim f_{\mathrm{pz}}
-\quad(\text{free-field/modal side, burst factor }C),\\[2ex]
-\dfrac{V_{\mathrm{room}}}{\rho_0c^2}, & f\lesssim f_{\mathrm{pz}} ,
-\end{cases}
-\label{eq:demand}
-\end{equation}
-rising at 12 dB/oct down to $f_{\mathrm{pz}}$ and \emph{flat} below. The two
-branches agree at $f_{\mathrm{pz}}$ up to $O(1)$: equating them gives
-$V_{\mathrm{room}}\approx 2rL_{\max}^2/\pi$, which is a normal room at
-$r\approx L/2$ --- the free-field and adiabatic pictures are the same physics
-meeting at the transition.
-\item The sealed roll-off ($-12$ dB/oct below $F_c$, at fixed drive
-$x\to$ const) against the room term \eqref{eq:pzdyn} ($p\propto x$, flat) means:
-a sealed system with $F_c\simeq f_{\mathrm{pz}}$ is flat \emph{in-room to the
-leakage corner without any EQ}. This is the exact form of ``taper-off below $F_c$
-compensated by room gain.'' Whether a vented system enjoys the same rescue is
-exactly the question App.~\ref{sec:vented} answers (it does not: the $24$
-dB/oct alignment collapses precisely the band this room term would have paid
-for).
-\end{enumerate}
+The canonical waveform is one rectangular cycle.  The figure also shows
+Hann-windowed cases to expose waveform dependence, but those curves do not
+replace the declared canonical test.  Discretization is part of the
+implementation and is covered by the numerical test suite; the waveform
+family remains an engineering input.
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=0.75\textwidth]{figures/fig_demand}
-\caption{Required displaced volume $V_{\mathrm{dem}}(f)$ \eqref{eq:demand} at the
-listening position: $110$\,dB target, $r_{\mathrm{listen}}=3$\,m, the $60$\,m$^3$,
-$L_{\max}=6$\,m room of this section. The $12$\,dB/oct free-field branch and the
-flat pressure-zone floor meet smoothly at $f_{\mathrm{pz}}=28.6$\,Hz -- the
-graphical form of the matching condition $V_{\mathrm{room}}\approx2rL_{\max}^2/\pi$
-noted below \eqref{eq:demand} (contrast the driver-comparison $r=1$\,m ceiling of
-Fig.~\ref{fig:spl-attack}, which does not satisfy this relation and so still
-shows a visible kink at $f_{\mathrm{pz}}$; Fig.~\ref{fig:spl-sub} avoids it by
-plotting at this section's self-consistent $r_{\mathrm{listen}}=3$\,m instead).}
-\label{fig:demand}
+	\centering
+	\includegraphics[width=0.9\textwidth]{figures/fig_transient_factor}
+	\caption{Numerically evaluated $C_{\mathrm{tr}}$ versus normalized
+	frequency for several alignments and windows, retaining the worst start
+	phase.  The worked-system operating points are marked.  The variation
+	near $F_c$ is why the procedure solves the ODE rather than applying one
+	fixed burst constant.}
+	\label{fig:transient}
 \end{figure}
 
-\subsection{Sizing rule and $F_s$ criterion}
+\subsection{Transient gates}
 
-\paragraph{A typical room.} To keep every number below concrete rather than
-symbolic, fix one running example, used for the rest of this section, for
-Appendix~\ref{sec:vented}, and for Appendix~\ref{app:room}: a rectangular room
-$6.0\times4.0\times2.5$ m ($V_{\mathrm{room}}=60$ m$^3$, longest dimension
-$L_{\max}=6$ m along the listening axis, soffit-mounted sources in the end wall,
-A3), single fixed listening position (``the couch,'' A11) at
-$r_{\mathrm{listen}}=3$ m from that wall. By \eqref{eq:pzdyn},
-$f_{\mathrm{pz}}=c/2L_{\max}=28.6$ Hz. Choosing $r_{\mathrm{listen}}\approx
-L_{\max}/2$ is not incidental: it is the condition, derived below
-\eqref{eq:demand}, under which the free-field and pressure-zone demand branches
-meet at $f_{\mathrm{pz}}$ with no discontinuity (Fig.~\ref{fig:demand}) --- a
-seat much closer to or farther from the source than $L_{\max}/2$ would still be
-handled by \eqref{eq:demand}, but the two branches would then cross away from
-$f_{\mathrm{pz}}$ and the simple corner rule \eqref{eq:Fsrule} below would need
-the free-field branch evaluated at the true $r_{\mathrm{listen}}$ instead of the
-room-volume shortcut. Real rooms of this size and construction (masonry or
-dry-wall on studs, one open doorway) typically leak below $f_\ell\sim$10--20 Hz,
-below which \eqref{eq:pz} stops being a tight bound (\emph{Caveats}, below).
-
-Combining \eqref{eq:demand} with the distortion cap $\xi^\ast$
-(Sec.~\ref{sec:distortion}):
+At the target pressure,
 \begin{equation}
-\boxed{\
-\Vd\ \ge\ \frac{1}{\xi^\ast}\,\max\!\left\{
-\frac{\sqrt2\,p_t\,V_{\mathrm{room}}}{\rho_0c^2},\ \
-C\,\frac{\sqrt2\,p_t\,2\pi r}{\rho_0\,\omega_{\mathrm{pz}}^{2}}\right\}
-\qquad\text{(peak sine basis: }C{=}1,\ \xi^\ast{=}1)
-\ }
-\label{eq:Vdreq}
+	\xi_x^{\mathrm{tr}}=
+	\frac{\max_t|x(t)|}{\Xmax}
+	=C_{\mathrm{tr}}\frac{X_{\mathrm{dem}}}{\Xmax}.
+	\label{eq:xitr}
 \end{equation}
-with the pressure-zone branch the robust one (A11). Numerically
-($\xi^\ast=1$, $C=1$; multiply by $1/\xi^\ast$ for a distortion budget; the
-middle row is the $60$ m$^3$ running example above):
-
-\input{tables/table_room_sizing}
-
-\noindent The corner criterion follows from the alignment line
-\eqref{eq:alignment}: placing $F_c$ at the transition,
+The equivalent transient excursion ceiling on B1 is
 \begin{equation}
-\boxed{\ F_c\simeq f_{\mathrm{pz}}=\frac{c}{2L_{\max}}
-\quad\Longleftrightarrow\quad
-\frac{F_s}{\Qts}\simeq\frac{f_{\mathrm{pz}}}{\Qtc^\ast}\ }
-\label{eq:Fsrule}
+	\mathrm{SPL}_{\mathrm{L,tr}}(f)=
+	\mathrm{SPL}_{\mathrm L}(f)
+	-20\log_{10}C_{\mathrm{tr}}(f).
+	\label{eq:spltr}
 \end{equation}
-(6 m room, $\Qtc^\ast=0.55$: $F_s/\Qts\le52$ Hz; the corner rate is now selected by
-the \emph{room}, not by taste). $F_c$ below $f_{\mathrm{pz}}$ wastes nothing but
-box volume; $F_c$ above it leaves a correctable sag $[f_{\mathrm{pz}},F_c]$ taxed
-by \eqref{eq:EQtax} --- bounded and often acceptable, per \eqref{eq:PL0}. The two
-mistunings are not equally cheap: undershoot's shelf,
-$20\log_{10}(f_{\mathrm{pz}}/F_c)$ dB, comes out with a free EQ \emph{cut};
-overshoot's sag needs a taxed \emph{boost} that also eats excursion headroom.
-Since \eqref{eq:Fsrule}'s exact match can force $\Qtc^\ast$ past a comfortable
-ringing budget (Prop.~\ref{prop:decay}: $M_p\le1\%\Leftrightarrow\Qtc\le0.61$),
-the practical rule is to fix $\Qtc$ from that budget first and let $F_c$
-undershoot $f_{\mathrm{pz}}$ rather than chase exact alignment
-(Sec.~\ref{sec:example}). Nothing in \eqref{eq:Fsrule} is specific to the
-room corner: it is a box invariant ($F_c/\Qtc=F_s/\Qts$, fixed once the
-driver is chosen) equated to whatever corner the band in question must
-clear, so the identical ceiling-not-target treatment applies verbatim to the
-attack driver's split corner $f_{\mathrm{sp}}$ (Sec.~\ref{sec:procedure},
-step 5) --- undershoot $f_{\mathrm{sp}}$ for free, avoid overshoot's taxed
-boost, and only drop $\Qtc$ below its budget ceiling $\Qtc^\ast$ when the
-driver's own corner rate demands it.
+The hard transient checks per driver are
+\begin{equation}
+	\boxed{
+	\xi_x^{\mathrm{tr}}\le1,\quad
+	E_{\mathrm{tr}}\le E_{\mathrm{amp}},\quad
+	I_{\mathrm{tr}}\le I_{\mathrm{amp}},\quad
+	P_{\mathrm{tr}}\le P_{\mathrm{amp,burst}}.}
+	\label{eq:transient-gates}
+\end{equation}
+Active-window rms values are used for the electrical burst quantities.  The
+continuous driver and amplifier limits remain checked against steady demand.
 
-\emph{Caveats.} Real rooms leak: below $f_\ell=\omega_\ell/2\pi$ (construction
-dependent, often 10--20 Hz in masonry rooms, higher in lightweight ones) the
-realized response falls $6$ dB/oct \eqref{eq:pzdyn} and \eqref{eq:pz} is an upper
-bound; measured room gain typically realizes $6$--$12$ dB/oct slope between
-$f_\ell$ and $f_{\mathrm{pz}}$. The air itself is irrelevantly linear here
-($p/P_0\sim10^{-4}$ at 115 dB).
+\section{Separately reported nonlinear-risk and implementation indicators}
+\label{sec:risk}
 
-%======================================================================
-\section{Selection procedure}
+The method reports
+\begin{equation}
+	\mathbf r=
+	\left(
+	\xi_x,\xi_x^{\mathrm{tr}},d_{\mathrm D},
+	\xi_{\mathrm{box}},\xi_P,\xi_{\mathrm{amp}},
+	f_{\mathcal B,\mathrm h}/f_L,V_{\mathrm b}^{\mathrm{tot}}
+	\right).
+	\label{eq:riskvec}
+\end{equation}
+These quantities have different physical origins and perceptual meanings.
+They remain separate in tables, plots, Pareto objectives, and policy keys.
+
+\subsection{Steady and transient excursion utilization}
+
+\begin{equation}
+	\xi_x=\max_{f\in\mathcal B}
+	\frac{X_{\mathrm{dem}}(f)}{\Xmax},
+	\qquad
+	\xi_x^{\mathrm{tr}}=
+	\max_{f\in\mathcal B}
+	\frac{X_{\mathrm{tr}}(f)}{\Xmax}.
+	\label{eq:xi}
+\end{equation}
+$\Xmax$ provides the hard boundary.  The preference
+$\max(\xi_x,\xi_x^{\mathrm{tr}})\le0.80$ reserves displacement margin.
+The procedure does not reconstruct $Bl(x)$ or suspension coefficients from
+these ratios.
+
+\subsection{Doppler first-sideband ratio}
+
+For each role, let
+\begin{equation}
+	X_{\mathcal B}=
+	\max_{f\in\mathcal B}X_{\mathrm{dem}}(f)
+	\label{eq:Xband}
+\end{equation}
+and use that role's own upper band edge $f_{\mathcal B,\mathrm h}$.  The
+phase-modulation index is
+\begin{equation}
+	m=2\pi f_{\mathcal B,\mathrm h}X_{\mathcal B}/c.
+	\label{eq:doppler-m}
+\end{equation}
+For small $m$, either first sideband has amplitude relative to the carrier
+\begin{equation}
+	\boxed{
+	d_{\mathrm D}=\frac{J_1(m)}{J_0(m)}
+	\simeq\frac{m}{2}
+	=\frac{\pi f_{\mathcal B,\mathrm h}X_{\mathcal B}}{c}.}
+	\label{eq:doppler}
+\end{equation}
+The canonical budget is $d_{\mathrm D}\le0.02$.  The value is reported for
+both roles; it is a hard gate for the upper-bass role in the implemented
+policy and a reported ordering indicator for the low-bass role.  Splitting
+the bands prevents a low-bass radiator from modulating upper-bass content on
+that same cone, but finite crossover overlap and self-modulation within each
+role remain.
+
+\subsection{Box-spring indicator}
+
+For an adiabatic gas, expanding pressure versus fractional volume change
+gives an asymmetric leading term.  Weighting it by the box fraction of the
+total stiffness gives
+\begin{equation}
+	\boxed{
+	\xi_{\mathrm{box}}\simeq
+	\frac{\gamma+1}{4}
+	\frac{V_{\mathrm{dem}}}{N\Vb}
+	\left(1-\frac{\Qts^2}{\Qtc^2}\right).}
+	\label{eq:boxHD}
+\end{equation}
+This is an enclosure indicator.  It decreases with larger volume and with a
+lower effective polytropic exponent from suitable filling.  It is not
+combined arithmetically with excursion or Doppler quantities.
+
+\subsection{Electrical, thermal, enclosure, and inductive indicators}
+
+\begin{align}
+	\xi_P&=
+	\max_{f\in\mathcal B}
+	\frac{P_{\mathrm{req}}(f)}{\Pmax},
+	\label{eq:xip}\\
+	\xi_{\mathrm{amp}}&=
+	\max\left\{
+	\frac{\max(E_{\mathrm{req}},E_{\mathrm{tr}})}{E_{\mathrm{amp}}},
+	\frac{\max(I_{\mathrm{req}},I_{\mathrm{tr}})}{I_{\mathrm{amp}}},
+	\frac{\max P_{\mathrm{req}}}{P_{\mathrm{amp,cont}}},
+	\frac{\max P_{\mathrm{tr}}}{P_{\mathrm{amp,burst}}}
+	\right\}.
+	\label{eq:xiamp}
+\end{align}
+$\xi_P$ is a loading warning, not a coil-temperature model.  The inductive
+ratio uses
+\begin{equation}
+	f_L=\frac{\Re}{2\pi\Le}.
+	\label{eq:fL}
+\end{equation}
+Because $\Le$ is neither constant nor always published, this is deliberately
+a rough screen.  Total role enclosure volume is retained as a packaging
+quantity:
+\begin{equation}
+	V_{\mathrm b}^{\mathrm{tot}}=N\Vb.
+	\label{eq:vbtot}
+\end{equation}
+
+\section{Selection, Pareto ranking, and implementation}
 \label{sec:procedure}
 
-Given: room ($V_{\mathrm{room}}$, $L_{\max}$), band top $f_2$, peak-equivalent
-target $L_t$ at the listening position, distortion budgets
-$D^\ast$ (HD) and $D^\ast_{\mathrm{IM}}$ (Doppler), damping ceiling $\Qtc^\ast$
-(e.g.\ 0.55, $M_p=0.1\%$), burst factor $C$ (Lemma~\ref{lem:shape}, take 2),
-burst headroom $\kappa$.
+\subsection{Alignment selection}
 
+For a candidate corner rate $F_s/\Qts$, the Q that would place the box
+corner exactly at the role target $f_{\mathrm target}$ is
+\begin{equation}
+	\Qtc^{\mathrm target}=
+	\frac{f_{\mathrm target}}{F_s/\Qts}.
+	\label{eq:qtarget}
+\end{equation}
+The implementation chooses
+\begin{equation}
+	\Qtc^{\mathrm desired}=
+	\min\left\{\Qtc^\ast,\Qtc^{\mathrm target}\right\},
+	\label{eq:qdesired}
+\end{equation}
+where $f_{\mathrm target}=f_{\mathrm{pz}}$ for low bass and
+$f_{\mathrm target}=f_{\mathrm{sp}}$ for upper bass.  It computes the
+required \cref{eq:boxvolume}; if that volume exceeds
+\begin{equation}
+	\Vb^{\mathrm cap}=
+	\min\left\{10\Vas,
+	\frac{\SI{1.0}{\cubic\meter}}{N}\right\},
+	\label{eq:boxcap}
+\end{equation}
+the cap is used and the realized $\Qtc$ is recalculated.  A realized
+$\Qtc>0.55$ fails.
+
+\subsection{Band evaluation}
+
+Steady quantities use a logarithmic 121-point grid plus relevant corner
+frequencies.  Transient quantities use a smaller logarithmic grid because
+each frequency requires repeated ODE integrations; band edges and relevant
+corners are again included.  At each point the implementation evaluates the
+room demand, per-driver displacement, steady electrical requirements, and
+finite-burst requirements.  Each maximum is retained with its binding
+frequency.  This is a declared numerical approximation over a finite band,
+not an assertion that an unsampled narrow anomaly cannot exist in a physical
+driver.
+
+\subsection{Hard gates}
+\label{sec:hard-gates}
+
+A candidate is rejected if any of the following occurs:
+
+\begin{itemize}
+	\item realized $\Qtc$ exceeds its ceiling;
+	\item steady or transient displacement exceeds $\Xmax$;
+	\item steady voltage, current, driver dissipation, or amplifier
+	continuous power exceeds its limit;
+	\item burst voltage, current, or amplifier burst power exceeds its limit;
+	\item reported $f_L$ is below the role upper edge;
+	\item the upper-bass Doppler first-sideband ratio exceeds $0.02$.
+\end{itemize}
+
+The preferred $0.80$ excursion marker is not in this list.  Every rejection
+stores its reason; every missing or derived field stores a note.
+
+\subsection{Role-specific Pareto fronts}
+
+For low bass, the core minimization vector is
+\begin{equation}
+	\left(
+	\max\{\xi_x,\xi_x^{\mathrm{tr}}\},
+	\xi_{\mathrm{amp}},
+	V_{\mathrm b}^{\mathrm{tot}}
+	\right).
+	\label{eq:pareto-sub}
+\end{equation}
+For upper bass it is
+\begin{equation}
+	\left(
+	\max\{\xi_x,\xi_x^{\mathrm{tr}}\},
+	d_{\mathrm D},
+	\xi_{\mathrm{amp}},
+	V_{\mathrm b}^{\mathrm{tot}}
+	\right).
+	\label{eq:pareto-upper}
+\end{equation}
+Candidate A dominates candidate B only when A is no worse in every component
+and strictly better in at least one.  Removing the current non-dominated set
+and repeating assigns successive fronts.  Public front numbers begin at one.
+The full vector in \cref{eq:riskvec} remains available even when a component
+is not a core Pareto coordinate.
+
+\subsection{Lexicographic policy within each front}
+
+The low-bass order is:
 \begin{enumerate}
-\item[0.] \textbf{Room closure:} $f_{\mathrm{pz}}=c/(2L_{\max})$; band bottom
-$f_1\to f_{\mathrm{pz}}$ (below it demand is flat, \eqref{eq:demand});
-$\xi^\ast=D^\ast/0.1$ (or $\sqrt{D^\ast/0.1}$ if odd-order dominated).
-\item \textbf{Displacement/distortion (binds at $f_{\mathrm{pz}}$, covers all
-$f<f_{\mathrm{pz}}$):} $\Vd\ge$ \eqref{eq:Vdreq}. Predicted
-$D\approx d_2\xi_x+d_3\xi_x^2$ \eqref{eq:HDscale}.
-\item \textbf{Dissipation:}
-$\eta_0\Pmax\ \ge\ 10^{(L_t-112.2)/10}$ (referred to 1 m/$2\pi$), $\eta_0$ from
-\eqref{eq:eta0}; thermal AM $\approx0.034\,\xi_P\Delta T_{\mathrm{rated}}$ dB
-(Sec.~\ref{sec:otherdist}).
-\item \textbf{Split (Doppler):} choose $f_{\mathrm{sp}}$ with
-$\pi f_{\mathrm{sp}}X_1^{\max}/c\le D^\ast_{\mathrm{IM}}$ \eqref{eq:doppler};
-verify the attack driver's own in-band index at $(f_{\mathrm{sp}},f_2)$.
-\item \textbf{Corner/settling/box:} with
-$f_{\mathrm{corner}}=f_{\mathrm{pz}}$ (sub) or $f_{\mathrm{sp}}$ (attack),
-take $\Qtc=\min\!\big(\Qtc^\ast,\,f_{\mathrm{corner}}\Qts/F_s\big)$
-(\eqref{eq:Fsrule} used as a ceiling, never a fixed target: undershooting
-$f_{\mathrm{corner}}$ is free, overshooting it is taxed); reject the driver
-only if $\Qts\ge\Qtc$ (its own $\Qts$ already exceeds the damping ceiling, or
-$F_s$ alone sits at/above $f_{\mathrm{corner}}$, so no box, however large,
-clears it); $\Vb=\Vas/((\Qtc/\Qts)^2-1)$; box distortion \eqref{eq:boxHD}
-$\le$ budget (sets minimum $\Vb$, stuffing); EQ tax below $F_c$ bounded via
-\eqref{eq:EQtax}, \eqref{eq:PL0}.
-\item \textbf{Regime map:} $f_x$ \eqref{eq:fx}, $\hat f_x$ \eqref{eq:fxburst};
-verify $p_{\max}(\omega)$ \eqref{eq:master} $\ge$ target across the band.
-\item \textbf{Validity:} $f_2\ll f_L=\Re/(2\pi\Le)$; $ka(f_2)\lesssim1$; same
-$\Xmax$ (A7) and power-rating (A5) standards across candidates.
+	\item minimum worst transient-or-steady excursion;
+	\item minimum steady excursion;
+	\item minimum Doppler first-sideband ratio;
+	\item minimum worst driver/electrical utilization;
+	\item minimum box-spring indicator;
+	\item minimum total role box volume;
+	\item minimum preferred unit count, then a stable label tie-break.
 \end{enumerate}
 
-\noindent Ranking inside one role (fixed category: nominal size or target class):
-lexicographic on predicted non-correctable distortion
-(Prop.~\ref{prop:equivdist}) --- in practice: sub role $\to$ maximize
-$\Vd$, tie-break on $\Sd$ (Doppler) and $\eta_0\Pmax$; attack role $\to$ maximize
-$\eta_0\Pmax$, subject to its own $\xi_x(f_{\mathrm{sp}})$ and Doppler index,
-tie-break on $f_L$ and shorting rings.
+The upper-bass order is:
+\begin{enumerate}
+	\item prefer candidates meeting the $0.80$ excursion marker;
+	\item maximize $\eta_0\Pmax$;
+	\item prefer reported, valid inductance over unresolved inductance;
+	\item maximize $f_L$;
+	\item minimize excursion, electrical utilization, and box volume;
+	\item apply a stable label tie-break.
+\end{enumerate}
 
-%======================================================================
-\section{Worked example}
+A system pair is feasible only if both role evaluations are feasible.  Pairs
+are compared first by low-bass front, then upper-bass front, then the two
+role policy keys, physical driver count, and total enclosure volume.  Role
+risks remain separate.
+
+\subsection{Candidate population and privacy boundary}
+\label{sec:database}
+
+The aggregate population is a separately obtained VituixCAD community
+driver-database export.  The repository does not contain that source or any
+row-level derivative.  The public manifest records its SHA-256 digest,
+parser entry point, required fields, filters, retained/skipped counts, role
+counts, canonical scenario, and the exact public selected-driver records.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.88\textwidth]{figures/fig_database_pareto}
+	\caption{Binned aggregate population in the
+	$(\Vd,\eta_0\Pmax)$ plane.  Binning avoids disclosure of individual
+	private-source rows.  The two public worked-example records are marked.}
+	\label{fig:database-pareto}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.88\textwidth]{figures/fig_corner_population}
+	\caption{Aggregate stroke versus exact corner-rate population.  The plot
+	shows the empirical spread of available records and the locations of the
+	public worked-example drivers.  It is descriptive population evidence,
+	not a physical exclusion curve.}
+	\label{fig:corner-population}
+\end{figure}
+
+\input{tables/table_database_summary}
+
+The size-unrestricted aggregate includes candidates feasible in both bands.
+The selected roles nevertheless occupy different parts of the observed
+population under the role size filters, targets, packaging limits, and
+policy.  This is an empirical scenario result, not a prohibition on a
+single-driver design.
+
+\subsection{Robustness as decision stability}
+\label{sec:robustness}
+
+The pipeline reruns rankings with $\Xmax$ shifted by $\pm25\%$, $\Pmax$
+shifted by $\pm\SI{3}{dB}$, alternative leakage corners, and alternative
+reasonable ordering priorities.  It reports top-$k$ shortlist overlap:
+\begin{equation}
+	R_k=\frac{|S_k^{(0)}\cap S_k^{(v)}|}{k}.
+	\label{eq:robustness}
+\end{equation}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.9\textwidth]{figures/fig_rank_robustness}
+	\caption{Top-$k$ overlap with the baseline under datasheet, room, and
+	policy variants.  High overlap means the practical shortlist is stable
+	to that perturbation; low overlap identifies a provisional ordering.}
+	\label{fig:rank-robustness}
+\end{figure}
+
+This analysis tests decision stability only.  It does not validate physical
+large-signal behaviour, audibility, or the room model.
+
+\section{Worked public-datasheet system}
 \label{sec:example}
 
-Representative (rounded, not quoted) parameters for two real driver classes
---- S, a long-throw 18'' subwoofer unit, and M, a high-efficiency 12''
-mid-bass unit --- illustrate the whole chain end to end. Every derived
-number in the table and in Figs.~\ref{fig:spl-sub}--\ref{fig:distortion-attack}
-is produced by the same script (App.~\ref{sec:tool-scope}) from the datasheet
-rows alone, so the reading below can be checked against the plots rather
-than taken on faith.
+\subsection{Low-bass manifold}
 
-\input{tables/table_worked_example}
+The selected low-bass system uses four BMS 18N862 drivers in two
+mechanically opposed pairs.  The opposed layout permits first-order
+reaction-force cancellation only when drive, drivers, and mounting are
+matched.  Unit variation, gain/phase mismatch, and mounting tolerance leave
+residual force.  Each physical driver has its own amplifier channel.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.8\textwidth]{figures/fig_spl_sub}
-\caption{Driver S, two units in $473$~L each ($\Qtc=0.61$, $F_c=25.5$~Hz):
-sine and burst excursion ceilings and the thermal ceiling
-\eqref{eq:SPLT}--\eqref{eq:PL0}, at $r_{\mathrm{listen}}=3$~m against the
-$110$~dB target. The sine ceiling clears target by only $0.5$~dB below
-$f_{\mathrm{pz}}$ --- two units are barely sufficient there --- widening to
-a comfortable margin above it; the thermal ceiling stays more than $2$~dB
-above target throughout. Right axis: per-unit electrical power to sit at
-the target line itself (not at $\Xmax$), which stays within
-$7.8$--$316$~W over the plotted band; the corresponding drive voltage
-\eqref{eq:xofe} stays within $29$--$50$~V per unit, so the unconstrained
-amplifier of A6 never implies anything unusual here. The axis starts just
-below $f_{\mathrm{pz}}$, cropping the flat pressure-zone plateau further
-down (frequency-independent, hence a single value); the shaded band above
-$f_{\mathrm{sp}}=80$~Hz marks driver M's range.}
-\label{fig:spl-sub}
-\end{figure}
+The \SI{110}{dB} target is the total manifold target from
+\SIrange{15}{80}{\hertz}.  The box cap binds at
+\SI{250}{\liter} per driver, filling the \SI{1.0}{\cubic\meter} low-bass
+role allowance.  The resulting alignment is approximately
+$\Qtc=0.512$ and $F_c=\SI{37.6}{\hertz}$.  Because $F_c$ is above
+$f_{\mathrm{pz}}$, the finite-band correction cost is included in every
+electrical and displacement result.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.8\textwidth]{figures/fig_spl_attack}
-\caption{Driver M, one unit in $38$~L ($\Qtc=0.55$, $F_c=79$~Hz): the burst
-(dashed) excursion ceiling dips \emph{below} target just under $80$~Hz ---
-the transient clipping that fixes the sub/attack split frequency below,
-invisible on the sine curve alone. The shaded band below
-$f_{\mathrm{sp}}=80$~Hz is driver S's range, shown for context only; the
-visible kink at $f_{\mathrm{pz}}$ there reflects the $r=1$~m vs.\ $r=3$~m
-mismatch discussed at Fig.~\ref{fig:demand}. Re-evaluated at that
-room-consistent $r=3$~m distance, M's own $80$--$250$~Hz band needs at
-most $225$~W per unit ($\ll350$~W rated).}
-\label{fig:spl-attack}
-\end{figure}
+\subsection{Independent upper-bass channels}
 
-\noindent Reading, against target $L_t=110$ dB (1 m, $2\pi$, rms):
-\begin{itemize}
-\item S meets 110 dB down to $f=\sqrt{10^{(110-108.5)/20}/\Vd}=22.7$ Hz on sine;
-thermal needs only $\eta_0 P\ge0.60$ W$_{\mathrm{ac}}$, i.e.\ 141 W $\ll$ 600 W
-(Remark~\ref{rmk:target}: nowhere near thermally limited at the target).
-Its ceiling above 32 Hz is 116 dB (thermal) --- irrelevant at home levels.
-\item S \emph{cannot} serve as attack driver regardless of its thermal math:
-$f_L=139$ Hz sits inside the attack band (mechanism 3), a $\Qtc=0.55$ alignment
-needs 918 L (mechanism 2), and its $\sigma/2\pi=42$ Hz cannot be raised (Prop.~\ref{prop:invariance}).
-\item M holds 117 dB sine at 80 Hz and 120.6 dB in band --- 7--10 dB of headroom over
-target. But its \emph{transient} excursion ceiling at 70 Hz is
-$114.7-20\log_{10}2=108.7$ dB peak-equivalent: a 110 dB kick at 70 Hz clips
-excursion. $\Rightarrow$ split at $\ge$80 Hz, exactly the empirically chosen HPF.
-The split frequency is set by the \emph{burst} penalty (Lemma~\ref{lem:shape}), not
-by the sine math.
-\item M in 38 L reaches $\Qtc=0.55$ with $F_c=79$ Hz $\approx f_1$: corner correctly
-placed with no EQ tax; its ring decays at $e^{-\sigma t/2}$,
-$\sigma/2=2\pi\cdot72\,\mathrm{s}^{-1}$ ($3.5\times$ faster than S --- the
-box-invariant meaning of ``fast'').
-\item Both drivers saturate the materials bound at $\beta\approx0.3$
-(Theorem~\ref{thm:bound}): neither is badly designed; they sit at two ends of the
-same Pareto front. One driver covering both roles would need
-$\beta B^2\approx1.1$: excluded.
-\end{itemize}
+Each stereo channel uses one Eighteen Sound 12NTLW3500-8.  The public
+manufacturer one-way $\Xmax=\SI{8.3}{\milli\meter}$ is used.  A
+\SI{35.2}{\liter} enclosure gives approximately
+$\Qtc=0.506$ and $F_c=\SI{80}{\hertz}$.  Each channel must independently
+meet \SI{105}{dB} from \SIrange{80}{250}{\hertz}.
 
-\subsection*{Distortion-referenced sizing with room closure}
+\subsection{Gate results}
 
-Room $V_{\mathrm{room}}=60$ m$^3$, $L_{\max}=6$ m $\Rightarrow$
-$f_{\mathrm{pz}}=28.6$ Hz; target 110 dB (rms-equivalent) at the listening
-position; split $f_{\mathrm{sp}}=80$ Hz. PZ demand \eqref{eq:demand}:
-$V_{\mathrm{dem}}=4.36$ L, flat for all $f\le f_{\mathrm{pz}}$.
-Figs.~\ref{fig:distortion-sub}--\ref{fig:distortion-attack} plot the three
-non-correctable mechanisms of Sec.~\ref{sec:distortion} against this demand
-for each driver; the bullets below read off their crossings with the budget
-line $D^\ast=3\%$.
+Under the \SI{10}{\hertz} leakage model, the low-bass displaced-volume
+demand is largest at \SI{15}{\hertz}.  The generated room-sensitivity table
+gives \SI{4.57}{\liter} peak for the complete manifold, or about
+\SI{1.14}{\liter} per driver before division by piston area.
+
+The generated worked table is the authoritative rounded summary.  The
+low-bass role reaches approximately $0.49$ steady and $0.51$ transient
+excursion utilization.  Its worst steady requirements are approximately
+\SI{31.7}{\volt} rms, \SI{3.3}{\ampere} rms, and \SI{59}{\watt} per
+driver.  The upper-bass role reaches approximately $0.71$ steady and
+$0.83$ transient excursion utilization, with approximately
+\SI{43.5}{\volt} rms, \SI{3.8}{\ampere} rms, and \SI{75}{\watt} at the
+respective worst frequencies.  The latter transient utilization crosses the
+preferred marker but remains below the hard boundary.
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=0.8\textwidth]{figures/fig_distortion_sub}
-\caption{Driver S (two units, $473$~L each): motor/suspension HD, Doppler IM
-onto $80$~Hz, box air-spring HD2 \eqref{eq:boxHD}, and their sum, at the
-$110$~dB target ($r_{\mathrm{listen}}=3$~m basis). Below $f_{\mathrm{pz}}$ the
-flat pressure-zone demand pins the total near $9$--$9.5\%$, about three times
-over budget. Box HD2 stays two orders of magnitude under budget throughout.
-The axis starts just below $f_{\mathrm{pz}}$ (see Fig.~\ref{fig:spl-sub});
-the shaded band above $f_{\mathrm{sp}}=80$~Hz marks driver M's range. The
-dotted grey curve is the same total at $20$~dB below the reference target
---- normal continuous listening level rather than the brief reference peak
-the budget line is checked against.}
-\label{fig:distortion-sub}
+	\centering
+	\includegraphics[width=0.9\textwidth]{figures/fig_worked_system}
+	\caption{Separately reported worked-system indicators for the complete
+	mono manifold and one upper-bass stereo channel.  The hard boundary and
+	preferred excursion marker are shown without combining unlike
+	quantities.}
+	\label{fig:worked-system}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.8\textwidth]{figures/fig_distortion_attack}
-\caption{Driver M (one unit, $38$~L): the total briefly touches $3.7\%$
-right at the $80$~Hz split (motor HD dominant, $\xi_x=0.45$ there) before
-clearing budget by $\approx87$~Hz, under a sixth of an octave higher --- the
-HD margin and the burst-excursion margin (Fig.~\ref{fig:spl-attack})
-independently favor the same split frequency. The shaded band below
-$f_{\mathrm{sp}}$ marks driver S's range (Fig.~\ref{fig:spl-attack}). The
-dotted grey curve is the same total $20$~dB down, the normal-listening
-proxy discussed after \eqref{eq:HDscale}.}
-\label{fig:distortion-attack}
-\end{figure}
+\input{tables/table_worked_pair}
 
-\begin{itemize}
-\item \textbf{Utilization and HD:} one S: $\xi_x=4.36/2.30=1.89$ --- infeasible
-even before distortion. Two S: $\xi_x=0.95\Rightarrow D\approx9.0$--$9.5\%$
-\eqref{eq:HDscale}. Budget $D^\ast=3\%$: $\Vd\ge4.36/\xi^\ast$ with
-$\xi^\ast=0.3$--$0.55$, i.e.\ $7.95$--$14.52$ L $\Rightarrow$ \textbf{4--7 units of
-S}. The distortion budget, not the SPL ceiling, multiplies the driver count by
-$2$--$3.5\times$ --- this is the quantitative content of ``it is even more about
-distortion than SPL.''
-\item \textbf{Doppler / split check \eqref{eq:doppler}:} two S at
-$X_1=18.9$ mm each: carrying their own band to 80 Hz costs $m/2=1.4\%$ IM; a
-hypothetical single full-range cone carrying 250 Hz on the same excursion:
-$4.3\%$. M's own in-band index ($X_1=3.6$ mm at 80 Hz, $f_2=250$ Hz): $0.8\%$.
-The split buys $\sim\!3\times$ lower FM distortion at identical SPL.
-\item \textbf{Box spring \eqref{eq:boxHD}:} two S in 473 L each
-($\Qtc=0.61$): $\mathrm{HD}_2^{\mathrm{box}}\approx0.6\cdot
-(2.18/473)\cdot0.39\approx0.11\%$ --- roughly two orders below the motor
-terms; stuffing lowers it further. Sealed-box air is not the bottleneck.
-\item \textbf{Thermal:} per unit, $P_{\mathrm{req}}$ from \eqref{eq:EQtax}
-evaluated at $f_{\mathrm{pz}}$ (with the $N^2$ coherent-array power sharing of A9,
-$N=2$) is $\approx23$ W $\Rightarrow\xi_P\approx3.8\%$ --- still comfortably
-small next to the driver's rating: two coherent units need $N^2=4\times$ less
-power each for the same target (A9), and $F_c=25.5$ Hz sits close enough to
-$f_{\mathrm{pz}}$ (undershooting by $3.1$ Hz) that \eqref{eq:PL}'s tax stays
-near its own bathtub minimum rather than deep below the corner. Hence thermal
-AM is $\approx0.13$ dB for any music crest factor; negligible here, dominant
-only if one coil served both bands.
-\item \textbf{$F_s$ rule \eqref{eq:Fsrule}:} required $F_s/\Qts\le
-f_{\mathrm{pz}}/0.55=52$ Hz; S has 42 Hz --- compliant; at $\Qtc=0.61$ in 473 L,
-$F_c=25.5\,\mathrm{Hz}$ undershoots $f_{\mathrm{pz}}$ by $3.1$ Hz: a
-$0.99$~dB in-room shelf between $F_c$ and $f_{\mathrm{pz}}$, trimmed by a free
-EQ cut. $\Qtc=0.61$ is chosen from the ringing budget (Prop.~\ref{prop:decay}:
-$M_p\le1\%$) rather than from exact alignment, per Sec.~\ref{sec:roomclose}.
-\end{itemize}
+Three conclusions follow within this scenario.  First, box volume fixes the
+low-bass alignment and correction demand, whereas transient excursion is the
+tighter upper-bass concern.  Second, all finite per-driver amplifier gates
+remain satisfied across both complete bands.  Third, the recommendation is
+conditional on the room leakage model; the available low-bass margin absorbs
+the declared sensitivity range but remains finite.
 
-%======================================================================
+\section{Scoped sealed-versus-vented comparison}
+\label{sec:vented}
+
+\subsection{Order and limiting behaviour}
+
+A vented enclosure adds port acoustic mass and resistance to the driver and
+box compliance, producing a fourth-order alignment \cite{small1973vented}.
+Around tuning it can deliver greater acoustic output per cone displacement
+and greater electrical efficiency than a same-volume sealed system.  Those
+are strong advantages when amplifier power or passband efficiency binds.
+
+Below tuning, however, port and cone volume velocities no longer combine in
+the same protective way.  Cone excursion rises rapidly unless a suitable
+high-pass filter limits programme content.  A practical vented design
+therefore adds that filter and evaluates its voltage, current, excursion,
+port, and group-delay consequences.  This is a manageable engineering task,
+but it differs from the sealed model in which the air spring bounds
+low-frequency displacement for a bounded voltage input down to dc.
+
+\subsection{Room integration}
+
+The sealed low-frequency response has a second-order high-pass asymptote,
+which can approximately complement the pressure-zone transition over the
+declared prepared-room range.  A vented system rolls off more steeply below
+tuning, so matching it to the same room and extension objective requires a
+different alignment and protective-filter calculation.  Neither topology
+removes the need for measured in-room verification above the first axial
+mode.
+
+\subsection{Port and passive-radiator constraints}
+
+Near tuning, port volume velocity supplies much of the output.  A useful
+first estimate for mean port speed at target pressure $p_t$ is
+\begin{equation}
+	v_{\mathrm{port}}\simeq
+	\frac{2\pi r_{\mathrm{listen}}p_t}
+	{\rho_0\omega_bS_{\mathrm{port}}}.
+	\label{eq:portvelocity}
+\end{equation}
+Port compression, vortex shedding, turbulence noise, and end correction
+then depend on geometry and level \cite{salvatti2002,vanderkooy1998}.
+Large or multiple flared ports reduce velocity but require volume and baffle
+area.  Passive radiators remove the port-flow mechanism while retaining the
+additional resonant degree of freedom and below-tuning excursion issue.
+
+\subsection{Why sealed loading is retained here}
+
+The canonical manifold already uses multiple actively driven units for
+displacement and opposed-pair force reduction.  Under the generated worked
+result, enclosure volume and excursion bind before amplifier power.
+Sealed loading consequently offers a compact modelling and protection
+advantage for this application: one bounded-excursion second-order plant per
+driver, no port geometry, and a direct fit to the declared room-sizing
+procedure.  Different constraints---particularly tighter amplifier power,
+greater required sensitivity near tuning, or a room without useful
+pressure-zone support---can favour vented or passive-radiator loading.  The
+present ranking equations would then need to be rederived for that plant.
+
+\section{Limitations and required validation}
+\label{sec:limits}
+
+\begin{enumerate}
+	\item The driver model is small-signal and LTI.  It omits measured
+	$Bl(x)$, $K_{\mathrm{ms}}(x)$, inductance modulation, hysteresis, creep,
+	and suspension heating.
+	\item Published $\Xmax$, $\Pmax$, and $\Le$ fields have mixed conventions
+	and unknown production spread.  Robustness analysis can reveal
+	sensitivity to those fields but cannot correct their definitions.
+	\item The thermal check is dissipation-based.  It does not predict coil
+	temperature, magnet heating, time-varying resistance, or compression.
+	\item The rigid-piston radiation model omits directivity transition,
+	cone breakup, baffle details, mutual radiation impedance, and near-field
+	effects.
+	\item The room model is a limiting compliance-plus-leakage description
+	below the first axial mode.  Above that range, measured transfers or
+	fitted modal sections are required.
+	\item The couch-area objective must be implemented as a declared
+	reference or spatial aggregation.  The current analytical example does
+	not establish uniformity throughout the area.
+	\item DSP correction is constrained by noise, latency, finite filter
+	length, spatial variation, headroom, and model error.
+	\item Reaction-force cancellation is first order and depends on matched
+	drive and mounting.
+	\item Aggregate database results inherit mixed manufacturer conventions,
+	unknown age, and unknown current availability.  They describe the frozen
+	snapshot, not the current market.
+	\item The robustness plot measures stability of the decision procedure,
+	not correctness of the physical proxies.
+	\item No controlled subjective comparison with a diffuse-field,
+	multi-seat, vented, or multichannel system is reported.
+\end{enumerate}
+
+The most important future work is therefore measured validation at three
+levels:
+
+\begin{enumerate}
+	\item public large-signal measurements on a comparable subset of drivers,
+	testing whether proxy-based pairwise ordering agrees with measured
+	headroom;
+	\item a measured transfer over the prepared couch area replacing the
+	analytical room model;
+	\item a built-system test of frequency response, phase/delay integration,
+	maximum output, voltage/current, compression, distortion spectra,
+	reaction force, and spatial variation.
+\end{enumerate}
+
+\section{Reproducibility and data boundary}
+\label{sec:availability}
+
+The implementation is in \path{src/audioshape/}, with scenario construction
+in \path{scenario.py}, physical relations in \path{physics.py}, ranking in
+\path{ranking.py}, and serializable recipe loading in \path{recipe.py}.
+The canonical manifest is
+\path{papers/26325/data/driver_database_manifest.json}.  It records the
+private source hash and metadata, aggregate counts, and exact public SI
+records for the selected BMS and Eighteen Sound drivers.  The source URLs are
+manufacturer URLs in that manifest.
+
+The private VituixCAD export is neither included nor reconstructable from the
+published package.  Only its digest, parser/filter metadata, aggregate
+counts, and non-row-level plots are public.  The generated figures and tables
+used by both manuscripts are committed under
+\path{papers/26325/figures/} and \path{papers/26325/tables/}.
+
+The author develops loudspeaker design software commercially at SenseMagic.
+The reference implementation, generated evidence, and this explanatory
+companion are available from the project repository
+\cite{audioshape-preprint}.
+
 \section{Conclusion}
 \label{sec:conclusion}
 
-\noindent The problem posed in Sec.~\ref{sec:intro} was: given a room, one
-listening position, and a target level, choose sealed bass driver(s) that
-reach it with the least non-correctable distortion. The derivation of
-Secs.~\ref{sec:model}--\ref{sec:example} answers it as follows.
+For the declared prepared-room, soffit-mounted, small-area stereo
+architecture, the method provides a reproducible path from public datasheet
+records to separate low-bass and upper-bass shortlists.  It retains the
+classical sealed ODE, alignment line, displacement and dissipation ceilings,
+$f_x$ equivalence, room-demand derivation, and full-band electrical
+requirements; it adds a declared numerical finite-burst test and a
+non-compensatory decision policy.
 
-\begin{enumerate}
-\item \textbf{Two regimes, two drivers.} A sealed driver's output near $F_s$
-is capped by displaced volume $\Vd=\Sd\Xmax$ (Cor.~\ref{cor:onlyVd}); above
-$f_x$ \eqref{eq:fx} it is capped instead by dissipation $\eta_0\Pmax$
-\eqref{eq:SPLT}. The motor materials bound (Thm.~\ref{thm:bound}) proves
-$EBP\cdot u^2\le K_{\mathrm{mat}}\beta_{\max}$: stroke and corner rate trade
-off through the same coil-mass fraction, so no single voice-coil motor
-maximizes both $\Vd$ and $\eta_0\Pmax$ at once. A sub role (maximize $\Vd$)
-and an attack role (maximize $\eta_0\Pmax$) are therefore best served by two
-physically different drivers, split at a frequency set jointly by Doppler
-\eqref{eq:doppler} and burst-excursion headroom (Sec.~\ref{sec:example}).
-\item \textbf{Sealed, not vented.} Appendix~\ref{sec:vented} shows a vented
-alignment's low-frequency asymptote is $24$~dB/oct, not sealed's $12$
-(Prop.~\ref{prop:vented24}); that below tuning its excursion is bounded only
-by drive, not by the box (Prop.~\ref{prop:ventedxmax}); and that reaching a
-realistic in-room target at typical port sizes drives port air velocity well
-past the empirical turbulence-onset threshold \eqref{eq:vport}. None of
-these are amplifier, alignment, or execution details -- they follow from the
-same lumped model \eqref{eq:ventedode} already validated for the sealed
-case (Cor.~\ref{cor:portshut}). A sealed box forfeits at most an octave of
-extension for a given volume, and recovers most of it for free from the
-room (next point) -- a trade this document takes.
-\item \textbf{Room gain closes the low end.} Below
-$f_{\mathrm{pz}}=c/2L_{\max}$ the demand curve flattens \eqref{eq:demand},
-and a sealed corner placed at $F_c\simeq f_{\mathrm{pz}}$ \eqref{eq:Fsrule}
-is flat in-room to the leakage corner with no EQ (Sec.~\ref{sec:roomclose}).
-A vented box's steeper $24$~dB/oct roll-off is not rescued the same way
-(Appendix~\ref{sec:vented}): the room-gain argument is itself a reason to
-prefer sealed, independent of points 1--2.
-\item \textbf{The selection procedure is datasheet-only.} Every quantity in
-Sec.~\ref{sec:procedure} -- $\Vd$, $\eta_0\Pmax$, $\sigma$, $f_L$, the
-$F_s$/room rule, the distortion budget $\xi^\ast$ -- is computable from the
-ten datasheet rows of Sec.~\ref{sec:assumptions}, with no free parameter
-beyond the room, the target level, and the distortion budget themselves.
-\end{enumerate}
+The canonical worked system uses four BMS 18N862 drivers in two opposed pairs
+for the mono manifold and one Eighteen Sound 12NTLW3500-8 per upper-bass
+stereo channel.  Under the stated room model, box limits, targets, and
+per-driver electronics, both roles satisfy their hard gates.  The selected
+records occupy different empirical regions and have different binding
+constraints, but that observation is specific to the frozen population and
+scenario.
 
-\noindent\textbf{Verdict.} An optimal sealed bass monitor for one listening
-position, in a room large enough to matter, is a \emph{two-driver} system --
-a high-$\Vd$, long-throw driver (or driver pair/manifold) sealed and
-corner-tuned to the room's pressure zone, plus a light, strongly motored
-driver above the split -- sharing a common baffle plane (a soffit wall). No
-single driver saturates both invariants at once (point 1), and no enclosure
-other than sealed lets the room pay for the last octave without the costs
-quantified in Appendix~\ref{sec:vented} (point 2).
+The procedure's strongest claim is practical: it makes assumptions,
+reference bases, correction cost, electrical limits, uncertainty, and
+ranking priorities inspectable before purchase.  Physical confidence still
+requires large-signal driver measurement, a measured prepared-room transfer,
+and verification of the built system.
 
-\subsection*{Relation to previous work}
-
-Sec.~\ref{sec:prevwork}'s review is closed by the results above: $EBP$
-remains a legitimate enclosure-\emph{type} screen (it is exactly the
-motor/mass ratio of Sec.~\ref{sec:materials}), but does not extend to an
-absolute performance ranking -- the excursion regime's ranking is
-$\Vd=\Sd\Xmax$ alone ($EBP$ enters only through $f_x$ and the corner rate),
-and the dissipation regime's ranking is $\eta_0\Pmax$ \eqref{eq:SPLT}. The
-overshoot, excursion-slope, and ``$\Qtc$-and-frequency'' shorthands
-reviewed there are corrected, not overturned, by
-Secs.~\ref{sec:freq}--\ref{sec:time}.
-
-\subsection*{Limitations}
-
-The model is LTI to leading order in $x/\Xmax$ (A1, A10) and excludes
-directivity/breakup above $ka\approx1$ (A3); distortion laws are
-order-of-magnitude ranking predictors, not $\pm1$~dB THD forecasts; and the
-reference implementation fixes several deployment choices (half-space
-radiation, one listening position, mono per-channel target level) rather
-than exploring the general design space. None of these change the criteria
-themselves -- only the constants that feed them. Appendix~\ref{sec:limits}
-records the complete list.
-
-\section*{Acknowledgments}
-
-Driver parameters used throughout this paper and its worked example are
-drawn from the VituixCAD driver database; we thank its maintainers for
-compiling and freely sharing this resource. An interactive web application
-implementing the selection procedure of Sec.~\ref{sec:procedure} against
-this database is available from SenseMagic. The reference implementation,
-including all code needed to reproduce every figure, table, and numerical
-claim in this paper, is open-sourced at
-\url{https://github.com/luchp/audioshape}.
-
-%======================================================================
 \appendix
 
-%======================================================================
-\section{Why sealed, not vented}
-\label{sec:vented}
+\section{Derivation of the leaky pressure-zone transfer}
+\label{app:room-derivation}
 
-Sec.~\ref{sec:roomclose} showed that a sealed system with $F_c\simeq
-f_{\mathrm{pz}}$ tapers off below its corner \emph{for free}: the room pays the
-bill. A vented (ported) box promises to avoid the taper-off altogether,
-extending flat output roughly an octave lower than a sealed box of the same
-volume, with one driver instead of two. This section asks, rather than
-asserts, what that promise costs -- reusing the free-air cone equation
-\eqref{eq:ode} and the box-invariance of $\sigma$ (Prop.~\ref{prop:invariance})
-already established, and adding only the port as two new lumped elements.
-
-\subsection{Minimal vented-box model}
-\label{sec:vented-model}
-
-Repackage \eqref{eq:newton}'s box-stiffness term as an acoustic compliance
-$C_{ab}=\Vb/(\rho_0c^2)$, and add a port of acoustic mass and resistance
-$M_{ap},R_{ap}$ driven by the box pressure $P_b$:
+Let room compliance be
 \begin{equation}
-\Mms\ddot x+\Rms\dot x+\frac{1}{\Cms}x-\Sd P_b=\Bl i,
-\qquad
-C_{ab}\dot P_b=-\Sd\dot x-U_p,
-\qquad
-M_{ap}\dot U_p+R_{ap}U_p=P_b,
-\label{eq:ventedode}
+	C_{\mathrm a}=\frac{V_{\mathrm{room}}}{\rho_0c^2}
+	\label{eq:roomCa}
 \end{equation}
-i.e.\ the \emph{free-air} cone (no box stiffness folded in here -- unlike
-\eqref{eq:newton}, the box now talks to the cone only through $P_b$) loaded by
-a second-order Helmholtz side-branch. In steady sine ($s=j\omega$, as in
-\eqref{eq:xofe}), define the port$+$box polynomial
-$D_p(s)=C_{ab}M_{ap}s^2+C_{ab}R_{ap}s+1$ (roots at $\omega_b=1/\sqrt{M_{ap}C_{ab}}$
-when $R_{ap}=0$: the port tuning $F_b$). Eliminating $P_b,U_p$ from
-\eqref{eq:ventedode} gives a 4th-order system --- the classical vented
-alignment \cite{small1973vented}, written in \eqref{eq:ode}'s own notation so
-every sealed-box quantity ($\sigma,\ws,\Cms$) transfers unchanged:
+and model leakage by an acoustic resistance $R_\ell$.  Conservation of
+volume velocity gives
 \begin{equation}
-X(s)=\frac{\Bl}{\Re}E\,\frac{D_p(s)}{\Delta(s)},
-\qquad
-\Delta(s)=L(s)D_p(s)+\Sd^2s\big(M_{ap}s+R_{ap}\big),
-\qquad
-L(s)=\Mms\big(s^2+\sigma s+\ws^2\big),
-\label{eq:ventedX}
+	U_s=C_{\mathrm a}\dot p+\frac{p}{R_\ell}.
+	\label{eq:roomflow}
 \end{equation}
+Since source volume velocity is $U_s=\dot V_s$, the Laplace-domain relation
+is
 \begin{equation}
-U_{\mathrm{tot}}(s)=\Sd sX(s)+U_{\mathrm{port}}(s),
-\qquad
-U_{\mathrm{tot}}(s)=\Sd sX(s)\,\frac{D_p(s)-1}{D_p(s)},
-\qquad
-U_{\mathrm{port}}(s)=-\frac{\Sd sX(s)}{D_p(s)}.
-\label{eq:ventedU}
+	sV_s=sC_{\mathrm a}P+\frac{P}{R_\ell}.
+	\label{eq:roomlaplace}
 \end{equation}
-
-\begin{cor}[Consistency: a shut port is a sealed box]
-\label{cor:portshut}
-As $M_{ap},R_{ap}\to\infty$ at fixed ratio (infinite inertance blocks all
-flow), $s(M_{ap}s+R_{ap})/D_p(s)\to1/C_{ab}$, so
+Solving for pressure per source displacement gives
 \begin{equation}
-\frac{\Delta(s)}{D_p(s)}\ \longrightarrow\ L(s)+\frac{\Sd^2}{C_{ab}}
-=\Mms\big(s^2+\sigma s+\wc^2\big),
-\label{eq:portshut}
+	\frac{P}{V_s}
+	=\frac{1}{C_{\mathrm a}}
+	\frac{s}{s+1/(R_\ell C_{\mathrm a})}.
+	\label{eq:roomtransfer}
 \end{equation}
-exactly \eqref{eq:ode}'s sealed operator, since $\Sd^2/C_{ab}\equiv
-\rho_0c^2\Sd^2/\Vb$ is \eqref{eq:newton}'s box-stiffness term. The vented model
-\emph{specializes} to the already-validated sealed one; it adds physics rather
-than replacing it (numerically confirmed to $4$ significant figures for the
-worked-example driver S).
-\end{cor}
+Identifying $\omega_\ell=1/(R_\ell C_{\mathrm a})$ produces
+\cref{eq:Hpz,eq:pzdyn}.  This derivation also shows why leakage has little
+effect well above $f_\ell$ and removes the static-pressure limit at dc.
 
-\subsection{Low-frequency asymptotics: two propositions the vented literature
-states but rarely proves from the driver's own datasheet}
-\label{sec:vented-asym}
+\section{Implementation formula sheet}
+\label{app:formula-sheet}
 
-\begin{prop}[$24$ dB/octave, not $12$]
-\label{prop:vented24}
-$\Delta(0)=\Mms\ws^2\ne0$ is finite ($D_p(0)=1$ in \eqref{eq:ventedX}), so as
-$s\to0$, $U_{\mathrm{tot}}(s)\propto s^2(M_{ap}s+R_{ap})$. For an ideal port
-($R_{ap}=0$): $U_{\mathrm{tot}}\propto\omega^3$, hence
-$p\propto\omega\,U_{\mathrm{tot}}\propto\omega^4$:
-\begin{equation}
-\boxed{\ \text{vented low-}f\text{ slope}=24\ \mathrm{dB/oct}\ }
-\qquad\text{vs.\ sealed's } 12\ \mathrm{dB/oct}\ \text{(Sec.~\ref{sec:roomclose}).}
-\label{eq:vented24}
-\end{equation}
-(Confirmed numerically to exponent $4.0\pm0.1$ over two octaves below $F_b$ for
-driver S, Fig.~\ref{fig:vented}.) A real port has $R_{ap}>0$:
-$U_{\mathrm{tot}}\propto R_{ap}s^2+M_{ap}s^3$ crosses from resistive
-($\propto\omega^2$, $18$ dB/oct in pressure) to inertive ($\propto\omega^3$,
-$24$ dB/oct) at $\omega^\ast=R_{ap}/M_{ap}$: for any port built with reasonably
-low loss ($R_{ap}\ll M_{ap}\omega_b$, i.e.\ a high port $Q$), $\omega^\ast\ll
-\omega_b$ and \eqref{eq:vented24} governs essentially the whole sub-tuning band
-of interest, not just an asymptotic tail.
-\end{prop}
-
-\begin{prop}[Excursion is not box-limited]
-\label{prop:ventedxmax}
-$\Delta(0)=\Mms\ws^2$ contains no $C_{ab},M_{ap},R_{ap}$ at all, so
-\begin{equation}
-X(0)=\frac{\Bl}{\Re}E\,\frac{D_p(0)}{\Delta(0)}=\frac{\Bl\Cms E}{\Re},
-\label{eq:ventedx0}
-\end{equation}
-independent of box or port sizing: below tuning, cone excursion relaxes to the
-driver's own \emph{free-air} (no enclosure at all) DC limit, not some
-box-conditioned value (confirmed numerically to $<1\%$, Fig.~\ref{fig:vented}
-bottom panel). This is the rigorous content of ``a vented box needs a subsonic
-filter'': below $F_b$ the box supplies \emph{no} restoring force, and
-excursion is bounded only by how much drive $E$ happens to be applied --
-unlike sealed, where \eqref{eq:ode}'s $\wc^2$ (box included) bounds $x$ at
-every frequency down to DC.
-\end{prop}
-
-\begin{prop}[Relative excursion at fixed drive]
-\label{prop:ventedratio}
-Same driver, same box volume $\Vb$ (hence same $\alpha=\Vas/\Vb$), same drive
-$E$: sealed DC excursion is $X_{\mathrm{sealed}}(0)=\Bl\Cms E/(\Re(1+\alpha))$
-(\eqref{eq:ode} at $s=0$), so
-\begin{equation}
-\frac{X_{\mathrm{vented}}(0)}{X_{\mathrm{sealed}}(0)}=1+\alpha=
-\Big(\frac{F_c}{F_s}\Big)^2
-\label{eq:ventedratio}
-\end{equation}
-(confirmed numerically to $0.1\%$) --- a clean reuse of the already-defined
-$\alpha$, not a new constant. A vented alignment moves $(1+\alpha)\times$
-farther, at identical sub-corner drive, than the same driver sealed in the
-same box: for the worked example's $\Qtc=0.61$ box, $1+\alpha\approx1.63$,
-roughly $60\%$ farther.
-\end{prop}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{figures/fig_vented_comparison}
-\caption{Driver S, identical $473$~L box, sealed ($\Qtc=0.61$) vs.\ vented
-($F_b=23$~Hz), both curves scaled to the same on-target level at $80$~Hz (top:
-SPL at $r_{\mathrm{listen}}=3$~m; bottom: peak cone excursion). Vented gains
-almost an octave of flat output below the sealed $F_c$, at the cost of the
-cone-excursion null at $F_b$ (Sec.~\ref{sec:vented-port}) and the unbounded,
-box-independent excursion rise of Prop.~\ref{prop:ventedxmax} below it --- the
-sealed curve visibly saturates toward $\Xmax$ instead of continuing to climb.}
-\label{fig:vented}
-\end{figure}
-
-\subsection{Room integration: a bill the room cannot pay}
-\label{sec:vented-room}
-
-Sec.~\ref{sec:roomclose} is not driver-specific: \emph{any} sealed system with
-$F_c\simeq f_{\mathrm{pz}}$ gets its bottom octave for free because $-12$
-dB/oct fixed-drive excursion roll-off matches $p\propto x$ (the room's own flat
-pressure-zone term) to within $O(1)$ \eqref{eq:Fsrule}. A vented system's
-$-24$ dB/oct (Prop.~\ref{prop:vented24}) is twice as steep in dB and is not
-matched the same way: closing the extra $-12$ dB/oct with FIR would apply
-\eqref{eq:EQtax}'s power tax to a driver whose excursion
-(Prop.~\ref{prop:ventedxmax}) the box no longer limits \emph{at all} below
-tuning --- the correction buys back level by driving an already
-excursion-unbounded cone harder, with no $\Xmax$-derived ceiling
-(Sec.~\ref{sec:freq}) to say when to stop. Sealed trades a taper-off the room
-fills in for free; vented trades the same octave for a drive-side liability
-the room can no longer absorb.
-
-\subsection{Port air velocity and turbulence}
-\label{sec:vented-port}
-
-Near tuning, $D_p(j\omega_b)\to0$ for a low-loss port (by construction), so
-$X(j\omega_b)\to0$ --- the classical cone-null --- and \eqref{eq:ventedU} gives
-$U_{\mathrm{port}}(j\omega_b)=U_{\mathrm{tot}}(j\omega_b)$ \emph{exactly} (the
-cone contributes nothing at its own null): essentially all output passes
-through the port. Rewriting the monopole relation used throughout (A3,
-\eqref{eq:pofx}) in terms of volume velocity $U=\Sd\dot x$,
-$\hat p(\omega)=\rho_0\omega\hat U/(2\pi r)$, and evaluating at $\omega_b$ with
-$U_{\mathrm{tot}}\approx U_{\mathrm{port}}=v_{\mathrm{port}}S_{\mathrm{port}}$:
-\begin{equation}
-\boxed{\ v_{\mathrm{port}}\approx\frac{2\pi r\,p_t}{\rho_0\,\omega_b\,
-S_{\mathrm{port}}}\ }
-\label{eq:vport}
-\end{equation}
-Turbulence (``chuffing'') onset at $v_{\max}\approx17$ m/s is an
-\emph{empirical} threshold \cite{dickason2006}, cited as an anchor exactly as
-IEC~62458's $10\%$-distortion threshold anchors $\Xmax$ (A7) --- not
-re-derived, and not universal (port flare and cross-section change the onset
-somewhat \cite{beranek2012}), but the right order of magnitude for a plain
-cylindrical port. For the running $60$~m$^3$/$110$~dB/$F_b=23$~Hz example
-(Sec.~\ref{sec:roomclose}):
-
-\input{tables/table_port_velocity}
-
-\noindent A single reasonably sized ($10$~cm) round port already runs at
-$\sim\!5\times$ the turbulence-onset velocity; holding $v\le v_{\max}$ at this
-target needs a $\approx23$~cm port (or several smaller ones in parallel) ---
-a real, level-dependent, compressive, un-equalizable distortion and noise
-mechanism with no sealed-box analogue, layered on top of the excursion/EQ-tax
-cost already derived above.
-
-\subsection*{Passive radiators}
-
-A passive radiator -- a driver-like cone with no voice coil or motor,
-tuned by its own moving mass and suspension in place of the port's air
-mass -- is a common alternative that avoids the mechanism above entirely:
-no air moves through a constriction, so \eqref{eq:vport} and the
-turbulence threshold simply do not apply, and several pro-audio monitors
-use exactly this solution. It does not, however, change the underlying
-alignment: a passive radiator is still driven by box pressure through a
-fourth-order mass-spring-damper standing in for the port, so
-Prop.~\ref{prop:vented24} and Prop.~\ref{prop:ventedxmax} (the steeper
-roll-off and the box-unbounded excursion below tuning) and the missing
-room-gain match of Sec.~\ref{sec:roomclose} all still apply unchanged. And the
-radiator is itself an added driver: once a second driver is accepted at
-all, an \emph{active} one in the array proposed here is the better use of
-it, contributing shared power and $\Vd$ (A9) that a passive radiator,
-lacking its own voice coil, cannot provide. Room gain remains the
-strongest of the reasons above -- it is the one advantage no port or
-radiator geometry can reproduce.
-
-\subsection{Summary: two regimes, two optimal drivers, or one compromise}
-\label{sec:vented-summary}
-
-Collecting Secs.~\ref{sec:freq}--\ref{sec:vented-port}: the excursion regime
-wants high $\Vd=\Sd\Xmax$ (large cone, long throw); the dissipation regime
-wants high $\eta_0\Pmax$ (strong motor, light cone, Sec.~\ref{sec:invariants}).
-Corollary~\ref{cor:onlyVd} and Prop.~\ref{prop:thermal} show these are
-different, weakly correlated optimization targets, so one driver rarely excels
-at both (Sec.~\ref{sec:example}'s worked pair: $\beta\approx0.3$ each against
-the same materials bound, Theorem~\ref{thm:bound}, with a single
-both-in-one driver needing $\beta B^2\approx1.1$ -- excluded). A vented
-alignment is, in this light, an attempt to cover the excursion regime's job
-with a dissipation-regime driver, by moving the box's own resonance in as
-extra gain: Secs.~\ref{sec:vented-model}--\ref{sec:vented-asym} showed this is
-not free --- $24$ instead of $12$ dB/oct, an excursion no longer bounded by the
-box at all below tuning, and a room term (Sec.~\ref{sec:vented-room}) that can
-no longer absorb the difference --- and Sec.~\ref{sec:vented-port} showed the
-mechanism that pays for the extra octave (port air velocity) is itself a
-nonlinear, level-dependent distortion and noise source outside this document's
-LTI accounting (A1, A10). Sealed keeps the two regimes, and the two drivers
-that serve them, honestly separated; the rest of this document, and the
-reference implementation (App.~\ref{sec:tool-scope}), is written for that
-choice.
-
-
-%======================================================================
-\section{Model limitations}
-\label{sec:limits}
-
-(i) $\Le(f)$ is semi-inductive (eddy losses); $f_L$ is a soft corner --- for ranking
-use same-standard $\Le$@1 kHz, or measured $|Z|$. (ii) Power ratings: AES/IEC/
-``program'' differ by up to $2\times$ (A5); power compression raises $\Re$ by
-$+0.39\%/\mathrm{K}$ (Cu): $\Delta T=100$ K $\Rightarrow\eta_0\Pmax$ ceiling
-$-1.4$ dB --- second-order for selection, first-order for sizing $\kappa$.
-(iii) $\Xmax$ definitions vary; FOM 1 is linear in it (A7). (iv) Above
-$ka\approx1$ ($287$ Hz for 18'', $428$ Hz for 12'') directivity and breakup
-invalidate A3 --- outside the bands considered. (v) Box losses lower the realized
-$\Qtc$ slightly ($Q_L\sim5$--$20$); \eqref{eq:alignment} is the lossless limit.
-(vi) Suspension creep and $\Cms(x)$ shift $F_c$ by several \%; irrelevant to
-ranking. (vii) Multiple subs / manifold: A9 scaling, plus boundary gain not modeled.
-(viii) Distortion laws (Sec.~\ref{sec:distortion}) are leading-order with $O(1)$
-weights (A10); published Klippel scans supersede them when available --- use
-\eqref{eq:HDscale}--\eqref{eq:boxHD} for ranking and sizing, not for absolute THD.
-(ix) Cone breakup is \emph{linear} and hence FIR-correctable on axis only; off-axis
-the correction fails (directivity error). Keeping each band below breakup remains a
-hard constraint that no DSP relaxes.
-
-\subsection*{Scope of the reference implementation}
-\label{sec:tool-scope}
-
-The companion Python tool (\texttt{audioshape}) implements
-Secs.~\ref{sec:distortion}--\ref{sec:procedure} against a driver database, but
-fixes several free choices to a single concrete deployment rather than
-exploring the general design space; these are recorded here so paper and code
-stay in sync:
-
-\begin{enumerate}
-\item[(a)] \textbf{Half-space radiation only.} Every driver/role uses the
-  $2\pi$ (soffit-wall) constants of \eqref{eq:SPLL}; free-standing/$4\pi$
-  placements are out of scope.
-\item[(b)] \textbf{One fixed listening position, DSP-aligned.} The tool
-  targets a single ``couch'' point and assumes a linear-phase/time/EQ DSP
-  alignment across drivers, so only the \emph{non-correctable} (nonlinear)
-  distortion of Sec.~\ref{sec:distortion} is scored --- never distortion an
-  FIR filter could remove (Sec.~\ref{sec:distortion}, ``What LTI correction
-  can and cannot do''). This deliberately trades the multi-seat coverage of
-  a cinema-style design --- many small woofers distributed around the room,
-  or diffuse-field/dipole surrounds, both of which treat the room as a
-  reverberant field and leave placement free precisely because no single
-  seat's phase coherence is the goal --- for tighter phase/image control at
-  the one seat that \emph{is} targeted. That trade is also why array size
-  is not a free scaling knob here the way it is for a cinema bass array
-  (item (d) below): the mono sub role can add units almost anywhere on the
-  shared manifold, since it carries no stereo image to preserve, but the
-  stereo attack role cannot --- each channel must stay a coherent point
-  source at the couch to keep the image intact, not merely add output
-  somewhere along the front wall.
-\item[(c)] \textbf{Room gain via the pressure-zone corner only.} Below
-  $f_{\mathrm{pz}}=c/2L_{\max}$ the demand curve flattens per
-  Sec.~\ref{sec:roomclose} and App.~\ref{app:room}; no other room-mode modeling is
-  attempted.
-\item[(d)] \textbf{Two independent roles, no cross-coupling term.} A
-  \emph{sub} role covers $[F_{\mathrm{low}},F_{\mathrm{split}}]$ and an
-  \emph{attack} role covers $[F_{\mathrm{split}},F_{\mathrm{high}}]$, each
-  evaluated with its own excursion demand and its own self-Doppler reference
-  tone (Sec.~\ref{sec:doppler}) at the top of \emph{its own} band. Because the
-  two roles are physically separate enclosures (e.g.\ a shared mono manifold
-  for the sub vs.\ a stereo tower for the attack driver) sharing only the
-  baffle plane, no acoustic coupling term between them is modeled.
-\item[(e)] \textbf{Per-driver target level; coherent A9 sum applies within
-  each role, never across roles.} $\mathrm{SPL}_{\mathrm{target}}$ is defined
-  as the level required from one physical driver/channel alone, at the
-  target's shared common signal. Within one role, its $N=$ (units per
-  channel) $\times$ (channels) identical, correlated drivers -- a mono sub
-  manifold ($N=$ units, one channel) or a stereo attack tower fed
-  correlated/mono-panned content ($N=$ units-per-channel $\times$ 2 channels)
-  -- add coherently per A9 ($\Vd\to N\Vd$, $+20\log_{10}N$ dB), so each
-  driver need only reach $\mathrm{SPL}_{\mathrm{target}}-20\log_{10}N$ dB on
-  its own; e.g.\ a stereo tower ($N=2$) needs only $104$\,dB per channel to
-  reach a $110$\,dB target. Electrical/thermal budget never receives this
-  credit: each physical driver dissipates only its own channel's power, so
-  A9's $N^2$ power-sharing is confined to units on the \emph{same} electrical
-  channel (the manifold), not applied across independently-driven stereo
-  channels. No coupling or summing term is modeled \emph{between} the sub and
-  attack roles (see (d)).
-\item[(f)] \textbf{Configuration is a recipe file, not a parameter sweep.}
-  Room size, listening distance, target SPL, distortion budget and role
-  bands are fixed per run by a hand-authored recipe; the tool ranks and pairs
-  drivers for that one design point rather than optimizing over the general
-  scenario space.
-\item[(g)] \textbf{$\Qtc^\ast$ is a per-role damping ceiling, not a fixed
-  target.} The tool never boxes a driver at exactly $\Qtc^\ast$: it computes
-  $\Qtc=\min(\Qtc^\ast,\,f_{\mathrm{corner}}\Qts/F_s)$ per driver and role
-  ($f_{\mathrm{corner}}=f_{\mathrm{pz}}$ for sub/full, $f_{\mathrm{sp}}$ for
-  attack; Sec.~\ref{sec:procedure} step 5), so a driver whose own corner rate
-  $F_s/\Qts$ would overshoot its role's corner at the ceiling gets a lower
-  $\Qtc$ (bigger box) instead of being rejected outright. A driver is marked
-  infeasible only when even this reduced $\Qtc$ cannot clear $\Qts$, i.e.\
-  when $\Qts$ alone already exceeds $\Qtc^\ast$ or $F_s$ alone already sits
-  at/above the corner --- no box, however large, helps either case. The rank
-  table reports each driver's own realized $\Qtc$ alongside the run's
-  ceiling.
-\end{enumerate}
-
-These are deliberate simplifications, not limitations of the underlying
-math: relaxing any of (a)--(g) only changes which constants feed
-Secs.~\ref{sec:freq}--\ref{sec:roomclose}, not the criteria themselves.
-
-%======================================================================
-\section{Room pressure zone: the below-corner floor}
-\label{app:room}
-
-Rigid sealed room, volume $V_{\mathrm{room}}$, frequencies below the first mode
-($f<c/2L_{\max}$): adiabatic compression gives the flat, frequency-independent bound
-\begin{equation}
-p_{\mathrm{pz}}=\rho_0c^2\,\frac{\Sd x}{V_{\mathrm{room}}}
-\ \Rightarrow\
-\mathrm{SPL}_{\mathrm{pz,max}}
-=20\log_{10}\!\left(\frac{\rho_0c^2\,\Vd}{\sqrt{2}\,V_{\mathrm{room}}\,p_0}\right).
-\label{eq:pz}
-\end{equation}
-Driver S in 60 m$^3$: $105.6$ dB \emph{flat to DC} at $\Xmax$, while the 1-m
-free-field line \eqref{eq:SPLL} has fallen to $105.6$ dB already at
-$17.7$ Hz. Real rooms leak; \eqref{eq:pz} is an upper bound approached below the
-leakage corner --- this is the quantitative form of ``sealed keeps going below $F_c$
-and the room lifts it,'' the mechanism a vented alignment's steeper $24$ dB/oct
-collapse cannot use the same way (Sec.~\ref{sec:vented-room}).
-
-\section{Spreadsheet formula sheet (SI units)}
-\label{app:formulas}
-
-\begin{align*}
-&\Vd=\Sd\Xmax
-&&\sigma=2\pi F_s/\Qts,\quad \se=2\pi F_s/\Qes,\quad \sm=2\pi F_s/\Qms\\
-&\eta_0=9.78\times10^{-7}\,F_s^3\Vas/\Qes
-&&\mathrm{SPL_T}=112.2+10\log_{10}(\eta_0\Pmax)\\
-&\mathrm{SPL_L}(f)=108.5+20\log_{10}(f^2\Vd)
-&&f_x=\tfrac{1}{2\pi}\big(4\pi F_s\Pmax/(\Qes\Mms\Xmax^2)\big)^{1/4}\\
-&\hat f_x=f_x(\kappa C^2)^{1/4}
-&&F_c=\Qtc F_s/\Qts,\quad \Vb=\Vas/\big((\Qtc/\Qts)^2-1\big)\\
-&f_L=\Re/(2\pi\Le)
-&&M_p=\exp\!\big(-\pi\zeta/\sqrt{1-\zeta^2}\big),\ \ \zeta=1/(2\Qtc)\\
-&P_{\mathrm{L}}(\omega)=\tfrac{\Mms\Qes\Xmax^2}{4\pi F_s}
-\big[(\wc^2-\omega^2)^2+\sm^2\omega^2\big]
-&&P_{\mathrm{req}}(\omega)=\tfrac{2\pi r^2p_t^2}{\rho_0c\,\eta_0}\cdot
-\tfrac{(\wc^2-\omega^2)^2+\sm^2\omega^2}{\omega^4}\\
-&\mathrm{SPL_{pz}}=20\log_{10}\!\big(\rho_0c^2\Vd/(\sqrt2\,V_{\mathrm{room}}p_0)\big)
-&&EBP\,u^2=\tfrac{B^2\sigma_c}{2\pi\rho_c}\,\tfrac{m_c}{\Mms},
-\quad u=\tfrac{h_g+2\Xmax}{2h_g}\\
-&f_{\mathrm{pz}}=c/(2L_{\max}),\quad
-V_{\mathrm{dem}}^{\mathrm{pz}}=\sqrt2\,p_tV_{\mathrm{room}}/(\rho_0c^2)
-&&\Vd\ge V_{\mathrm{dem}}^{\mathrm{pz}}/\xi^\ast,\quad \xi^\ast\in[D^\ast/0.1,\sqrt{D^\ast/0.1}]\\
-&D\approx d_2\xi_x+d_3\xi_x^2,\ \ \xi_x=V_{\mathrm{dem}}/\Vd
-&&\mathrm{IM_{Doppler}}\approx\pi f_2X_1/c\\
-&\mathrm{HD_2^{box}}\approx\tfrac{\gamma+1}{4}\tfrac{V_{\mathrm{dem}}}{\Vb}\big(1-\tfrac{\Qts^2}{\Qtc^2}\big)
-&&\Delta L_{\mathrm{thermal}}\approx-0.034\,\xi_P\,\Delta T_{\mathrm{rated}}\ \mathrm{dB}
-\end{align*}
-Constants: $108.5=20\log_{10}(\sqrt2\pi\rho_0/p_0)-3.0$;
-$112.2=10\log_{10}(\rho_0c/(2\pi p_0^2))$; Cu:
-$\sigma_c/\rho_c=6.65\times10^3$, Al: $1.30\times10^4$ S\,m$^2$/kg.
+\begin{center}
+\small
+\begin{tabular}{@{}p{4.2cm}p{9.2cm}@{}}
+\toprule
+quantity & expression\\
+\midrule
+corner rate & $F_s/\Qts$\\
+box corner & $F_c=\Qtc F_s/\Qts$\\
+box volume &
+$\Vb=\Vas/[(\Qtc/\Qts)^2-1]$\\
+displacement volume & $\Vd=\Sd\Xmax$\\
+reference efficiency &
+$\eta_0=9.78\times10^{-7}F_s^3\Vas/\Qes$,
+$\Vas$ in m$^3$\\
+intrinsic excursion ceiling &
+$108.5+20\log_{10}(f^2\Vd)$ dB at 1 m, half space\\
+intrinsic dissipation ceiling &
+$112.2+10\log_{10}(\eta_0\Pmax)$ dB at 1 m, half space\\
+regime crossover &
+$f_x=(2\pi)^{-1}[4\pi c\eta_0\Pmax/(\rho_0\Vd^2)]^{1/4}$\\
+pressure-zone corner & $c/(2L_{\max})$\\
+leakage multiplier &
+$\sqrt{1+(f_\ell/f)^2}$\\
+per-driver demanded displacement &
+$V_{\mathrm{dem}}/(N\Sd)$\\
+inductive screen & $f_L=\Re/(2\pi\Le)$\\
+Doppler phase index &
+$m=2\pi f_{\mathcal B,\mathrm h}X_{\mathcal B}/c$\\
+Doppler reported sideband &
+$d_{\mathrm D}\simeq\pi f_{\mathcal B,\mathrm h}X_{\mathcal B}/c$\\
+preferred excursion headroom &
+$20\log_{10}(1/0.8)\simeq\SI{1.9}{dB}$\\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \bibliography{refs}
 

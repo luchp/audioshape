@@ -1,55 +1,50 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-The problem posed in \cref{sec:intro} was: given a room, one listening
-position, and a target level, choose sealed bass driver(s) that reach it
-with the least non-correctable distortion.
+For the architecture declared in \cref{sec:intro-arch}---a compact prepared
+listening area, half-space soffit mounting, a mono low-bass manifold of
+mechanically opposed pairs, independent stereo upper-bass channels, and
+finite-band DSP alignment---this report assembles established sealed-box
+relations into a reproducible pre-purchase ranking procedure that operates
+on public datasheet fields.
 
-\textbf{Two regimes, two drivers.} A sealed driver's output near $F_s$ is
-capped by displaced volume $\Vd=\Sd\Xmax$ (\cref{cor:onlyVd}); above $f_x$
-\eqref{eq:fx} it is capped by dissipation $\eta_0\Pmax$ \eqref{eq:SPLT}. The
-motor materials bound (\cref{thm:bound}) proves $EBP\cdot u^2\le
-K_{\mathrm{mat}}\beta_{\max}$: stroke and corner rate trade off through the
-same coil-mass fraction, so no single voice-coil motor maximizes both at
-once. A sub role and an attack role are therefore best served by two
-physically different drivers.
+\textbf{What is exact within the model.} The sealed-box equation, the
+alignment line \cref{eq:alignment}, the displacement- and
+dissipation-limited ceilings \cref{eq:SPLL,eq:SPLT}, their crossover
+\cref{eq:fx}, and the steady electrical requirements
+\cref{eq:Ereq,eq:Ireq,eq:Preq} follow from the stated lumped model. The
+transient factor \cref{eq:ctr} is obtained numerically from the same model
+for a declared waveform family, which removes the invalid constant burst
+factor near $F_c$.
 
-\textbf{Sealed, not vented.} \Cref{app:vented} shows a vented alignment's
-low-frequency asymptote is $24$\,dB/oct, not sealed's $12$; that below
-tuning its excursion is bounded only by drive, not by the box; and that
-reaching a realistic in-room target drives port air velocity past the
-empirical turbulence-onset threshold. A sealed box forfeits at most an
-octave of extension for a given volume, recovered mostly for free from the
-room.
+\textbf{What is empirical.} In the frozen candidate population analysed
+here, and under the canonical scenario, the well-ranked low-bass and
+upper-bass candidates occupy different regions of the descriptor plane
+(\cref{fig:database-pareto,tab:database-summary}). This is an observation
+about an available population, not a proof that one driver cannot serve
+both roles.
 
-\textbf{Room gain closes the low end.} Below $f_{\mathrm{pz}}=c/2L_{\max}$
-the demand curve flattens, and a sealed corner placed at
-$F_c\simeq f_{\mathrm{pz}}$ is flat in-room to the leakage corner with no
-EQ. A vented box's steeper roll-off is not rescued the same way.
+\textbf{What is policy.} The hard gates, the choice of core Pareto
+objectives, the $0.80$ preferred excursion margin, the Doppler sideband
+budget, the $\Qtc$ ceiling, the enclosure limit, and the role-specific
+lexicographic orders are declared engineering choices. Their influence is
+measured, not assumed, by the robustness analysis of
+\cref{sec:procedure-robustness}.
 
-\textbf{The selection procedure is datasheet-only.} Every quantity in
-\cref{sec:procedure} is computable from ten datasheet rows, with no free
-parameter beyond the room, the target level, and the distortion budget.
+\textbf{What is application-specific.} The worked system of
+\cref{app:example} meets its declared targets within every gate, including
+the finite per-driver amplifier limits, for the stated room, targets, and
+bands. It is a result for that scenario, not a general recommendation.
 
-\textbf{Verdict.} An optimal sealed bass monitor for one listening
-position, in a room large enough to matter, is a two-driver system: a
-high-$\Vd$, long-throw driver sealed and corner-tuned to the room's
-pressure zone, plus a light, strongly motored driver above the split,
-sharing a common baffle plane. No single driver saturates both invariants
-at once, and no enclosure other than sealed lets the room pay for the last
-octave without the costs quantified in \cref{app:vented}. This verdict
-holds within the DSP-corrected, room-integrated premise of
-\cref{sec:assumptions}; where amplifier headroom, rather than distortion
-or room gain, is the binding constraint, \cref{app:vented} names a
-legitimate narrower-purpose alternative.
-
-\Cref{sec:prevwork}'s review is closed by these results: $EBP$ remains a
-legitimate enclosure-\emph{type} screen but does not extend to an absolute
-performance ranking --- the excursion regime's ranking is $\Vd$ alone, the
-dissipation regime's is $\eta_0\Pmax$. The model is LTI to leading order in
-$x/\Xmax$ and excludes directivity/breakup above $ka\approx1$; distortion
-laws are order-of-magnitude ranking predictors, not $\pm1$\,dB THD
-forecasts. A companion preprint \cite{audioshape-preprint} gives the
-complete derivations, model-limitation list, and a worked numerical example
-(reproduced here in \cref{app:example}), together with an open-source
-reference implementation.
+\textbf{Limitations.} The model is small-signal and LTI; nonlinear
+indicators are proxies, not predicted distortion; $\Xmax$, $\Pmax$, and
+$\Le$ conventions differ between manufacturers; the room model is a
+low-order description of a prepared room over one band and one small area;
+DSP correction is finite-band and does not address nonlinear residuals; and
+no controlled subjective evaluation is reported. Most importantly, the
+robustness analysis validates the \emph{stability} of the decision under
+uncertain inputs, not the physical correctness of the nonlinear indicators.
+The natural next steps are a public large-signal measurement subset for
+proxy validation, a measured room transfer over the couch area in place of
+the analytical model, and measurement of a built system against the
+predicted gates.

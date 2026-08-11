@@ -42,17 +42,20 @@ def test_rank_produces_sorted_feasible_first(db):
     feas_flags = [e.feasible for e in evals]
     assert feas_flags == sorted(feas_flags, reverse=True)
     feasible = [e for e in evals if e.feasible]
-    dist = [e.total_distortion for e in feasible]
-    assert dist == sorted(dist)
+    keys = [e.sort_key() for e in feasible]
+    assert keys == sorted(keys)
+    assert all(e.pareto_rank >= 0 for e in feasible)
 
 
-def test_more_units_reduce_distortion(db):
+def test_more_units_reduce_separate_risks(db):
     sc = Scenario()
     d = next(dr for dr in db.drivers if dr.model == "TD15H")
     e1 = evaluate(d, sc, n_units=1)
     e2 = evaluate(d, sc, n_units=2)
     assert e2.xi_x == pytest.approx(e1.xi_x / 2)
-    assert e2.total_distortion < e1.total_distortion
+    assert e2.xi_x_transient < e1.xi_x_transient
+    assert e2.doppler_im == pytest.approx(e1.doppler_im / 2)
+    assert not hasattr(e2, "total_distortion")
 
 
 def test_infeasible_high_qts_driver_flagged(db):
@@ -65,4 +68,4 @@ def test_infeasible_high_qts_driver_flagged(db):
     # fallback): this driver is genuinely infeasible on excursion/thermal
     # clipping even in the large-box + EQ fallback.
     assert any("clip" in r for r in ev.reasons)
-    assert any("Fc can't reach" in n for n in ev.notes)
+    assert any("alignment limited" in n for n in ev.notes)

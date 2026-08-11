@@ -1,91 +1,162 @@
-\section{Scope, conventions, assumptions}
-\label{sec:assumptions}
+\section{Scope, conventions, and assumptions}
+\label{sec:scope}
 
-SI units throughout. SPLs are dB values computed from the rms sound
-pressure relative to $p_0=\SI{20}{\micro\pascal}$, on axis, at
-$r=\SI{1}{\meter}$, half-space radiation; 
-$\rho_0=\SI{1.204}{\kilogram\per\cubic\meter}$,
-$c=\SI{343}{\meter\per\second}$. 
-This driver-intrinsic $r=\SI{1}{\meter}$ is kept distinct throughout 
-from the room's own listening distance $r_{\mathrm{listen}}$, 
-introduced only from \cref{sec:roomclose} on; the two are 
-never interchangeable.
+This section is the contract for everything that follows. SI units
+throughout; $\rho_0=\SI{1.20}{\kilogram\per\cubic\meter}$,
+$c=\SI{343}{\meter\per\second}$. Sound pressure levels are dB re
+$p_0=\SI{20}{\micro\pascal}$ computed from \emph{rms} pressure, half-space
+radiation, on axis.
 
 \begin{center}
 	\small
-	\begin{tabular}{llll}
+	\begin{tabular}{@{}llll@{}}
 	\toprule
 		$F_s$ & free-air resonance & $\Mms$ & moving mass\\
 		$\Qes,\Qms,\Qts$ & Q factors & $\Re$ & DC resistance\\
 		$\Vas$ & compliance vol. & $\Bl$ & force factor\\
 		$\Sd$ & piston area & $\Le$ & coil inductance\\
 		$\Xmax$ & linear excursion & $\Pmax$ & rated power\\
+		$\Vd$ & displacement vol. & $\Vb$ & box volume\\
+		$F_c,\Qtc$ & in-box corner, $Q$ & $f_L$ & inductive screen\\
 	\bottomrule
 	\end{tabular}
 \end{center}
 
-Key assumptions (A1--A11; full derivations in the companion preprint
-\cite{audioshape-preprint}):
+\subsection{Reference bases}
+\label{sec:scope-bases}
+
+Four distinct pressure references are used, and no figure or table mixes
+them:
+
 \begin{enumerate}
-\item[A1.] Lumped-parameter LTI model; linear operation $\equiv|x|\le\Xmax$,
-with all nonlinear mechanisms ($\Bl(x)$, $\Cms(x)$, flux modulation) folded
-into that single limit. 
-Breakup is a $ka\gtrsim1$ phenomenon well above the
-bass band addressed here, so a rigid-piston model is the same premise every
-T/S parameter set already presumes, not an extra restriction.
-
-\item[A2.] Coil inductance neglected for $f\ll f_L\equiv\Re/(2\pi\Le)$;
-$f_L$ is retained as an explicit validity/selection criterion rather than
-simply dropped.
-
-\item[A3.] Baffled rigid piston, far field, $ka\lesssim1$
-($a=\sqrt{\Sd/\pi}$) -- the standard monopole approximation underlying
-every SPL formula used below.
-
-\item[A4.] Lossless sealed box ($Q_L\to\infty$), adiabatic air spring; box
-losses are a second-order correction, not a mechanism the ranking below
-depends on.
-
-\item[A5.] $\Pmax$ is the maximum \emph{continuous} coil dissipation
-$\langle i^2\rangle\Re$.
-AES2/IEC~62458 datasheet ratings \cite{aes2}
-approximate this within about a factor of $2$, so comparisons are
-meaningful only within one rating standard; short-term (burst) dissipation
-capability is $\kappa\Pmax$, $\kappa\in[2,4]$ (Sec.~\ref{sec:time}).
-
-\item[A6.] The amplifier is unconstrained: whatever voltage/current the
-driver's own limits allow is assumed available, isolating the driver's
-ceiling from a separate, system-level one. 
-Where amplifier headroom is itself the binding constraint, \cref{app:vented}'s 
-vented alternative remains legitimate;
- App.~\ref{app:example}'s worked example also reports
-the actual power/voltage the derived demand curve requires, which stays
-modest in practice.
-
-\item[A7.] $\Xmax$ is distortion-defined at $10\%$ equivalent input
-distortion, per IEC~62458/Klippel \cite{iec62458,klippel2006} ($\Bl(x)$
-fallen to $\approx82\%$, $\Cms(x)$ to $\approx75\%$, or $\Le(x)$ swing
-$17\%$). Geometric $\Xmax$ values must be converted to this basis, or
-driver comparisons are void.
-
-\item[A8.] Room effects excluded from the free-field ceilings of
-Secs.~\ref{sec:freq}--\ref{sec:distortion}; the pressure-zone bound is
-reintroduced separately and quantitatively in Sec.~\ref{sec:roomclose}.
-
-\item[A9.] For $N$ identical, common-signal drivers in a compact array
-(spacing $\ll$ wavelength, consistent with A3), far-field volume
-velocities sum linearly ($\Vd\to N\Vd$) while radiated power sums as
-$N^2$ -- the standard coherent-array mutual-coupling gain, not the
-$+10\log_{10}N$ of incoherent sources. A fixed acoustic target therefore
-needs only $1/N^2$ of the single-driver-equivalent power from each unit.
-
-\item[A10.] Distortion analysis (Sec.~\ref{sec:distortion}) is
-leading-order in $x/\Xmax$: a ranking law and order-of-magnitude
-predictor, not a $\pm1$\,dB THD prediction.
-
-\item[A11.] Targets are peak-equivalent levels at the fixed listening
-position. Below $f_{\mathrm{pz}}$ the room's own transfer function is flat
-(Sec.~\ref{sec:roomclose}), so the pressure-zone relation -- not the
-free-field formula evaluated at $r_{\mathrm{listen}}$ -- is the robust,
-room-independent demand basis there.
+\item[B1.] \emph{Intrinsic ceiling}: one driver, half space,
+	$r=\SI{1}{\meter}$. Used only to characterize a driver, never to assess
+	a system.
+\item[B2.] \emph{Couch-area reference demand}: the level required at the
+	declared listening distance $r_{\mathrm{listen}}$ over the primary
+	listening area. All feasibility checks use this basis.
+\item[B3.] \emph{Mono manifold total}: the aggregate level of the complete
+	low-bass manifold at B2. The per-driver share of the required displaced
+	volume is the total divided by the number of manifold drivers.
+\item[B4.] \emph{One independent stereo channel}: the level of one
+	upper-bass channel at B2, with no credit from the opposite channel.
 \end{enumerate}
+
+Electrical quantities are per \emph{physical} driver, since each has its
+own amplifier channel. Peak and rms conventions are stated at each
+equation: displacements and the displaced volume $V_{\mathrm{dem}}$ are
+peak values, while voltage, current, and power are rms over the evaluated
+waveform.
+
+\subsection{Canonical scenario}
+\label{sec:scope-scenario}
+
+The worked scenario used for every figure and table is:
+
+\begin{center}
+	\small
+	\begin{tabular}{@{}p{2.5cm}p{5.0cm}@{}}
+	\toprule
+		room & $V_{\mathrm{room}}=\SI{60}{\cubic\meter}$,
+			$L_{\max}=\SI{6}{\meter}$\\
+		room model & leaky pressure zone,
+			$f_\ell=\SI{10}{\hertz}$\\
+		listening distance & $r_{\mathrm{listen}}=\SI{3}{\meter}$\\
+		bands & sub $15$--$\SI{80}{\hertz}$;
+			upper bass $80$--$\SI{250}{\hertz}$\\
+		targets & \SI{110}{dB} manifold total (B3);\\
+		 & \SI{105}{dB} per stereo channel (B4)\\
+		amplifier, per driver & $\SI{90}{\volt}$ rms, $\SI{15}{\ampere}$ rms,\\
+		 & \SI{500}{\watt} continuous, \SI{1}{\kilo\watt} burst\\
+		alignment ceiling & $\Qtc\le0.55$\\
+		enclosure limit & $\Vb\le\min(10\Vas,\ \SI{1.0}{\cubic\meter}/N)$
+			per driver; \SI{1.0}{\cubic\meter} total per role\\
+		excursion & $\Xmax$ hard limit;
+			$0.80$ preferred margin\\
+		Doppler screen & first-sideband ratio $\le0.02$\\
+		transient & one-cycle rectangular burst, 8 phases\\
+	\bottomrule
+	\end{tabular}
+\end{center}
+
+Target levels are maximum-output design tests. The pressure-zone corner of
+this room is $f_{\mathrm{pz}}=c/2L_{\max}\simeq\SI{28.6}{\hertz}$.
+
+\subsection{Assumptions}
+\label{sec:scope-assumptions}
+
+\begin{enumerate}
+\item[A1.] \emph{Lumped-parameter LTI small-signal model.} The screening
+	domain ends at $|x|=\Xmax$; operation below that boundary does not by
+	itself establish linear behavior. Cone breakup is a $ka\gtrsim1$
+	phenomenon above the bands considered here, so the rigid-piston premise
+	is the same one the published T/S parameters already presume.
+
+\item[A2.] \emph{Coil inductance neglected in the transfer relations.}
+	$f_L=\Re/(2\pi\Le)$ is retained as a screening frequency only. $\Le$ is
+	itself frequency- and level-dependent, so $f_L$ is a rough indicator of
+	where the model degrades, not a sharp validity boundary.
+
+\item[A3.] \emph{Baffled rigid piston, far field, $ka\lesssim1$}
+	($a=\sqrt{\Sd/\pi}$): the monopole approximation underlying every SPL
+	relation below.
+
+\item[A4.] \emph{Lossless sealed box}, adiabatic air spring. Box losses are
+	a second-order correction that the ranking does not depend on.
+
+\item[A5.] \emph{$\Pmax$ is a continuous coil-dissipation rating}
+	$\langle i^2\rangle\Re$. Published ratings follow different standards
+	\cite{aes2}, so comparisons are meaningful only within one standard, and
+	a rating uncertainty of a few dB is propagated explicitly
+	(\cref{sec:procedure}). Thermal compression \cite{button1992} raises
+	$\Re$ during sustained drive and detunes $\Qtc$ and $F_c$; it is
+	reported as a risk indicator, not modelled.
+
+\item[A6.] \emph{Amplifier limits are explicit inputs.} Voltage, current,
+	continuous power, and burst power per physical driver are hard gates
+	(\cref{eq:ampgates}). The scenario is considered viable only if the
+	driver, enclosure, and room constraints bind before those limits.
+
+\item[A7.] \emph{$\Xmax$ is used only as the clipping boundary.} A
+	distortion-defined value \cite{iec62458,klippel2003xmax} is preferred;
+	geometric values must be converted or flagged. Excursion utilization
+	$\xi_x=X_{\mathrm{dem}}/\Xmax$ is a risk proxy, not predicted THD.
+	Public large-signal measurements supersede the proxy wherever they
+	exist.
+
+\item[A8.] \emph{Room effects are separated from free-field ceilings.} The
+	ceilings of \cref{sec:freq} are free-field driver properties; room
+	demand enters only through \cref{sec:room}.
+
+\item[A9.] \emph{Summation is restricted to the mono manifold.} The
+	manifold's drivers carry one common signal in a compact arrangement
+	(spacing $\ll$ wavelength, consistent with A3), so their volume
+	velocities are taken as coherent at the couch-area reference: each
+	driver supplies $1/N$ of the required displaced volume. Independent
+	stereo channels receive no summing credit. Total radiated power is
+	\emph{not} inferred from on-axis pressure summation, mutual radiation
+	impedance is not modelled, and the electrical demand of each physical
+	driver is computed from its own displacement across the complete role
+	band.
+
+\item[A10.] \emph{Nonlinear indicators are proxies.} They are
+	leading-order, dimensionless screening quantities reported separately.
+	They are not summed, and they are not converted into an absolute
+	distortion percentage.
+
+\item[A11.] \emph{DSP correction is finite-band and regularized.} Linear
+	correction trades response error against displacement, voltage, current,
+	thermal load, noise, and model error; it does not reduce nonlinear
+	residuals, and its practical limits over an area are those reported in
+	\cite{makivirta2003,cecchi2018}.
+\end{enumerate}
+
+\subsection{Limitations of public data}
+\label{sec:scope-datalimits}
+
+Datasheet fields carry mixed conventions for $\Xmax$, $\Pmax$, and $\Le$,
+occasional missing fields, and no statement of unit-to-unit spread. The
+procedure therefore (i) rejects records missing a required field rather
+than imputing it, (ii) records which fields were derived rather than
+published, and (iii) reports rank stability under declared perturbations of
+$\Xmax$ and $\Pmax$ instead of presenting a single ranking as exact.

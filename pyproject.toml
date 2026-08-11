@@ -1,7 +1,7 @@
 [project]
 name = "audioshape"
 version = "0.1.0"
-description = "First-principles sealed-box bass driver selection: ranking and plots over the VituixCAD driver database"
+description = "Datasheet-based sealed-box bass driver ranking for a small-area DSP stereo system"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"

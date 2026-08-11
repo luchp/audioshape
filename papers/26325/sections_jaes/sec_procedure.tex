@@ -1,42 +1,130 @@
 \section{Selection procedure}
 \label{sec:procedure}
 
-Given room ($V_{\mathrm{room}}$, $L_{\max}$), band top $f_2$,
-peak-equivalent target $L_t$, distortion budgets $D^\ast$ (HD) and
-$D^\ast_{\mathrm{IM}}$ (Doppler), damping ceiling $\Qtc^\ast$ (e.g.\ $0.55$),
-burst factor $C$ (\cref{lem:shape}, take 2), burst headroom $\kappa$:
+\subsection{Inputs}
+\label{sec:procedure-inputs}
+
+A candidate population of datasheet records; the role bands and channel
+layout of \cref{sec:intro-arch}; the per-role targets on bases B3 and B4;
+the room model of \cref{sec:room}; the per-driver amplifier limits; the
+enclosure limit and the alignment ceiling $\Qtc^\ast$; the hard $\Xmax$
+boundary with the preferred excursion margin; the Doppler sideband-ratio
+budget; and
+the declared transient waveform family. All of these are fields of one
+serializable scenario object, and the canonical values are those of
+\cref{sec:scope-scenario}.
+
+\subsection{Algorithm}
+\label{sec:procedure-algorithm}
 
 \begin{enumerate}
-	\item[0.] \textbf{Room closure:} 
-		$f_{\mathrm{pz}}=c/(2L_{\max})$; band bottom 
-		$f_1\to f_{\mathrm{pz}}$; $\xi^\ast=D^\ast/0.1$ (or $\sqrt{D^\ast/0.1}$
-		if odd-order dominated).
-	\item \textbf{Displacement/distortion:} 
-		$\Vd\ge$~\eqref{eq:Vdreq}; predicted 
-		$D\approx d_2\xi_x+d_3\xi_x^2$ \eqref{eq:HDscale}.
-	\item \textbf{Dissipation:} 
-		$\eta_0\Pmax\ge10^{(L_t-112.2)/10}$; thermal AM
-		$\approx0.034\,\xi_P\Delta T_{\mathrm{rated}}$\,dB.
-	\item \textbf{Split (Doppler):} 
-		choose $f_{\mathrm{sp}}$ with $\pi 
-		f_{\mathrm{sp}}X_1^{\max}/c\le D^\ast_{\mathrm{IM}}$ \eqref{eq:doppler}.
-	\item \textbf{Corner/settling/box:}
-		with $f_{\mathrm{corner}}=f_{\mathrm{pz}}$ (sub) or $f_{\mathrm{sp}}$
-		(attack), take $\Qtc=\min\!\big(\Qtc^\ast,\,f_{\mathrm{corner}}\Qts/F_s\big)$
-		(ceiling, not fixed target: undershoot is free, overshoot is taxed);
-		reject only if $\Qts\ge\Qtc$;
-		$\Vb=\Vas/((\Qtc/\Qts)^2-1)$;
-		box distortion \eqref{eq:boxHD} within budget.
-	\item \textbf{Regime map:} 
-		verify $f_x$ \eqref{eq:fx} and $p_{\max}(\omega)$
-		\eqref{eq:master} $\ge$ target across the band.
-	\item \textbf{Validity:} 
-		$f_2\ll f_L$; $ka(f_2)\lesssim1$; 
-		consistent $\Xmax$/power-rating standards across candidates.
+\item \textbf{Normalize and quality-check} each record: required fields
+	present, $\Xmax$ and $\Pmax$ conventions recorded, derived quantities
+	(for example $\Bl$ from $F_s,\Qes,\Mms,\Re$) flagged as derived, records
+	with missing required fields skipped and counted.
+\item \textbf{Compute descriptors}: $\Vd$, $\eta_0\Pmax$ \cref{eq:eta0},
+	the corner rate $F_s/\Qts$ \cref{eq:cornerrate}, $f_L$, and the regime
+	boundary $f_x$ \cref{eq:fx}.
+\item \textbf{Select a realizable alignment}: target the role's corner
+	($f_{\mathrm{pz}}$ for low bass, $f_{\mathrm{sp}}$ for upper bass) under
+	\cref{eq:Fsrule}, cap $\Qtc$ at $\Qtc^\ast$, and cap $\Vb$ at the
+	enclosure limit, recording which cap binds.
+\item \textbf{Evaluate room demand} \cref{eq:Vdem} across the complete role
+	band, dividing by the number of manifold drivers (A9).
+\item \textbf{Evaluate steady requirements} \cref{eq:Ereq,eq:Ireq,eq:Preq}
+	and \textbf{transient requirements} \cref{eq:ctr} over the band and the
+	declared start phases, retaining the worst value and the frequency at
+	which it occurs.
+\item \textbf{Apply the hard gates} of \cref{sec:risk-policy}, recording
+	the binding gate for every rejected candidate.
+\item \textbf{Report the risk vector} \cref{eq:riskvec} for every surviving
+	candidate.
+\item \textbf{Assign Pareto fronts} on the role's core objectives.
+\item \textbf{Apply the declared lexicographic order} within each front to
+	obtain a reproducible total order.
+\item \textbf{Form role pairs} without summing role indicators, and
+	\textbf{re-run} the ranking under the declared uncertainty and policy
+	variants (\cref{sec:procedure-robustness}), flagging candidates whose
+	position is unstable.
 \end{enumerate}
 
-Ranking within one role: lexicographic on predicted non-correctable
-distortion (\cref{prop:equivdist}) --- sub role maximizes $\Vd$, tie-break
-on $\Sd$ and $\eta_0\Pmax$; attack role maximizes $\eta_0\Pmax$ subject to
-its own utilization and Doppler index, tie-break on $f_L$ and shorting
-rings.
+Every candidate ends in exactly one of four statuses: \emph{rejected} (with
+the binding gate), \emph{feasible but dominated}, \emph{Pareto-optimal}, or
+\emph{recommended by policy} (first in its role's order). Only the last is
+a recommendation; the first three are reported so a reader with different
+priorities can re-rank without re-deriving anything.
+
+\subsection{Candidate population and the private-data boundary}
+\label{sec:procedure-database}
+
+The candidate population used for the aggregate evidence in this report is
+a locally held export of a community driver database. That file is obtained
+separately and is not redistributed. What is published is its SHA-256 hash,
+the parser and filter definitions, the retained and skipped record counts,
+role-feasible and Pareto-front counts, and the aggregate plots of
+\cref{fig:database-pareto}. Those quantities are collected in
+\cref{tab:database-summary}, which is generated directly from the frozen
+input and is the authoritative source for every count referred to in the
+text. The driver records used in \cref{app:example} come from the
+manufacturers' public datasheets and are reproduced in full, so the worked
+example is reproducible without access to the private file.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_database_pareto}
+	\caption{Frozen candidate population in the $(\Vd,\eta_0\Pmax)$ plane,
+	shown as a binned density so that no individual record is disclosed. The
+	two candidates selected in \cref{app:example} are marked. Aggregate
+	population evidence only; the counts behind it are in
+	\cref{tab:database-summary}.}
+	\label{fig:database-pareto}
+\end{figure}
+
+\input{../tables/table_database_summary}
+
+The observation this evidence supports is deliberately narrow: in this
+frozen population, under this scenario, the candidates selected for the two
+roles occupy different regions of the $(\Vd,\eta_0\Pmax)$ plane, differing
+chiefly in displacement volume at comparable thermal output capacity. The
+same table reports a non-zero count of size-unrestricted candidates that
+are feasible in both role bands, so the separation is a consequence of the
+role targets, the packaging constraint, and the ranking policy---not a
+physical prohibition on a single-driver architecture.
+
+\subsection{Rank robustness}
+\label{sec:procedure-robustness}
+
+Public data is imprecise, and the lexicographic order is a policy. The
+ranking is therefore recomputed under declared perturbations---$\Xmax$
+scaled by $\pm25\%$, $\Pmax$ shifted by $\pm\SI{3}{dB}$, alternative room
+leakage corners, and alternative reasonable lexicographic
+orders---and the overlap of the top-$k$ shortlist with the baseline is
+reported (\cref{fig:rank-robustness}).
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_rank_robustness}
+	\caption{Top-$k$ shortlist overlap with the baseline ranking under
+	declared datasheet, room, and policy perturbations, for both roles. A
+	high overlap indicates that the shortlist does not depend on the precise
+	value of an uncertain input; a low one identifies where the
+	recommendation is provisional.}
+	\label{fig:rank-robustness}
+\end{figure}
+
+The result is informative in both directions. The shortlists are
+insensitive to the power-rating uncertainty, which is reassuring given the
+standard-dependence noted in A5, and moderately sensitive to the assumed
+leakage corner. They are clearly sensitive to the $\Xmax$ perturbation and,
+for the upper-bass role, to the choice of lexicographic tie-break. The
+practical consequence is that an $\Xmax$ value on an unknown basis, and the
+policy order itself, matter more to the outcome than the power rating; both
+are therefore reported alongside every recommendation rather than being
+treated as settled.
+
+This is a sensitivity analysis of the decision procedure. It is
+\emph{not} physical validation: it does not test the nonlinear indicators
+against measured large-signal behaviour. Such validation would require
+public $Bl(x)$, $K_{\mathrm{ms}}(x)$, or distortion-headroom measurements
+for a comparable subset of candidates, and is identified in
+\cref{sec:conclusion} as the principal outstanding item.

@@ -1,63 +1,130 @@
-"""Evaluate drivers against a scenario and rank them.
+"""Evaluate and rank sealed-box candidates for the declared system.
 
-Pure computation on `Driver` + `Scenario`; no I/O.  The ranking implements the
-selection procedure of the paper: feasibility gates first, then sort by
-predicted non-correctable distortion at the target (Prop. equivalence:
-distortion sorting == headroom maximization).
+The core policy is deliberately non-compensatory:
+
+1. reject candidates that cross a physical or electrical limit;
+2. assign Pareto fronts using separate, named risk indicators;
+3. apply a declared role-specific lexicographic order.
+
+Unlike mechanisms are never added into a synthetic distortion percentage.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal
+import math
+from dataclasses import dataclass, replace
+from typing import Iterable, Literal
 
 from audioshape import physics
 from audioshape.driver import BoxedDriver, Driver
 from audioshape.scenario import Scenario
 
-Role = Literal["sub", "attack"]
+Role = Literal["sub", "attack", "full"]
 
-# Practical box-volume cap when a driver's own corner rate (Fs/Qts) makes
-# the ideal alignment (Fc at the role's target corner) unreachable by any
-# finite sealed box (Vb -> inf as Qtc -> Qts): a real system just builds
-# the largest reasonable box instead and leans on EQ for the rest of the
-# gap (eq:EQtax), rather than treating the driver as infeasible outright.
-MAX_VB_VAS_RATIO = 10.0
+@dataclass(frozen=True)
+class RiskVector:
+    """Separate minimization objectives; no arithmetic total is defined."""
+
+    steady_excursion: float
+    transient_excursion: float
+    doppler_modulation: float
+    box_spring: float
+    driver_power: float
+    amplifier_voltage: float
+    amplifier_current: float
+    amplifier_continuous_power: float
+    amplifier_burst_power: float
+    inductive: float
+    box_volume_m3: float
+
+    def pareto_values(self, role: Role) -> tuple[float, ...]:
+        """Core non-compensatory objectives used for Pareto fronts.
+
+        The complete vector remains available for reporting. Keeping the
+        front to the main role tradeoffs avoids the degenerate result where
+        nearly every candidate is non-dominated in eleven dimensions.
+        """
+        excursion = max(self.steady_excursion, self.transient_excursion)
+        amplifier = max(
+            self.amplifier_voltage,
+            self.amplifier_current,
+            self.amplifier_continuous_power,
+            self.amplifier_burst_power,
+        )
+        if role == "sub":
+            return excursion, amplifier, self.box_volume_m3
+        return (
+            excursion,
+            self.doppler_modulation,
+            amplifier,
+            self.box_volume_m3,
+        )
+
+    def dominates(
+        self,
+        other: "RiskVector",
+        role: Role,
+        tolerance: float = 1e-12,
+    ) -> bool:
+        """Whether every core role risk is no worse and one is better."""
+        pairs = tuple(zip(
+            self.pareto_values(role),
+            other.pareto_values(role),
+        ))
+        no_worse = all(left <= right + tolerance for left, right in pairs)
+        strictly_better = any(left < right - tolerance for left, right in pairs)
+        return no_worse and strictly_better
+
+
+@dataclass(frozen=True)
+class ElectricalExtrema:
+    """Worst steady-sine per-driver demand across the complete role band."""
+
+    voltage_rms: float
+    voltage_frequency: float
+    current_rms: float
+    current_frequency: float
+    coil_power_w: float
+    power_frequency: float
+
+
+@dataclass(frozen=True)
+class TransientExtrema:
+    """Worst declared finite-burst results across the sampled role band."""
+
+    shape_factor: float
+    shape_frequency: float
+    displacement_peak: float
+    displacement_frequency: float
+    voltage_rms: float
+    voltage_frequency: float
+    current_rms: float
+    current_frequency: float
+    coil_power_w: float
+    power_frequency: float
 
 
 @dataclass(frozen=True)
 class Evaluation:
-    """All criteria for one driver (n_units identical units, n_channels
-    coherent-signal channels) in one scenario."""
-
     boxed: BoxedDriver
     scenario: Scenario
+    role: Role
+    band_low: float
+    band_high: float
 
-    # feasibility
     feasible: bool
-    reasons: tuple[str, ...]        # why infeasible (empty when feasible)
+    reasons: tuple[str, ...]
+    notes: tuple[str, ...]
 
-    # excursion / distortion at the target SPL
-    xi_x: float                     # worst-case excursion utilization
-    hd: float                       # motor/suspension HD (eq:HDscale)
-    doppler_im: float               # in-band Doppler index (eq:doppler)
-    box_hd2: float                  # box air-spring HD2 (eq:boxHD)
-    total_distortion: float         # sum of the three above
+    risk: RiskVector
+    electrical: ElectricalExtrema
+    transient: TransientExtrema
 
-    # power at the target SPL
-    xi_p: float                     # worst-case power utilization P_req/Pmax
-    thermal_compression_db: float   # -0.034 xi_P dT (Sec. distortion)
-
-    # ceilings and boundaries (at the listening position)
-    spl_sine_floor: float           # sine ceiling at f_low
-    spl_burst_floor: float          # burst ceiling at f_low
-    f_x: float                      # sine regime boundary (eq:fx)
-    f_x_burst: float                # transient boundary (eq:fxburst)
-
-    n_units_required: int           # units to meet the distortion budget
-    n_channels: int = 1             # coherent-signal channels (see evaluate())
-    role: Role = "sub"              # which selection rule sort_key() applies
-    notes: tuple[str, ...] = ()     # non-blocking caveats (e.g. large-box+EQ fallback)
+    spl_sine_floor: float
+    spl_transient_floor: float
+    f_x: float
+    n_units_preferred: int
+    pareto_rank: int = -1
 
     @property
     def driver(self) -> Driver:
@@ -65,206 +132,412 @@ class Evaluation:
 
     @property
     def eta0_pmax(self) -> float:
-        """Dissipation invariant eta0 * Pmax (sec_procedure.tex step 2):
-        the attack role's primary ranking criterion."""
         return self.driver.eta0 * self.driver.p_max
 
-    def sort_key(self) -> tuple:
-        """Paper's selection procedure (sec_procedure.tex / worked-example
-        ranking): feasible first, then role-specific ordering.
+    @property
+    def xi_x(self) -> float:
+        return self.risk.steady_excursion
 
-        Sub role: maximize Vd (displacement) -- equivalent to minimizing
-        total_distortion, since D(xi_x) is monotonic in 1/Vd; tie-break on
-        Sd (Doppler) and eta0*Pmax (both captured by total_distortion's
-        Doppler term and the thermal gate) -- unchanged from before.
+    @property
+    def xi_x_transient(self) -> float:
+        return self.risk.transient_excursion
 
-        Attack role: maximize eta0*Pmax (dissipation invariant), subject to
-        its own excursion utilization and Doppler index staying within
-        budget (enforced as feasibility gates in evaluate(), not scored
-        here); tie-break on f_L (inductance corner, higher is better) and
-        fewest units required."""
+    @property
+    def doppler_im(self) -> float:
+        return self.risk.doppler_modulation
+
+    @property
+    def box_nonlinearity(self) -> float:
+        return self.risk.box_spring
+
+    @property
+    def xi_p(self) -> float:
+        return self.risk.driver_power
+
+    @property
+    def amplifier_utilization(self) -> float:
+        return max(
+            self.risk.amplifier_voltage,
+            self.risk.amplifier_current,
+            self.risk.amplifier_continuous_power,
+            self.risk.amplifier_burst_power,
+        )
+
+    @property
+    def is_preferred_excursion(self) -> bool:
+        return max(self.xi_x, self.xi_x_transient) <= (
+            self.scenario.preferred_excursion
+        )
+
+    def policy_key(self) -> tuple:
+        """Role-specific order used only within a Pareto front."""
+        excursion = max(self.xi_x, self.xi_x_transient)
+        electrical = max(self.xi_p, self.amplifier_utilization)
         if self.role == "attack":
-            return (not self.feasible, -self.eta0_pmax, -self.driver.f_le,
-                    self.n_units_required)
-        return (not self.feasible, self.total_distortion, self.n_units_required)
+            inductance_unknown = not self.driver.has_inductance
+            f_le_order = -self.driver.f_le if self.driver.has_inductance else 0.0
+            return (
+                not self.is_preferred_excursion,
+                -self.eta0_pmax,
+                inductance_unknown,
+                f_le_order,
+                excursion,
+                electrical,
+                self.risk.box_volume_m3,
+                self.driver.label(),
+            )
+        return (
+            excursion,
+            self.xi_x,
+            self.doppler_im,
+            electrical,
+            self.box_nonlinearity,
+            self.risk.box_volume_m3,
+            self.n_units_preferred,
+            self.driver.label(),
+        )
+
+    def sort_key(self) -> tuple:
+        pareto = self.pareto_rank if self.pareto_rank >= 0 else math.inf
+        return (not self.feasible, pareto, self.policy_key())
 
 
-def evaluate(driver: Driver, scenario: Scenario, n_units: int = 1,
-            band_low: float | None = None, band_high: float | None = None,
-            doppler_ref: float | None = None, n_channels: int = 1,
-            role: Role = "sub") -> Evaluation:
-    """Evaluate one driver (n identical units, on n_channels coherent-signal
-    channels) against the scenario, over the band [band_low, band_high]
-    (default: [f_low, f_high], the whole range -- i.e. this driver alone
-    covers everything).
+def evaluate(
+    driver: Driver,
+    scenario: Scenario,
+    n_units: int = 1,
+    band_low: float | None = None,
+    band_high: float | None = None,
+    doppler_ref: float | None = None,
+    role: Role = "sub",
+) -> Evaluation:
+    """Evaluate one mono manifold or one independent stereo channel.
 
-    `role` selects the ranking rule applied by `Evaluation.sort_key()`
-    (sec_procedure.tex): "sub" maximizes Vd (displacement); "attack"
-    maximizes eta0*Pmax (dissipation) subject to its own excursion and
-    Doppler index staying within budget -- for "attack", exceeding either
-    budget here makes the driver infeasible (reasons), it is not merely
-    scored worse.
-
-    Pass a role-restricted band to score a driver for only part of the range,
-    e.g. band=(f_low, f_split) for a sub or (f_split, f_high) for an attack
-    driver in a two-driver system (see pair_rank).  Excursion demand is worst
-    at band_low (the demand curve falls with frequency and is flat below
-    f_pz, eq:demand).  Doppler is self-Doppler within the driver's own band:
-    its own excursion modulating `doppler_ref` (default: band_high, the top
-    of its own passband) -- no other driver's excursion is involved, since a
-    physically separate sub and tower do not couple acoustically.
-
-    `n_units` is the number of identical drivers sharing one electrical
-    channel (a manifold): they add coherently both acoustically (Vd -> N*Vd)
-    and electrically (A9's N^2 power-sharing, since they share one signal
-    and one amplifier channel). `n_channels` is the number of separate,
-    independently-driven channels (e.g. stereo L/R) carrying a common-signal
-    (e.g. mono-panned) program: for genuinely correlated content these also
-    sum acoustically at the listening position, but each channel's own
-    driver(s) still only ever dissipate their own channel's power -- no
-    electrical/thermal credit crosses channels. So `n_units` scales both the
-    acoustic and thermal budget (A9 array), while `n_channels` scales only
-    the acoustic budget.
+    ``n_units`` identical drivers share that role/channel's acoustic target.
+    Each physical driver is checked against the full per-driver amplifier
+    envelope.  A second stereo channel receives no acoustic or electrical
+    credit because it must reproduce independent program material.
     """
+    if n_units < 1:
+        raise ValueError("n_units must be at least one")
+
     sc = scenario
     band_low = sc.f_low if band_low is None else band_low
     band_high = sc.f_high if band_high is None else band_high
-    doppler_ref = sc.f_split if doppler_ref is None else doppler_ref
+    doppler_ref = band_high if doppler_ref is None else doppler_ref
+    if not 0 < band_low < band_high:
+        raise ValueError("evaluation band must satisfy 0 < low < high")
+
     reasons: list[str] = []
     notes: list[str] = []
 
-    # --- Qtc ceiling vs. this role's own corner target (eq:Fsrule) -------
-    # Use the smaller of the configured ceiling and whatever Qtc lands Fc
-    # exactly at this role's own corner (f_pz for sub/full, f_split for
-    # attack): undershooting a target corner is free (EQ cut), overshooting
-    # it is taxed (EQ boost, costs excursion), so never pin every driver to
-    # the same fixed ceiling when a lower Qtc (bigger box) both avoids the
-    # overshoot and is still available under it.
-    #
-    # If even Qtc==Qts (the largest box gives, in the limit) can't reach the
-    # target corner -- i.e. the driver's own corner rate Fs/Qts is below
-    # f_target/Qts, meaning no finite box can align Fc there -- this is not
-    # by itself infeasible: a real system just uses a large practical box
-    # (capped at MAX_VB_VAS_RATIO * Vas, since Vb -> inf as Qtc -> Qts) and
-    # leans on EQ to fill the gap between Fc and f_target, which costs
-    # excursion/power (eq:EQtax) rather than being geometrically impossible.
-    # Feasibility is then decided by the real budgets below (xi_x, xi_p),
-    # not by alignment reachability -- consistent with there being no
-    # commercial driver with Fs below ~20 Hz, so this case only arises for
-    # very large rooms where f_pz is already low.
     f_target = sc.target_corner_hz(role)
-    qtc = physics.qtc_for_target_corner(driver.corner_rate, f_target, sc.qtc)
-    if driver.qts >= qtc:
-        vb = MAX_VB_VAS_RATIO * driver.vas
-        qtc = physics.qtc_for_box_volume(driver.vas, driver.qts, vb)
+    desired_qtc = physics.qtc_for_target_corner(
+        driver.corner_rate, f_target, sc.qtc
+    )
+    box_cap = sc.max_box_volume_per_driver(driver.vas, n_units)
+    desired_box = math.inf
+    if desired_qtc > driver.qts:
+        desired_box = physics.box_volume_for_qtc(
+            driver.vas, driver.qts, desired_qtc
+        )
+    if desired_box > box_cap:
+        qtc = physics.qtc_for_box_volume(driver.vas, driver.qts, box_cap)
         notes.append(
-            f"Fc can't reach {('f_sp' if role == 'attack' else 'f_pz')}="
-            f"{f_target:.0f} Hz in any finite box (Fs/Qts="
-            f"{driver.corner_rate:.0f} Hz); using a {MAX_VB_VAS_RATIO:g}x-Vas "
-            f"box (Qtc={qtc:.2f}) and EQ to fill the gap -- not itself "
-            "infeasible, see xi_x/xi_P below")
+            f"alignment limited to {box_cap*1e3:.0f} L per driver "
+            f"(min of {sc.max_box_vas_ratio:g}x Vas and "
+            f"{sc.max_role_box_volume_m3*1e3:.0f} L per role)"
+        )
+    else:
+        qtc = desired_qtc
 
     boxed = BoxedDriver(driver, qtc=qtc, n_units=n_units)
-    n_acoustic = n_units * n_channels  # coherent-sum units across channels
-
-    # --- inductance corner must clear this driver's own band -----------
-    if driver.f_le < band_high:
+    if boxed.qtc > sc.qtc:
         reasons.append(
-            f"f_L={driver.f_le:.0f} Hz inside band (< {band_high:.0f} Hz)")
+            f"box cap gives Qtc={boxed.qtc:.2f} > ceiling {sc.qtc:.2f}"
+        )
+    if not driver.has_force_factor:
+        notes.append("Bl missing; derived from Fs, Qes, Mms, and Re")
+    if not driver.has_inductance:
+        notes.append("Le missing; inductive screening remains uncertain")
+    elif driver.f_le < band_high:
+        reasons.append(
+            f"inductive screen f_L={driver.f_le:.0f} Hz < {band_high:.0f} Hz"
+        )
 
-    # --- excursion and distortion at the target, within this band ------
-    # (acoustic totals: coherent sum across both units-per-channel and
-    # channels -- see docstring above)
-    v_dem = sc.demand_volume(band_low, role)
-    vd_acoustic_total = n_channels * boxed.vd_total
-    xi_x = physics.excursion_utilization(v_dem, vd_acoustic_total)
-    hd = physics.harmonic_distortion(xi_x)
+    steady_grid = _frequency_grid(
+        band_low,
+        band_high,
+        samples=121,
+        extras=(boxed.fc, sc.f_pz, sc.leakage_corner_hz),
+    )
+    steady_excursion = 0.0
+    maximum_displacement = 0.0
+    maximum_volume_per_driver = 0.0
+    voltage = (0.0, band_low)
+    current = (0.0, band_low)
+    power = (0.0, band_low)
+    sigma_total = boxed.wc / boxed.qtc
 
-    x1 = min(xi_x, 1.0) * driver.xmax  # own excursion, capped
-    doppler = physics.doppler_im(doppler_ref, x1)
+    for frequency in steady_grid:
+        volume_total = sc.demand_volume(frequency, role)
+        displacement = volume_total / (n_units * driver.sd)
+        excursion = displacement / driver.xmax
+        steady_excursion = max(steady_excursion, excursion)
+        maximum_displacement = max(maximum_displacement, displacement)
+        maximum_volume_per_driver = max(
+            maximum_volume_per_driver, volume_total / n_units
+        )
 
-    box_hd = physics.box_hd2(min(v_dem / n_acoustic, driver.vd),
-                             boxed.vb, driver.qts, qtc)
-    total = hd + doppler + box_hd
+        power_at_frequency = physics.power_at_excursion_limit(
+            frequency,
+            driver.mms,
+            driver.qes,
+            driver.fs,
+            displacement,
+            boxed.wc,
+            driver.sigma_m,
+        )
+        current_at_frequency = physics.current_at_excursion_limit(
+            frequency,
+            driver.mms,
+            driver.qes,
+            driver.fs,
+            driver.re,
+            displacement,
+            boxed.wc,
+            driver.sigma_m,
+        )
+        voltage_at_frequency = physics.voltage_at_excursion_limit(
+            frequency,
+            driver.mms,
+            driver.effective_bl,
+            driver.re,
+            displacement,
+            boxed.wc,
+            sigma_total,
+        )
+        voltage = _larger_extreme(voltage, voltage_at_frequency, frequency)
+        current = _larger_extreme(current, current_at_frequency, frequency)
+        power = _larger_extreme(power, power_at_frequency, frequency)
 
-    if xi_x > 1.0:
-        reasons.append(f"excursion clip: xi_x={xi_x:.2f} > 1 at "
-                       f"{sc.target_spl_for(role):.0f} dB, {band_low:.0f} Hz")
+    electrical = ElectricalExtrema(
+        voltage_rms=voltage[0],
+        voltage_frequency=voltage[1],
+        current_rms=current[0],
+        current_frequency=current[1],
+        coil_power_w=power[0],
+        power_frequency=power[1],
+    )
 
-    # --- attack-role budget gates (sec_procedure.tex step 4/2): the paper
-    # ranks attack drivers by maximizing eta0*Pmax "subject to" their own
-    # excursion utilization and Doppler index staying within budget -- i.e.
-    # these are feasibility gates for this role, not scored terms.
-    if role == "attack":
-        if xi_x > sc.utilization_budget:
-            reasons.append(
-                f"xi_x={xi_x:.3f} > distortion budget xi*="
-                f"{sc.utilization_budget:.3f}")
-        if doppler > sc.doppler_budget:
-            reasons.append(
-                f"Doppler index={doppler:.3f} > budget D*_IM="
-                f"{sc.doppler_budget:.3f}")
+    transient_grid = _frequency_grid(
+        band_low,
+        band_high,
+        samples=5,
+        extras=(boxed.fc, sc.f_pz, sc.leakage_corner_hz),
+    )
+    transient_shape = (0.0, band_low)
+    transient_displacement = (0.0, band_low)
+    transient_voltage = (0.0, band_low)
+    transient_current = (0.0, band_low)
+    transient_power = (0.0, band_low)
+    for frequency in transient_grid:
+        x_sine_peak = (
+            sc.demand_volume(frequency, role) / (n_units * driver.sd)
+        )
+        burst = physics.sealed_burst_requirements(
+            frequency,
+            x_sine_peak,
+            boxed.fc,
+            boxed.qtc,
+            driver.mms,
+            driver.re,
+            driver.effective_bl,
+            cycles=sc.transient_cycles,
+            window=sc.transient_window,
+            phase_samples=sc.transient_phase_samples,
+        )
+        transient_shape = _larger_extreme(
+            transient_shape, burst.shape_factor, frequency
+        )
+        transient_displacement = _larger_extreme(
+            transient_displacement, burst.displacement_peak, frequency
+        )
+        transient_voltage = _larger_extreme(
+            transient_voltage, burst.voltage_rms, frequency
+        )
+        transient_current = _larger_extreme(
+            transient_current, burst.current_rms, frequency
+        )
+        transient_power = _larger_extreme(
+            transient_power, burst.coil_power_w, frequency
+        )
 
-    # --- power at the target (EQ tax, worst at the bottom of the band) --
-    # Thermal/power budget is per-physical-driver only: n_units (same
-    # electrical channel/manifold) gets A9's N^2 power-sharing since those
-    # drivers share one amplifier signal, but n_channels never does --
-    # each channel's own driver(s) dissipate only their own channel's power,
-    # heat never crosses channels (this session's explicit design decision).
-    p_t = sc.target_pressure(role)
-    w_ac = physics.acoustic_power_halfspace(p_t, sc.r_listen)
-    p_passband = w_ac / (driver.eta0 * n_units * n_units)
-    p_req = physics.eq_tax_power(max(band_low, sc.f_pz), p_passband,
-                                 boxed.wc, driver.sigma_m)
-    xi_p = p_req / driver.p_max
-    if xi_p > 1.0:
-        reasons.append(f"thermal clip: xi_P={xi_p:.2f} > 1")
+    transient = TransientExtrema(
+        shape_factor=transient_shape[0],
+        shape_frequency=transient_shape[1],
+        displacement_peak=transient_displacement[0],
+        displacement_frequency=transient_displacement[1],
+        voltage_rms=transient_voltage[0],
+        voltage_frequency=transient_voltage[1],
+        current_rms=transient_current[0],
+        current_frequency=transient_current[1],
+        coil_power_w=transient_power[0],
+        power_frequency=transient_power[1],
+    )
 
-    # --- ceilings at the listening position, referenced to band_low -----
-    spl_sine = _room_spl_ceiling(vd_acoustic_total, sc, band_low, role,
-                                 shape_factor=1.0)
-    spl_burst = _room_spl_ceiling(vd_acoustic_total, sc, band_low, role,
-                                  shape_factor=sc.burst_shape)
+    transient_excursion = transient.displacement_peak / driver.xmax
+    doppler = physics.doppler_im(doppler_ref, maximum_displacement)
+    box_spring = physics.box_spring_nonlinearity(
+        maximum_volume_per_driver, boxed.vb, driver.qts, boxed.qtc
+    )
+    inductive = (
+        band_high / driver.f_le if driver.has_inductance else 1.0
+    )
+    risk = RiskVector(
+        steady_excursion=steady_excursion,
+        transient_excursion=transient_excursion,
+        doppler_modulation=doppler,
+        box_spring=box_spring,
+        driver_power=electrical.coil_power_w / driver.p_max,
+        amplifier_voltage=max(
+            electrical.voltage_rms, transient.voltage_rms
+        ) / sc.amplifier_voltage_rms,
+        amplifier_current=max(
+            electrical.current_rms, transient.current_rms
+        ) / sc.amplifier_current_rms,
+        amplifier_continuous_power=(
+            electrical.coil_power_w / sc.amplifier_power_continuous
+        ),
+        amplifier_burst_power=(
+            transient.coil_power_w / sc.amplifier_power_burst
+        ),
+        inductive=inductive,
+        box_volume_m3=n_units * boxed.vb,
+    )
 
-    f_x = physics.regime_boundary_fx(driver.fs, driver.p_max, driver.qes,
-                                     driver.mms, driver.xmax)
-    f_x_burst = physics.burst_boundary_fx(f_x, sc.burst_headroom, sc.burst_shape)
+    if risk.steady_excursion > 1.0:
+        reasons.append(
+            f"steady excursion clip xi_x={risk.steady_excursion:.2f} "
+            f"at {sc.target_spl_for(role):.0f} dB"
+        )
+    if risk.transient_excursion > 1.0:
+        reasons.append(
+            f"transient excursion clip xi_x={risk.transient_excursion:.2f} "
+            f"at {transient.displacement_frequency:.1f} Hz"
+        )
+    if role in ("attack", "full") and doppler > sc.doppler_budget:
+        reasons.append(
+            f"Doppler sideband ratio={doppler:.3f} > "
+            f"{sc.doppler_budget:.3f}"
+        )
+    if risk.driver_power > 1.0:
+        reasons.append(
+            f"driver power={electrical.coil_power_w:.0f} W > "
+            f"{driver.p_max:.0f} W"
+        )
+    if electrical.voltage_rms > sc.amplifier_voltage_rms:
+        reasons.append(
+            f"steady voltage={electrical.voltage_rms:.1f} V rms > "
+            f"{sc.amplifier_voltage_rms:.1f} V rms"
+        )
+    if electrical.current_rms > sc.amplifier_current_rms:
+        reasons.append(
+            f"steady current={electrical.current_rms:.1f} A rms > "
+            f"{sc.amplifier_current_rms:.1f} A rms"
+        )
+    if electrical.coil_power_w > sc.amplifier_power_continuous:
+        reasons.append(
+            f"steady power={electrical.coil_power_w:.0f} W > "
+            f"{sc.amplifier_power_continuous:.0f} W continuous"
+        )
+    if transient.voltage_rms > sc.amplifier_voltage_rms:
+        reasons.append(
+            f"burst voltage={transient.voltage_rms:.1f} V rms > "
+            f"{sc.amplifier_voltage_rms:.1f} V rms"
+        )
+    if transient.current_rms > sc.amplifier_current_rms:
+        reasons.append(
+            f"burst current={transient.current_rms:.1f} A rms > "
+            f"{sc.amplifier_current_rms:.1f} A rms"
+        )
+    if transient.coil_power_w > sc.amplifier_power_burst:
+        reasons.append(
+            f"burst power={transient.coil_power_w:.0f} W > "
+            f"{sc.amplifier_power_burst:.0f} W"
+        )
+
+    sine_floor = sc.target_spl_for(role) + 20.0 * math.log10(
+        1.0 / steady_excursion
+    )
+    transient_floor = sc.target_spl_for(role) + 20.0 * math.log10(
+        1.0 / transient_excursion
+    )
+    preferred_units = max(
+        1,
+        math.ceil(
+            n_units
+            * max(steady_excursion, transient_excursion)
+            / sc.preferred_excursion
+        ),
+    )
 
     return Evaluation(
-        boxed=boxed, scenario=sc,
-        feasible=not reasons, reasons=tuple(reasons), notes=tuple(notes),
-        xi_x=xi_x, hd=hd, doppler_im=doppler, box_hd2=box_hd,
-        total_distortion=total,
-        xi_p=xi_p,
-        thermal_compression_db=physics.thermal_compression_db(min(xi_p, 1.0)),
-        spl_sine_floor=spl_sine, spl_burst_floor=spl_burst,
-        f_x=f_x, f_x_burst=f_x_burst,
-        n_units_required=sc.units_required(driver.vd, band_low, role),
-        n_channels=n_channels,
+        boxed=boxed,
+        scenario=sc,
         role=role,
+        band_low=band_low,
+        band_high=band_high,
+        feasible=not reasons,
+        reasons=tuple(reasons),
+        notes=tuple(notes),
+        risk=risk,
+        electrical=electrical,
+        transient=transient,
+        spl_sine_floor=sine_floor,
+        spl_transient_floor=transient_floor,
+        f_x=physics.regime_boundary_fx(
+            driver.fs,
+            driver.p_max,
+            driver.qes,
+            driver.mms,
+            driver.xmax,
+        ),
+        n_units_preferred=preferred_units,
     )
 
 
-def rank(drivers: list[Driver], scenario: Scenario, n_units: int = 1,
-         min_size_in: float = 0.0, max_size_in: float = float("inf"),
-         band_low: float | None = None, band_high: float | None = None,
-         doppler_ref: float | None = None, n_channels: int = 1,
-         role: Role = "sub") -> list[Evaluation]:
-    """Evaluate a size category and sort per the role's ranking rule
-    (sec_procedure.tex): sub maximizes Vd; attack maximizes eta0*Pmax
-    subject to its own excursion/Doppler budgets (see Evaluation.sort_key)."""
-    evals = [evaluate(d, scenario, n_units, band_low, band_high, doppler_ref,
-                      n_channels=n_channels, role=role)
-             for d in drivers if min_size_in <= d.size_in <= max_size_in]
-    return sorted(evals, key=Evaluation.sort_key)
+def rank(
+    drivers: list[Driver],
+    scenario: Scenario,
+    n_units: int = 1,
+    min_size_in: float = 0.0,
+    max_size_in: float = float("inf"),
+    band_low: float | None = None,
+    band_high: float | None = None,
+    doppler_ref: float | None = None,
+    role: Role = "sub",
+) -> list[Evaluation]:
+    evaluations = [
+        evaluate(
+            driver,
+            scenario,
+            n_units,
+            band_low,
+            band_high,
+            doppler_ref,
+            role,
+        )
+        for driver in drivers
+        if min_size_in <= driver.size_in <= max_size_in
+    ]
+    evaluations = _assign_pareto_ranks(evaluations)
+    return sorted(evaluations, key=Evaluation.sort_key)
 
 
 @dataclass(frozen=True)
 class PairEvaluation:
-    """A sub driver (own band [f_low, f_split]) paired with an attack driver
-    (own band [f_split, f_high]); no cross-driver coupling term, since the
-    two are physically separate sources (soffit-wall sub manifold vs.
-    mid/high tower)."""
+    """A mono low-bass manifold plus one candidate per stereo channel."""
 
     sub: Evaluation
     attack: Evaluation
@@ -274,51 +547,162 @@ class PairEvaluation:
         return self.sub.feasible and self.attack.feasible
 
     @property
-    def total_distortion(self) -> float:
-        return self.sub.total_distortion + self.attack.total_distortion
+    def physical_driver_count(self) -> int:
+        return self.sub.boxed.n_units + 2 * self.attack.boxed.n_units
 
     @property
-    def n_units_required(self) -> tuple[int, int]:
-        return (self.sub.n_units_required, self.attack.n_units_required)
+    def total_box_volume_m3(self) -> float:
+        return (
+            self.sub.risk.box_volume_m3
+            + 2.0 * self.attack.risk.box_volume_m3
+        )
 
     def sort_key(self) -> tuple:
-        return (not self.feasible, self.total_distortion,
-                sum(self.n_units_required))
+        sub_pareto = self.sub.pareto_rank if self.sub.pareto_rank >= 0 else math.inf
+        attack_pareto = (
+            self.attack.pareto_rank
+            if self.attack.pareto_rank >= 0
+            else math.inf
+        )
+        return (
+            not self.feasible,
+            sub_pareto,
+            attack_pareto,
+            self.sub.policy_key(),
+            self.attack.policy_key(),
+            self.physical_driver_count,
+            round(self.total_box_volume_m3, 6),
+        )
 
 
-def pair_rank(drivers: list[Driver], scenario: Scenario,
-             sub_units: int = 1, attack_units: int = 1,
-             sub_size_min: float = 0.0, sub_size_max: float = float("inf"),
-             attack_size_min: float = 0.0, attack_size_max: float = float("inf"),
-             top_k_each: int = 15, sub_channels: int = 1,
-             attack_channels: int = 2) -> list[PairEvaluation]:
-    """Rank sub and attack candidates independently within their own bands
-    and size windows, then combine the top-K of each into pairs sorted by
-    combined distortion (feasible pairs first).
-
-    `sub_channels` (default 1, mono manifold) and `attack_channels` (default
-    2, stereo L/R) scale the *acoustic* coherent-sum only -- see
-    `evaluate()`'s docstring for why thermal/power budget never gets that
-    credit."""
+def pair_rank(
+    drivers: list[Driver],
+    scenario: Scenario,
+    sub_units: int = 1,
+    attack_units: int = 1,
+    sub_size_min: float = 0.0,
+    sub_size_max: float = float("inf"),
+    attack_size_min: float = 0.0,
+    attack_size_max: float = float("inf"),
+    top_k_each: int = 15,
+    require_even_sub_units: bool = False,
+) -> list[PairEvaluation]:
+    """Combine independently ranked role candidates without summing risks."""
+    if require_even_sub_units and sub_units % 2:
+        raise ValueError(
+            "force-cancelling sub manifolds require an even unit count"
+        )
     sc = scenario
-    sub_evals = rank(drivers, sc, n_units=sub_units,
-                     min_size_in=sub_size_min, max_size_in=sub_size_max,
-                     band_low=sc.f_low, band_high=sc.f_split,
-                     doppler_ref=sc.f_split, n_channels=sub_channels,
-                     role="sub")[:top_k_each]
-    attack_evals = rank(drivers, sc, n_units=attack_units,
-                        min_size_in=attack_size_min, max_size_in=attack_size_max,
-                        band_low=sc.f_split, band_high=sc.f_high,
-                        doppler_ref=sc.f_high, n_channels=attack_channels,
-                        role="attack")[:top_k_each]
-    pairs = [PairEvaluation(s, a) for s in sub_evals for a in attack_evals]
+    sub_evaluations = rank(
+        drivers,
+        sc,
+        n_units=sub_units,
+        min_size_in=sub_size_min,
+        max_size_in=sub_size_max,
+        band_low=sc.f_low,
+        band_high=sc.f_split,
+        doppler_ref=sc.f_split,
+        role="sub",
+    )[:top_k_each]
+    attack_evaluations = rank(
+        drivers,
+        sc,
+        n_units=attack_units,
+        min_size_in=attack_size_min,
+        max_size_in=attack_size_max,
+        band_low=sc.f_split,
+        band_high=sc.f_high,
+        doppler_ref=sc.f_high,
+        role="attack",
+    )[:top_k_each]
+    pairs = [
+        PairEvaluation(sub, attack)
+        for sub in sub_evaluations
+        for attack in attack_evaluations
+    ]
     return sorted(pairs, key=PairEvaluation.sort_key)
 
 
-def _room_spl_ceiling(vd_total: float, sc: Scenario, band_low: float,
-                      role: str, shape_factor: float) -> float:
-    """Ceiling SPL at the listening position at band_low, including the room
-    pressure zone: the SPL at which V_dem(band_low) equals Vd/C."""
-    v_dem_unit = sc.demand_volume(band_low, role) / sc.target_pressure(role)  # per Pa
-    p_max_rms = (vd_total / shape_factor) / v_dem_unit
-    return physics.spl_from_pressure(p_max_rms)
+def pareto_front(evaluations: Iterable[Evaluation]) -> list[Evaluation]:
+    """Return the feasible non-dominated evaluations."""
+    candidates = [evaluation for evaluation in evaluations if evaluation.feasible]
+    return [
+        candidate
+        for candidate in candidates
+        if not any(
+            other.risk.dominates(candidate.risk, candidate.role)
+            for other in candidates
+            if other is not candidate
+        )
+    ]
+
+
+def _assign_pareto_ranks(
+    evaluations: list[Evaluation],
+) -> list[Evaluation]:
+    feasible_indices = [
+        index for index, evaluation in enumerate(evaluations)
+        if evaluation.feasible
+    ]
+    dominates: dict[int, list[int]] = {index: [] for index in feasible_indices}
+    domination_count = {index: 0 for index in feasible_indices}
+
+    for position, left_index in enumerate(feasible_indices):
+        left = evaluations[left_index]
+        for right_index in feasible_indices[position + 1:]:
+            right = evaluations[right_index]
+            if left.risk.dominates(right.risk, left.role):
+                dominates[left_index].append(right_index)
+                domination_count[right_index] += 1
+            elif right.risk.dominates(left.risk, right.role):
+                dominates[right_index].append(left_index)
+                domination_count[left_index] += 1
+
+    current_front = [
+        index for index in feasible_indices if domination_count[index] == 0
+    ]
+    ranks: dict[int, int] = {}
+    rank_index = 1
+    while current_front:
+        next_front: list[int] = []
+        for index in current_front:
+            ranks[index] = rank_index
+            for dominated_index in dominates[index]:
+                domination_count[dominated_index] -= 1
+                if domination_count[dominated_index] == 0:
+                    next_front.append(dominated_index)
+        current_front = next_front
+        rank_index += 1
+
+    return [
+        replace(evaluation, pareto_rank=ranks.get(index, -1))
+        for index, evaluation in enumerate(evaluations)
+    ]
+
+
+def _frequency_grid(
+    low: float,
+    high: float,
+    *,
+    samples: int,
+    extras: Iterable[float] = (),
+) -> tuple[float, ...]:
+    if samples < 2:
+        raise ValueError("frequency grid needs at least two samples")
+    ratio = high / low
+    values = {
+        low * ratio ** (index / (samples - 1))
+        for index in range(samples)
+    }
+    values.update(value for value in extras if low <= value <= high)
+    return tuple(sorted(values))
+
+
+def _larger_extreme(
+    current: tuple[float, float],
+    candidate_value: float,
+    candidate_frequency: float,
+) -> tuple[float, float]:
+    if candidate_value > current[0]:
+        return candidate_value, candidate_frequency
+    return current

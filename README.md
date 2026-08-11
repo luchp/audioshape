@@ -1,28 +1,24 @@
 # audioshape
 
-First-principles sealed-box bass driver selection: ranking and plots over
-the VituixCAD driver database, backing the paper *Sealed-Box Driver
-Selection Criteria for High-SPL Monitoring* (paper id `26325`). See
+First-principles sealed-box bass driver selection using public datasheet
+fields and an optional separately obtained local candidate database. It
+backs *Datasheet-Based Ranking of Sealed-Box Bass Drivers for a Small-Area
+DSP-Integrated Stereo System* (paper id `26325`). See
 `papers/26325/sealed_driver_criteria.tex` for the full derivation.
 
-The tool ranks drivers by predicted non-correctable (nonlinear) distortion
-at a target SPL/room/listening-position scenario — motor harmonic
-distortion from excursion utilization, Doppler intermodulation, and box
-air-spring second harmonic — subject to feasibility gates (Qts vs. target
-Qtc, the corner-rate room-closure rule, inductance corner, excursion/
-thermal clipping). It supports both single-role ranking and a two-role
-(sub + attack) pair ranking for the paper's Part II architecture.
+The tool applies hard excursion and finite-amplifier feasibility gates,
+then ranks the surviving drivers with separate risk indicators, Pareto
+fronts, and role-specific policy keys. Excursion utilization, transient
+excursion, the first-order Doppler sideband ratio, box-spring nonlinearity,
+voltage, current, power, inductive risk, and box volume are never added into
+a synthetic "total distortion" value.
 
-`distortion_budget` (`D*`, set in the recipe) is a **selection ceiling at
-the target SPL**, not an operating point: the target itself is typically a
-brief reference-level peak (105 dB per channel, coherently stereo-summed
-to ~111 dB at the seat, is only safely sustainable for about a minute per
-NIOSH exposure limits), so a driver picked to just clear `D*` there will,
-in ordinary continuous listening, run at distortion levels well below it.
-`audioshape plot ... distortion` plots the total-distortion-vs-frequency
-curve both at the target and 20 dB down (a proxy for normal listening
-level) against the same `D*` line, so you can see how much margin actually
-remains day-to-day.
+Published one-way `Xmax` is the clipping boundary. The default 80% value is
+only a preferred design margin and unit-count guide, leaving about 1.9 dB of
+excursion headroom. The 110 dB mono-sub and 105 dB-per-stereo-channel targets
+are occasional maximum-output conditions, not continuous listening levels.
+Hearing-exposure guidance can contextualize how extreme sustained levels
+would be, but does not define the mechanical screening limit.
 
 ## Layout
 

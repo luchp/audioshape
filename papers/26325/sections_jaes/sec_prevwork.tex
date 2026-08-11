@@ -1,31 +1,81 @@
-\section{Previous work}
+\section{Previous work and positioning}
 \label{sec:prevwork}
 
-Thiele/Small alignment theory and the sealed-box alignment line
-\eqref{eq:alignment} \cite{small1972} are the common starting point;
-nothing here revisits that theory. 
-The efficiency-bandwidth product $EBP\equiv F_s/\Qes$ is a widely 
-used single number for sealed-vs-vented screening, 
-$EBP\lesssim50$ suggesting sealed, $\gtrsim100$ vented \cite{dickason2006}. 
-As \cref{sec:invariants} shows, $EBP$ is a genuine motor/mass ratio 
-\eqref{eq:sebound}: a legitimate enclosure-\emph{type} screen, 
-but it says nothing about \emph{how much} SPL or how little
-distortion either choice delivers once the type is fixed. Below, $EBP$
-enters only through the regime-boundary frequency $f_x$ \eqref{eq:fx} and
-the corner rate \eqref{eq:cornerrate}, never as a standalone ranking.
+\Cref{tab:prior-art} lists, element by element, which parts of the
+procedure are established prior results reused unchanged and which parts
+are this report's own methodological or policy contribution. Nothing in
+\cref{sec:model,sec:freq} is claimed as new physics.
 
-A few related shorthands are corrected in passing, since later sections
-rely on the corrected versions silently. Overshoot rules of thumb quote
-$1$--$2\%$ for $\Qtc=0.55$; the exact value is $M_p=0.11\%$,
-and $M_p\le1\%$ holds up to $\Qtc\le0.61$.
-``Excursion grows as $1/f^2$ going down'' holds only above the sealed
-corner $F_c$; below it, excursion at fixed drive saturates
-\eqref{eq:PL}. Finally, ``given $\Qtc$ and a frequency, what SPL can this
-driver make'' is ill-posed: the excursion-limited ceiling \eqref{eq:SPLL}
-does not depend on $\Qtc$ (\cref{cor:onlyVd}); $\Qtc$ governs corner
-placement and settling only.
+\input{../tables/table_prior_art}
 
-Neither the $EBP$ screen nor these shorthands produces a datasheet-computable
-ranking that is (a)~derived rather than guessed, (b)~referenced to
-non-correctable distortion, and (c)~accounts for room gain. Supplying that
-ranking is the subject of the rest of this paper.
+\textbf{Alignment and output ceilings.} Closed-box small-signal analysis
+and synthesis \cite{small1972} and direct-radiator system analysis
+\cite{small1972direct} supply the sealed-box model, the alignment relation,
+the reference efficiency $\eta_0$, and the displacement- and
+dissipation-limited output ceilings used throughout. Fielder and Benjamin
+\cite{fielder1988} established the corresponding program-material and
+room-aware view of subwoofer displacement requirements, which is the
+closest prior work to the sizing part of the present procedure.
+
+\textbf{Ratings and their comparability.} Continuous power ratings follow
+different standards \cite{aes2}, and published $\Xmax$ values may be
+geometric, distortion-defined, or vendor-specific
+\cite{iec62458,klippel2003xmax,klippel2006}. Both introduce enough spread
+between manufacturers to change a ranking, which is why the procedure
+carries these as declared uncertainty inputs
+(\cref{sec:scope}) and reports rank robustness against them
+(\cref{sec:procedure}).
+
+\textbf{$EBP$ as a screening heuristic.} $EBP\lesssim\SI{50}{\hertz}$
+suggesting sealed and $\gtrsim\SI{100}{\hertz}$ suggesting vented
+\cite{dickason2006} is a widely used enclosure-\emph{type} screen. It is a
+motor-to-mass ratio and, through the exact corner rate $F_s/\Qts$, fixes
+where a chosen $\Qtc$ places the box corner; it does not state achievable
+output or nonlinear headroom. Here it enters only through the exact
+$F_s/\Qts$ used in \cref{eq:alignment}, never as a standalone ranking key.
+The approximation $F_s/\Qts\approx EBP$ is not used numerically: it differs
+by $(1+\Qes/\Qms)$, which reaches several per cent to over ten per cent for
+typical bass drivers.
+
+\textbf{Large-signal behaviour and nonlinear risk.} Motor and suspension
+nonlinearity, and the parameters used to characterize it, are surveyed by
+Klippel \cite{klippel2006}; $\Xmax$ definitions and their measurement are
+treated in \cite{klippel2003xmax}. Doppler (FM) distortion in
+direct-radiator loudspeakers was described by Klipsch \cite{klipsch1969},
+and its magnitude and audibility were subsequently disputed by Allison and
+Villchur \cite{allison1982}; the present report therefore reports the
+small-index first-sideband ratio and cites that debate rather than
+converting it into a perceptual penalty. Thermal compression and power
+handling follow Button \cite{button1992}. Perceptual thresholds for low-frequency
+loudspeaker distortion depend on order, spectrum, level, and program
+material \cite{fielder2019}, so no absolute audibility claim is made here.
+
+\textbf{Ports.} Port compression, turbulence, and nonlinearity are
+characterized in \cite{salvatti2002,vanderkooy1998}. These references
+support the scoped discussion in \cref{app:vented}, which motivates the
+choice of sealed loading for this application without claiming general
+superiority.
+
+\textbf{Room and correction.} The distinction between direct/early-field
+and modal-region behaviour, and the interaction of loudspeakers with small
+rooms, follows Toole \cite{toole2006}. Optimization over a defined seating
+area using multiple subwoofers \cite{welti2006} is the explicit contrast to
+the compact-area objective adopted here. Modal equalization
+\cite{makivirta2003} and the review of room-response equalization
+\cite{cecchi2018} bound what finite-band correction can achieve, and
+motivate treating DSP correction as band-limited and regularized rather
+than as exact inversion.
+
+\textbf{Spatial attributes.} Scene-based spatial-quality terminology
+\cite{rumsey2002} separates image and scene attributes from environmental
+envelopment; small-room reflection effects are quantified in
+\cite{bech1998}; envelopment's dependence on late lateral energy
+\cite{bradley1995} and listener preference across reproduction methods
+\cite{francombe2017} are the counterpoint that keeps
+\cref{sec:intro-fidelity}'s claim restricted to scene fidelity.
+
+What is missing from this body of work, and what this report supplies, is
+not a new physical relation but a complete, reproducible, datasheet-only
+decision path from a candidate population to a ranked, gate-checked
+shortlist for one declared architecture, including the finite amplifier,
+the finite enclosure, the room, and the transient case.

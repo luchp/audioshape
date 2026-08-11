@@ -3,17 +3,16 @@
     "sealed_driver_criteria.tex",
     "jaes/sealed_driver_criteria_jaes.tex"
   ],
-  "title": "Sealed-Box Loudspeaker Driver Selection Criteria",
+  "title": "Datasheet-Based Ranking of Sealed-Box Bass Drivers for a Small-Area DSP-Integrated Stereo System",
   "version": "3.0",
-  "summary": "Frequency- and Time-Domain Excursion and Power Headroom Limits for Sealed Direct-Radiator Loudspeakers",
+  "summary": "A Reproducible, Datasheet-Based Screening and Role-Ranking Procedure for a Small-Area DSP-Integrated Stereo Bass System",
   "keywords": [
-    "loudspeaker design",
+    "loudspeaker driver selection",
     "sealed enclosure",
-    "excursion limit",
-    "power compression",
-    "distortion",
-    "vented enclosure",
-    "driver selection"
+    "maximum acoustic output",
+    "datasheet screening",
+    "room gain",
+    "nonlinear headroom"
   ],
   "year": "2026",
   "license": "CC BY 4.0"

@@ -1,102 +1,62 @@
-\section{Why sealed, not vented}
+\section{Why sealed loading was chosen here}
 \label{app:vented}
 
-A vented (ported) box promises to extend flat output roughly an octave
-lower than a sealed box of the same volume, with one driver instead of two.
-Repackaging the box stiffness as an acoustic compliance $C_{ab}=\Vb/(\rho_0c^2)$
-and adding a port of acoustic mass/resistance $M_{ap},R_{ap}$ driven by box
-pressure $P_b$ gives the classical 4th-order vented alignment
-\cite{small1973vented} in \eqref{eq:ode}'s own notation, so every sealed-box
-quantity ($\sigma$, $\ws$, $\Cms$) transfers unchanged. As
-$M_{ap},R_{ap}\to\infty$ this specializes exactly to the sealed operator
-\eqref{eq:ode} (a shut port is a sealed box) --- the vented model adds
-physics rather than replacing it.
+Sealed loading is an architectural choice for this application, not the
+outcome of a general topology contest. This appendix states the reasoning
+and its limits.
 
-\begin{proposition}[$24$\,dB/octave, not $12$]
-	\label{prop:vented24}
-	For an ideal port, low-frequency output falls as $\omega^4$: vented slope is
-	$24$\,dB/oct, vs.\ sealed's $12$. A real port ($R_{ap}>0$) crosses from
-	$18$ to $24$\,dB/oct well below tuning for any reasonably low-loss port, so
-	this steeper roll-off governs essentially the whole sub-tuning band of
-	interest.
-\end{proposition}
+A vented alignment is a fourth-order system \cite{small1973vented}: the box
+compliance and the port's acoustic mass and resistance add a degree of
+freedom to the sealed operator \cref{eq:ode}, to which it reduces exactly
+as the port mass and resistance grow without bound. Compared with a sealed
+box of the same volume, it buys roughly an octave of extension and higher
+passband sensitivity---a decisive advantage when amplifier power, not
+displacement or room gain, is the binding constraint.
 
-\begin{proposition}[Excursion is not box-limited]
-	\label{prop:ventedxmax}
-	Below tuning, cone excursion relaxes to the driver's own free-air DC limit,
-	independent of box or port sizing: the box supplies \emph{no} restoring
-	force below $F_b$, unlike sealed, where $\wc^2$ bounds $x$ at every
-	frequency down to DC. At fixed drive and box volume, vented moves
-	$(1+\alpha)=(F_c/F_s)^2$ times farther than the same driver sealed in the
-	same box --- $\approx1.6\times$, roughly $60\%$ farther, for the worked
-	example's $\Qtc=0.61$ box.
-\end{proposition}
+Four properties make it the less convenient choice for the architecture of
+\cref{sec:intro-arch}.
 
-Standard practice counters this with a steep high-pass filter just below
-$F_b$; but that filter necessarily removes the same sub-tuning output
-whose room-gain rescue (\cref{sec:roomclose}) is sealed's chief
-low-frequency advantage, so the fix and the case for choosing vented pull
-in opposite directions.
+\textbf{Below-tuning excursion.} Below the tuning frequency the enclosure
+supplies little restoring force, so cone excursion is limited by the drive
+signal rather than by the alignment. Standard practice adds a protective
+high-pass filter below tuning, which is entirely workable, but it removes
+output in exactly the region where the pressure-zone branch of
+\cref{eq:Vdem} would otherwise be exploited. The sealed alternative bounds
+displacement at every frequency down to DC without an additional protective
+element, which makes the excursion gates of \cref{sec:risk-policy}
+sufficient on their own.
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\columnwidth]{../figures/fig_vented_comparison}
-	\caption{Driver S, identical $473$~L box, sealed ($\Qtc=0.61$) vs.\ vented
-	($F_b=23$~Hz), both scaled to the same on-target level at $80$~Hz. Vented
-	gains almost an octave of flat output below the sealed $F_c$, at the cost
-	of the cone-excursion null at $F_b$ and the unbounded excursion rise below
-	it.}
-	\label{fig:vented}
-\end{figure}
+\textbf{Steeper low-frequency slope.} The vented low-frequency asymptote is
+steeper than the sealed $12$\,dB/oct, so the approximate complementarity
+with the room's pressure-zone branch \cref{eq:Fsrule} does not carry over
+directly, and correction toward the bottom of the band starts from a larger
+deficit.
 
-The sealed room-gain match of \cref{sec:roomclose} ($F_c\simeq
-f_{\mathrm{pz}}$, $-12$\,dB/oct meeting the room's flat pressure-zone term)
-has no vented analogue: $-24$\,dB/oct is twice as steep, and closing the
-gap with FIR would drive an already excursion-unbounded cone harder, with
-no $\Xmax$-derived ceiling to say when to stop.
+\textbf{Port behaviour.} Near tuning most of the output passes through the
+port, and the port air velocity at a given target scales as
+$v_{\mathrm{port}}\approx2\pi r_{\mathrm{listen}}p_t/
+(\rho_0\omega_b S_{\mathrm{port}})$. At the levels and frequencies of this
+scenario a small port would run well above the velocity at which
+compression, turbulence noise, and nonlinear behaviour become significant
+\cite{salvatti2002,vanderkooy1998}. This is a design constraint on port
+geometry, not a defect of vented loading: large flared ports, several
+ports, or a passive radiator address it, at the cost of enclosure volume,
+baffle area, or an additional moving part. A passive radiator removes the
+port mechanism entirely while retaining the fourth-order alignment and the
+below-tuning excursion behaviour.
 
-Near tuning the cone nulls and essentially all output passes through the
-port; port air velocity at the target is
-\begin{equation}
-	\boxed{\ v_{\mathrm{port}}\approx
-			\frac{2\pi r\,p_t}{\rho_0\,\omega_b\, S_{\mathrm{port}}}\ }.
-	\label{eq:vport}
-\end{equation}
+\textbf{System integration.} The manifold of \cref{sec:intro-arch} already
+uses several active drivers for displacement and first-order
+reaction-force cancellation under matched opposed-pair operation, each
+with its own amplifier channel. In that context the extra tuning element,
+the protective filter, and the port geometry constraint add system
+complexity without addressing the binding constraint, which
+\cref{app:example} shows is enclosure volume and excursion rather than
+amplifier power.
 
-Turbulence (``chuffing'') onset is empirically $v_{\max}\approx17$\,m/s
-\cite{dickason2006}. For the running $60$\,m$^3$/$110$\,dB/$F_b=23$\,Hz
-example:
-
-\input{../tables/table_port_velocity}
-
-A single $10$\,cm round port already runs at $\sim5\times$ the
-turbulence-onset velocity; holding $v\le v_{\max}$ needs a
-$\approx23$\,cm port --- a real, level-dependent, compressive,
-un-equalizable distortion and noise mechanism with no sealed-box analogue.
-
-A passive radiator (a driver-like cone with no voice coil or motor, tuned
-by its own moving mass and suspension) is a common port alternative that
-avoids this mechanism entirely: no air moves through a constriction, so
-\eqref{eq:vport} and the turbulence threshold above simply do not apply,
-and several pro-audio monitors use exactly this solution. It does not,
-however, change the underlying alignment: a passive radiator is still a
-fourth-order mass-spring-damper driven by box pressure in place of the
-port's acoustic mass, so \cref{prop:vented24,prop:ventedxmax} (the
-steeper roll-off and the box-unbounded excursion below tuning) and the
-missing room-gain match (\cref{sec:roomclose}) all still apply unchanged.
-And the radiator is itself an added driver: once a second driver is
-accepted at all, an \emph{active} one in the array this paper proposes is
-the better use of it, contributing shared power and $\Vd$ (A9) that a
-passive radiator, lacking its own voice coil, cannot. Room gain remains
-the strongest of the reasons below --- it is the one advantage no port or
-radiator geometry can reproduce.
-
-Three independent, first-principles reasons therefore support the sealed
-choice: a steeper low-frequency asymptote (\cref{prop:vented24}), an
-excursion no longer bounded by the box at all below tuning
-(\cref{prop:ventedxmax}), and a room-gain mechanism (\cref{sec:roomclose})
-that has no vented equivalent, on top of the port-velocity liability above.
-These hold within this paper's DSP-corrected, room-integrated premise
-(A6); where amplifier headroom, not distortion or room gain, is the
-binding constraint, a vented alignment's higher passband sensitivity
-remains a legitimate, narrower-purpose choice.
+None of this establishes that sealed loading is generally superior. Under a
+different constraint set---limited amplifier power, limited enclosure
+volume with a higher extension requirement, or a room without usable
+pressure-zone gain---a vented or passive-radiator alignment is the
+better-matched choice, and the gates of \cref{sec:risk-policy} would have
+to be re-derived for its fourth-order model.

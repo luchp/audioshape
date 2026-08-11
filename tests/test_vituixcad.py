@@ -37,7 +37,7 @@ def driver_m() -> Driver:
 @pytest.fixture
 def scenario() -> Scenario:
     return Scenario(v_room=60.0, l_max=6.0, r_listen=3.0,
-                    sub_target_spl=110.0, attack_target_spl=110.0, distortion_budget=0.03,
+                    sub_target_spl=110.0, attack_target_spl=105.0,
                     qtc=0.55, f_low=15.0, f_split=80.0, f_high=250.0)
 
 
@@ -109,6 +109,8 @@ def test_project_xml_well_formed_and_has_both_drivers(selections):
     assert root.tag == "SPEAKER"
     assert root.findtext("Description") == "hello & <world>"
     assert root.findtext("HalfSpace") == "True"
+    assert root.find("AxialTarget") is None
+    assert root.find("PowerTarget") is None
 
     models = [e.findtext("Model") for e in root.findall("DRIVER")]
     assert models == ["Example S18", 'B&C Speakers M/12"']
@@ -123,6 +125,11 @@ def test_project_xml_well_formed_and_has_both_drivers(selections):
     sub_part = driver_parts[0]
     assert sub_part.find("DriverTarget").findtext("FreqMin") == "15"
     assert sub_part.find("DriverTarget").findtext("FreqMax") == "80"
+    assert sub_part.find("DriverTarget").findtext("SPL") == "110"
+    attack_part = driver_parts[1]
+    assert attack_part.find("DriverTarget").findtext("FreqMin") == "80"
+    assert attack_part.find("DriverTarget").findtext("FreqMax") == "250"
+    assert attack_part.find("DriverTarget").findtext("SPL") == "105"
 
 
 def test_project_xml_requires_at_least_one_selection():

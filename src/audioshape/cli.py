@@ -28,7 +28,7 @@ _ROLE_BANDS = {
     # role -> (band_low, band_high, doppler_ref) as Scenario attribute names
     "sub": ("f_low", "f_split", "f_split"),
     "attack": ("f_split", "f_high", "f_high"),
-    "full": ("f_low", "f_high", "f_split"),  # single driver covers everything
+    "full": ("f_low", "f_high", "f_high"),  # single driver covers everything
 }
 
 
@@ -41,9 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="audioshape",
         description="Sealed-box bass driver selection from first principles. "
-                    "sub_target_spl/attack_target_spl in the recipe are the "
-                    "per-driver level required from each role (coherent A9 "
-                    "summing across units/channels is applied separately).")
+                    "The sub target applies to the mono manifold; the "
+                    "upper-bass target applies independently per stereo channel.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     def add_recipe_arg(p: argparse.ArgumentParser) -> None:
@@ -64,7 +63,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_pair.add_argument("--top", type=int, default=15,
                         help="pairs to print (default 15)")
 
-    p_plot = sub.add_parser("plot", help="SPL and distortion plots for one driver")
+    p_plot = sub.add_parser(
+        "plot", help="SPL and separate risk plots for one driver"
+    )
     add_recipe_arg(p_plot)
     p_plot.add_argument("--driver", required=True,
                         help="substring of 'Manufacturer Model' (case-insensitive)")
@@ -110,10 +111,11 @@ def cmd_rank(args: argparse.Namespace) -> int:
           f"({len(result.skipped)} skipped for missing data).")
     print(f"Role '{args.role}': band [{band_low:g}, {band_high:g}] Hz, "
           f"{n_units} unit(s), target {sc.target_spl_for(args.role):g} dB "
-          f"@ {sc.r_listen:g} m (per-driver level)")
+          f"@ {sc.r_listen:g} m")
     print(f"Room {sc.v_room:g} m^3 (f_pz={sc.f_pz:.1f} Hz), "
-          f"D*={sc.distortion_budget:.1%}, Qtc<={sc.qtc:g} (ceiling; see "
-          f"Qtc column, some drivers use less)\n")
+          f"leakage corner={sc.leakage_corner_hz:g} Hz, "
+          f"preferred excursion<={sc.preferred_excursion:.0%}, "
+          f"Qtc<={sc.qtc:g}\n")
 
     _print_rank_table(evals[:args.top])
     return 0
@@ -121,8 +123,8 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
 def _print_rank_table(evals: list[Evaluation]) -> None:
     header = (f"{'#':>3} {'driver':<38} {'in':>4} {'Vd[L]':>6} {'Vb[L]':>6} "
-              f"{'Fc':>5} {'Qtc':>5} {'xi_x':>5} {'D%':>6} {'Dop%':>5} "
-              f"{'box%':>5} {'xi_P':>5} {'N*':>3} flags")
+              f"{'Fc':>5} {'Qtc':>5} {'xi_s':>5} {'xi_b':>5} {'SB%':>5} "
+              f"{'box%':>5} {'xi_P':>5} {'amp':>5} {'PF':>3} {'N80':>3} flags")
     print(header)
     print("-" * len(header))
     for i, ev in enumerate(evals, 1):
@@ -138,9 +140,10 @@ def _format_row(i: int, ev: Evaluation) -> str:
     return (f"{i:>3} {d.label():<38.38} {d.size_in:>4.0f} {d.vd*1e3:>6.2f} "
             f"{ev.boxed.vb*1e3:>6.0f} {ev.boxed.fc:>5.1f} "
             f"{ev.boxed.qtc:>5.2f} {ev.xi_x:>5.2f} "
-            f"{100*ev.hd:>6.2f} {100*ev.doppler_im:>5.2f} "
-            f"{100*ev.box_hd2:>5.2f} {ev.xi_p:>5.2f} "
-            f"{ev.n_units_required:>3} {flags}")
+            f"{ev.xi_x_transient:>5.2f} {100*ev.doppler_im:>5.2f} "
+            f"{100*ev.box_nonlinearity:>5.2f} {ev.xi_p:>5.2f} "
+            f"{ev.amplifier_utilization:>5.2f} {ev.pareto_rank:>3} "
+            f"{ev.n_units_preferred:>3} {flags}")
 
 
 def cmd_pair(args: argparse.Namespace) -> int:
@@ -152,18 +155,21 @@ def cmd_pair(args: argparse.Namespace) -> int:
                       sub_size_min=recipe.sub_size_min, sub_size_max=recipe.sub_size_max,
                       attack_size_min=recipe.attack_size_min,
                       attack_size_max=recipe.attack_size_max,
-                      top_k_each=recipe.top_k_each)
+                      top_k_each=recipe.top_k_each,
+                      require_even_sub_units=recipe.require_even_sub_units)
 
     print(f"Parsed {len(result.drivers)} drivers "
           f"({len(result.skipped)} skipped for missing data).")
     print(f"Target sub={sc.sub_target_spl:g} dB / attack={sc.attack_target_spl:g} dB "
-          f"@ {sc.r_listen:g} m (per-driver levels), room {sc.v_room:g} m^3 "
-          f"(f_pz={sc.f_pz:.1f} Hz), D*={sc.distortion_budget:.1%}, "
-          f"Qtc<={sc.qtc:g} (ceiling), split {sc.f_split:g} Hz\n")
+          f"@ {sc.r_listen:g} m, room {sc.v_room:g} m^3 "
+          f"(f_pz={sc.f_pz:.1f} Hz), preferred excursion "
+          f"{sc.preferred_excursion:.0%}, Qtc<={sc.qtc:g}, "
+          f"split {sc.f_split:g} Hz\n")
 
     for i, pe in enumerate(pairs[:args.top], 1):
         print(f"--- pair #{i} "
-              f"(total distortion {100*pe.total_distortion:.2f} %, "
+              f"({pe.physical_driver_count} physical drivers, "
+              f"{pe.total_box_volume_m3*1e3:.0f} L total, "
               f"{'feasible' if pe.feasible else 'FLAGGED'}) ---")
         print(f"  sub    ({recipe.sub_units}x): " + _format_row(1, pe.sub).lstrip("1 "))
         print(f"  attack ({recipe.attack_units}x): "
@@ -201,13 +207,13 @@ def cmd_plot(args: argparse.Namespace) -> int:
         args.save.mkdir(parents=True, exist_ok=True)
         stem = driver.label().replace(" ", "_").replace("/", "-")
         for maker, kind in ((plots.spl_figure, "spl"),
-                            (plots.distortion_figure, "distortion")):
+                            (plots.risk_figure, "risk")):
             out = args.save / f"{stem}_{args.role}_{kind}.png"
             maker(ev).savefig(out, dpi=150)
             print(f"wrote {out}")
     else:
         import matplotlib.pyplot as plt
-        for maker in (plots.spl_figure, plots.distortion_figure):
+        for maker in (plots.spl_figure, plots.risk_figure):
             fig = plt.figure(figsize=(9, 6), layout="constrained")
             maker(ev, fig=fig)
         plt.show()
@@ -266,6 +272,9 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     args = build_parser().parse_args(argv)
     if args.command == "rank":
         return cmd_rank(args)

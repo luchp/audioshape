@@ -1,106 +1,100 @@
 \section{Worked example}
 \label{app:example}
 
-Representative (rounded) parameters for two real driver classes --- S, a
-long-throw 18'' subwoofer, and M, a high-efficiency 12'' mid-bass unit ---
-illustrate the chain end to end. Every derived number is produced by the
-open-source reference implementation \cite{audioshape-preprint} from the
-datasheet rows alone.
+This appendix applies the complete procedure to the canonical scenario of
+\cref{sec:scope-scenario}. Both drivers are named models, and every
+parameter used is taken from a public manufacturer datasheet. The
+accompanying data manifest records the exact source URLs and SI input
+records; \cref{tab:worked-pair} summarizes the computed results and is the
+authoritative source where a number below is rounded.
 
-\input{../tables/table_worked_example}
+\subsection*{Selected system}
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\columnwidth]{../figures/fig_spl_sub}
-	\caption{Driver S, two units in $473$~L each ($\Qtc=0.61$, $F_c=25.5$~Hz):
-	sine and burst excursion ceilings and the thermal ceiling, at
-	$r_{\mathrm{listen}}=3$~m (\cref{sec:roomclose}) against the $110$~dB
-	target. Right axis: per-unit electrical power to sit at the target line
-	itself (not at $\Xmax$), which stays within $7.8$--$316$\,W over the
-	plotted band 
-	--- the peak drive voltage from \eqref{eq:xofe} stays within
-	$29$--$50$\,V per unit, so A6's unconstrained amplifier never implies an
-	unusual one here. The axis starts just below $f_{\mathrm{pz}}$, cropping
-	the flat pressure-zone plateau below it (a single value, see text); the
-	shaded band above $f_{\mathrm{sp}}=80$\,Hz marks driver M's range.}
-	\label{fig:spl-sub}
-\end{figure}
+\textbf{Low-bass manifold.} Four BMS 18N862 units, the largest class that
+fits the declared \SI{18}{inch} packaging constraint, arranged as two
+mechanically opposed pairs to permit first-order reaction-force
+cancellation within the manifold under matched drive and mounting. Driver mismatch
+and mounting tolerances leave residual force. The four drivers carry one
+common mono signal and share the
+manifold target of \SI{110}{dB} \emph{in total} at
+$r_{\mathrm{listen}}=\SI{3}{\meter}$ (basis B3); each has its own amplifier
+channel. The enclosure limit binds: at \SI{250}{\liter} per driver the
+manifold occupies the full \SI{1.0}{\cubic\meter} role budget and the
+realizable alignment is $\Qtc\simeq0.51$, $F_c\simeq\SI{37.6}{\hertz}$.
 
-Against target $L_t=110$\,dB (1\,m, $2\pi$, rms): S meets 110\,dB down to
-$22.7$\,Hz on sine, needing only 141\,W thermally ($\ll600$\,W rated) ---
-nowhere near thermally limited at this target. S cannot serve as attack
-driver: $f_L=139$\,Hz sits inside the attack band, a $\Qtc=0.55$ alignment
-needs 918\,L, and its corner rate ($42$\,Hz) cannot be raised
-(\cref{prop:invariance}). M holds 117\,dB sine at 80\,Hz, but its
-\emph{transient} ceiling at 70\,Hz clips excursion at a 110\,dB kick,
-fixing the split at $\ge$80\,Hz --- set by the burst penalty
-(\cref{lem:shape}), not the sine math. Both drivers saturate the materials
-bound at $\beta\approx0.3$ (\cref{thm:bound}): two ends of one Pareto front.
+\textbf{Upper bass.} One Eighteen Sound 12NTLW3500-8 per independent stereo
+channel in \SI{35.2}{\liter}, giving $\Qtc\simeq0.506$ and
+$F_c\simeq\SI{80}{\hertz}$, exactly at the split. Each channel meets its
+own \SI{105}{dB} target at \SI{3}{\meter} (basis B4) with no credit from
+the opposite channel. The evaluation uses the manufacturer's official
+$\Xmax=\SI{8.3}{\milli\meter}$.
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\columnwidth]{../figures/fig_spl_attack}
-	\caption{Driver M, one unit in $38$~L ($\Qtc=0.55$, $F_c=79$~Hz): the burst
-	(dashed) excursion ceiling dips below target just under $80$~Hz 
-	--- the	transient clipping that fixes the sub/attack split, invisible on the sine
-	curve alone. The shaded band below $f_{\mathrm{sp}}=80$\,Hz is driver S's
-	range, shown for context only using this appendix's $r=1$\,m comparison
-	basis rather than S's own room-consistent $r_{\mathrm{listen}}=3$\,m
-	(\cref{fig:spl-sub}), hence the visible kink at $f_{\mathrm{pz}}$.
-	Re-evaluated at that room-consistent distance, M's own
-	$80$--$250$\,Hz band needs at most $225$\,W per unit ($\ll350$\,W rated).}
-	\label{fig:spl-attack}
-\end{figure}
+\subsection*{Demand and gates}
 
-\subsection*{Distortion-referenced sizing with room closure}
+With $V_{\mathrm{room}}=\SI{60}{\cubic\meter}$ and
+$L_{\max}=\SI{6}{\meter}$, $f_{\mathrm{pz}}\simeq\SI{28.6}{\hertz}$. Under
+the declared \SI{10}{\hertz} leakage corner the worst low-bass demand
+occurs at the bottom of the band, \SI{15}{\hertz}, and equals
+\SI{4.57}{\liter} of peak displaced volume for the manifold as a whole
+(\cref{tab:room-sensitivity}), hence about \SI{1.14}{\liter} per driver.
 
-Room $V_{\mathrm{room}}=60$\,m$^3$, $L_{\max}=6$\,m
-$\Rightarrow f_{\mathrm{pz}}=28.6$\,Hz; target 110\,dB at the listening
-position $r_{\mathrm{listen}}=3$\,m; split $f_{\mathrm{sp}}=80$\,Hz;
-pressure-zone demand $V_{\mathrm{dem}}=4.36$\,L, flat for
-$f\le f_{\mathrm{pz}}$.
+Because the enclosure cap places $F_c$ above $f_{\mathrm{pz}}$, the flat
+target requires a correction boost below $F_c$. That boost is not assumed
+free: it is charged to \cref{eq:Preq,eq:Ereq,eq:Ireq} and to excursion, and
+the resulting worst-case values are the ones checked against the gates.
+Across the complete \SIrange{15}{80}{\hertz} band the low-bass units run at
+approximately $\xi_x\simeq0.49$ steady and $\xi_x^{\mathrm{tr}}\simeq0.51$
+for the declared one-cycle burst family, requiring about
+\SI{31.7}{\volt} rms, \SI{3.3}{\ampere} rms, and \SI{59}{\watt} per driver
+at the worst frequency---well inside the \SI{90}{\volt},
+\SI{15}{\ampere}, \SI{500}{\watt} continuous, and \SI{1}{\kilo\watt} burst
+limits, and inside the driver's own rating.
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\columnwidth]{../figures/fig_distortion_sub}
-	\caption{Driver S: motor/suspension HD, Doppler IM onto 80\,Hz, box
-	air-spring HD2, and their sum, at the 110\,dB target
-	($r_{\mathrm{listen}}=3$~m). The axis starts just below $f_{\mathrm{pz}}$
-	(\cref{fig:spl-sub}); 
-	the shaded band above $f_{\mathrm{sp}}=80$\,Hz marks driver M's range.}
-	\label{fig:distortion-sub}
-\end{figure}
-
-One S gives utilization $\xi_x=4.36/2.30=1.89$: infeasible even before
-distortion. Two S: $\xi_x=0.95\Rightarrow D\approx9.0$--$9.5\%$. At budget
-$D^\ast=3\%$, $\xi^\ast=0.3$--$0.55$ requires $7.95$--$14.52$\,L, i.e.\
-\textbf{4--7 units of S}: the distortion budget, not the SPL ceiling,
-multiplies driver count by $2$--$3.5\times$. Doppler: two S carrying their
-own band to 80\,Hz costs $1.4\%$ IM, versus $4.3\%$ for a hypothetical
-single full-range cone covering to 250\,Hz; the split buys $\sim3\times$
-lower FM distortion. Box spring: two S in 473\,L each gives
-$\mathrm{HD}_2^{\mathrm{box}}\approx0.11\%$, roughly two orders below the
-motor terms. Thermal: $\xi_P\approx3.8\%$, still comfortably small next to
-the driver's rating. The $F_s$ rule requires $F_s/\Qts\le52$\,Hz; S has
-42\,Hz --- compliant, with $F_c=25.5$\,Hz undershooting $f_{\mathrm{pz}}$ by
-$3.1$\,Hz at $\Qtc=0.61$ ($M_p\le1\%$, \cref{prop:decay}): a $0.99$\,dB
-in-room shelf, trimmed by a free EQ cut rather than chasing exact alignment
-at a less comfortable $\Qtc$.
+The upper-bass channel is the more heavily loaded role:
+$\xi_x\simeq0.71$ steady and $\xi_x^{\mathrm{tr}}\simeq0.83$, requiring
+about \SI{43.5}{\volt} rms, \SI{3.8}{\ampere} rms, and \SI{75}{\watt} at
+its worst frequencies. Both excursion figures are inside the hard
+$\Xmax$ boundary, and the transient figure exceeds the $0.80$ preferred
+margin, which the policy of \cref{sec:risk-policy} records as a preference
+violation rather than a rejection. The Doppler sideband indicator at the
+top of each role's band remains within the declared budget.
+\Cref{fig:worked-system}
+collects the separately reported indicators for both roles, and
+\cref{fig:output-electrical} shows the corresponding output margin and
+electrical utilization across each role's band.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{../figures/fig_distortion_attack}
-	\caption{Driver M, one unit in $38$~L: motor/suspension HD, Doppler IM, and
-	their sum, at the $110$~dB target, split at $80$~Hz. 
-	The shaded band below $f_{\mathrm{sp}}$ marks 
-	driver S's range (\cref{fig:spl-attack}).}
-	\label{fig:distortion-attack}
+	\includegraphics[width=\columnwidth]{../figures/fig_worked_system}
+	\caption{Complete worked system: the dimensionless indicators of
+	\cref{eq:riskvec} for the mono low-bass manifold and for one independent
+	stereo upper-bass channel, against the hard limit and the preferred
+	excursion margin. Each indicator is reported separately; none is summed
+	with another.}
+	\label{fig:worked-system}
 \end{figure}
 
-M (one unit, $38$\,L) carries the split at $80$\,Hz with $7$--$10$\,dB of
-sine headroom; its distortion total briefly touches $3.7\%$ right at the
-split (motor HD dominant) before clearing the $3\%$ budget by
-$\approx87$\,Hz, under a sixth of an octave higher. This HD margin and the
-burst-excursion margin (\cref{fig:spl-attack}) independently favor the same
-split frequency, corroborating rather than merely assuming the empirically
-common $\sim\!80$\,Hz sub/attack crossover.
+\input{../tables/table_worked_pair}
+
+\subsection*{Reading the result}
+
+Three points matter more than the specific models.
+
+First, the binding constraint differs by role. For the low-bass manifold it
+is enclosure volume, which fixes the alignment and therefore the correction
+demand; for the upper-bass channel it is transient excursion near the
+split. Neither is visible from an output-ceiling comparison alone.
+
+Second, the two roles are served by candidates from different regions of
+the descriptor plane (\cref{fig:database-pareto}). Within this candidate
+population and scenario, the alternatives that rank close to each selection
+do so for role-specific reasons---greater $\Vd$ at higher electrical demand
+for the low-bass role, greater $\eta_0\Pmax$ at lower $f_L$ for the
+upper-bass role---and their Pareto and policy statuses are reported in
+\cref{tab:worked-pair} rather than reduced to a single score.
+
+Third, the result is conditional on the room. \Cref{tab:room-sensitivity}
+shows how the required displaced volume, and hence the driver count, moves
+with the assumed leakage corner; a less favourable corner is absorbed here
+by the manifold's excursion margin, but that margin is finite and is
+reported rather than assumed.

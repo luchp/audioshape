@@ -1,37 +1,121 @@
 \section{Introduction}
 \label{sec:intro}
 
-The problem is deliberately narrow: given a room, one fixed listening
-position, a target SPL, a driver database, and unlimited-complexity DSP
-between amplifier and driver, select sealed bass driver(s) that reach the
-target with least \emph{non-correctable} distortion (correctable made
-precise below). All drivers radiate into half space from a common baffle;
-every ceiling below is a \emph{single physical driver's} quantity, though
-$N$ identical drivers on one correlated signal (a mono manifold, or a
-stereo pair on mono-panned content) sum coherently per A9, so each need
-only reach $\mathrm{SPL}_{\mathrm{target}}-20\log_{10}N$ on its own -- never
-assumed \emph{between} the sub and attack roles, which stay acoustically
-uncoupled. One fixed seat, not a cinema-style diffuse field, is the point:
-it buys tighter phase/image control at that seat in exchange for the
-multi-seat coverage a distributed array or diffuse-field surround gives up
-on any one of them -- and it is why array size is not a free knob for the
-stereo attack role the way it is for the mono sub (no image to preserve).
+Choosing bass drivers for a specific loudspeaker project is normally done
+before anything can be measured. The information available at that moment
+is the manufacturer's published Thiele/Small and rating fields, and the
+decision rules commonly applied to them---most prominently the
+efficiency-bandwidth product $EBP=F_s/\Qes$ \cite{dickason2006}---are
+undocumented in the sense that they do not state the operating point, the
+enclosure, the room, the target level, or the amplifier at which they are
+supposed to hold.
 
-Two facts drive the argument. (i)~\emph{Room gain}: below a room-set corner
-$f_{\mathrm{pz}}$, pressure at the listening position tracks cone
-displacement rather than acceleration, so a sealed system with $F_c\simeq
-f_{\mathrm{pz}}$ tapers off below its corner for free. (ii)~\emph{Two
-regimes, two jobs}: near $F_s$ a sealed driver is displacement-limited
-($\Vd=\Sd\Xmax$); an octave or more above, it is dissipation-limited
-($\eta_0\Pmax$). We prove (\cref{thm:bound}) no single motor maximizes both,
-so the two roles want physically different drivers.
+This Engineering Report replaces that step, for one deliberately narrow
+architecture, with an explicit procedure assembled from established
+first-principles relations. The procedure is a \emph{pre-purchase}
+screening and ranking method operating on public datasheet fields alone. It
+is not a substitute for post-purchase measurement of a physical driver.
 
-We review the $EBP$ heuristic (\cref{sec:prevwork}), derive the two
-ceilings and their crossover (\cref{sec:freq,sec:time}), collect the
-resulting invariants and the motor-materials bound (\cref{sec:invariants}),
-show three independent non-correctable distortion mechanisms all reduce to
-the same headroom ranking (\cref{sec:distortion}), close the low end with
-the room (\cref{sec:roomclose}), and assemble an ordered, datasheet-only
-selection procedure (\cref{sec:procedure}). \Cref{app:vented} proves, rather
-than assumes, why the paper restricts itself to sealed enclosures, and
-\cref{app:example} works a full numerical example.
+\subsection{Application and architecture}
+\label{sec:intro-arch}
+
+The target system, sketched in \cref{fig:architecture}, is fixed
+throughout:
+
+\begin{itemize}
+\item a compact primary listening area---a prepared living-room couch
+	area---represented by a declared reference position or a small declared
+	set of measurement positions, not by a mathematical point;
+\item half-space (soffit-wall) mounting of all bass sources;
+\item one shared \emph{mono} low-bass manifold covering
+	$f_1=\SI{15}{\hertz}$ to $f_{\mathrm{sp}}=\SI{80}{\hertz}$, built from
+	an even number of nominally identical drivers arranged as mechanically
+	opposed pairs, permitting first-order reaction-force cancellation under
+	matched drive and mounting;
+\item \emph{independent} left and right upper-bass channels covering
+	$f_{\mathrm{sp}}$ to $f_2=\SI{250}{\hertz}$, each carrying its own
+	program material;
+\item one dedicated amplifier channel per physical driver, with declared
+	voltage, current, continuous-power, and burst-power limits;
+\item finite-band DSP crossover, delay, and magnitude/phase correction
+	across the design band.
+\end{itemize}
+
+Target levels are maximum-output design tests---short, occasional
+peaks---not continuous exposure levels. The mono target is the
+\emph{total} level produced by the complete manifold at the listening
+distance; the upper-bass target applies to \emph{each} stereo channel
+separately. Because the two stereo channels reproduce independent program
+material, no summing credit is taken between them.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_architecture}
+	\caption{Reference architecture and data flow. A mono low-bass manifold
+	of mechanically opposed driver pairs and two independent stereo
+	upper-bass channels share one prepared room, one couch-area reference
+	basis, and one finite-band DSP layer. Public datasheet fields and a
+	frozen candidate population enter the ranking procedure of
+	\cref{sec:procedure}, which returns separate role orders; the roles are
+	never combined into a single summed score.}
+	\label{fig:architecture}
+\end{figure}
+
+\subsection{What the architecture is intended to buy}
+\label{sec:intro-fidelity}
+
+The objective is high fidelity to the recorded two-channel scene over the
+primary listening area: stable localization and image focus, accurate
+direct- and early-field timbre, controlled low-frequency summation, and
+coherent temporal integration across the crossover. In small rooms these
+attributes depend strongly on the direct sound and the early reflection
+pattern \cite{toole2006,bech1998}, on the relative phase and delay of
+noncoincident sources \cite{linkwitz1976}, and on group-delay error
+remaining below audibility bounds \cite{blauert1978}---all of which a
+compact, prepared, soffit-mounted, DSP-aligned system can control over a
+small area.
+
+This is deliberately \emph{not} a claim of greater listener envelopment, nor
+of superiority over multi-seat or diffuse-field designs. Envelopment is a
+separate attribute governed largely by late lateral energy
+\cite{bradley1995,rumsey2002} and is commonly better served by multichannel
+or deliberately diffuse reproduction \cite{francombe2017}. The present
+architecture trades room-wide coverage and off-area robustness---the
+problem addressed by distributed multiple-subwoofer optimization
+\cite{welti2006}---for control over one small area. This report evaluates
+that trade objectively; it contains no controlled subjective comparison.
+
+\subsection{Contribution}
+\label{sec:intro-contribution}
+
+The physical relations used here are established prior results
+(\cref{tab:prior-art}). The contribution of this report is their
+integration into a decision procedure with a declared policy:
+
+\begin{enumerate}
+\item exact displacement- and dissipation-limited output ceilings, and the
+	sealed alignment line, assembled into role-specific feasibility gates
+	under one declared couch-area reference basis
+	(\cref{sec:model,sec:freq});
+\item explicit finite-amplifier gates on voltage, current, continuous power,
+	and burst power for every physical driver, evaluated across the complete
+	role band (\cref{sec:freq});
+\item transient demand obtained by numerically solving the sealed-box
+	equation for declared bursts and start phases, rather than from a
+	constant burst factor (\cref{sec:time});
+\item room-specific demand from a leaky pressure-zone model with declared
+	sensitivity to the leakage corner (\cref{sec:room});
+\item separately reported nonlinear-risk indicators and a declared,
+	non-compensatory ranking policy---hard gates, role-specific Pareto
+	fronts, then a role-specific lexicographic order
+	(\cref{sec:risk,sec:procedure});
+\item a reproducible implementation, aggregate evidence from a frozen
+	candidate population under a documented private-data boundary, and a
+	worked example built from public manufacturer datasheets
+	(\cref{sec:procedure,app:example}).
+\end{enumerate}
+
+\Cref{sec:prevwork} positions this against prior work, \cref{sec:scope}
+states the scope contract, and \cref{sec:conclusion} records what the
+method does not establish. \Cref{app:vented} explains, within this
+application, why sealed loading was chosen.
