@@ -18,4 +18,5 @@ papers/**/*.toc
 papers/**/*.synctex.gz
 papers/**/*.pdf
 PROVENANCE.txt
-
+# Local licensed/reference database; never commit or distribute.
+/data/VituixCAD_driver_db.txt
