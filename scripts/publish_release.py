@@ -56,7 +56,7 @@ class PaperMetadata:
     paper_id: str
     repository: str
     summary: str
-    texmain: str
+    texmain: list[str]
     title: str
     version: str
     year: str
@@ -107,6 +107,8 @@ def run_checked(cmd: list[str], *, cwd: Path | None = None) -> str:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         details = "\n".join(
@@ -176,11 +178,24 @@ def load_code_metadata(path: Path, code_version_override: str | None) -> CodeMet
     )
 
 
+def normalize_texmains(value: Any, source: Path) -> list[str]:
+    if isinstance(value, str):
+        entries = [value]
+    elif isinstance(value, list) and value:
+        entries = [v for v in value if isinstance(v, str) and v.strip()]
+    else:
+        raise ReleaseAbort(
+            f"Metadata field 'texmain' must be a non-empty list of .tex paths in {source}"
+        )
+    if not entries:
+        raise ReleaseAbort(f"Metadata field 'texmain' must not be empty in {source}")
+    return [e if e.endswith(".tex") else f"{e}.tex" for e in entries]
+
+
 def load_paper_metadata(code_metadata: CodeMetadata, paper_id: str) -> PaperMetadata:
     path = SCRIPTS_DIR / "papers" / paper_id / "metadata.json"
     data = load_json(path)
-    texmain_raw = required_str(data, "texmain", path)
-    texmain = texmain_raw if texmain_raw.endswith(".tex") else f"{texmain_raw}.tex"
+    texmain = normalize_texmains(data.get("texmain"), path)
     author = " ".join([code_metadata.author_given_names,
                        code_metadata.author_family_names])
     return PaperMetadata(
@@ -447,31 +462,49 @@ def run_paper_figures(paper_script: Path) -> None:
     )
 
 
-def build_paper_pdf(paper: PaperMetadata) -> Path:
+def build_paper_pdfs(paper: PaperMetadata) -> list[Path]:
     paper_dir = REPO_ROOT / "papers" / paper.paper_id
-    tex_path = paper_dir / paper.texmain
-    if not tex_path.is_file():
-        raise ReleaseAbort(f"TeX entry file does not exist: {tex_path}")
-    tex_file_name = tex_path.name
-    tex_stem = tex_path.stem
-    pdf_path = paper_dir / f"{tex_stem}.pdf"
-    # delete to pdf if it exists
-    pdf_path.unlink(missing_ok=True)
-    # run latex
-    pdflatex = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex_file_name]
-    run_checked(pdflatex, cwd=paper_dir)
-    run_checked(["bibtex", tex_stem], cwd=paper_dir)
-    run_checked(pdflatex, cwd=paper_dir)
-    run_checked(pdflatex, cwd=paper_dir)
-    # check that we generated a pdf
-    if not pdf_path.is_file() or pdf_path.stat().st_size == 0:
-        raise ReleaseAbort(f"Expected PDF was not generated: {pdf_path}")
-    # build the release path
     last_name = paper.author.split()[-1].capitalize()
     title = "".join(t.capitalize() for t in paper.title.split())
-    pdf_out_path = paper_dir / f"{last_name}_{title}_v{paper.version}.pdf"
-    pdf_path.copy(pdf_out_path)
-    return pdf_out_path
+    main_stem = Path(paper.texmain[0]).stem
+
+    pdf_out_paths: list[Path] = []
+    for index, texmain_rel in enumerate(paper.texmain):
+        tex_path = paper_dir / texmain_rel
+        if not tex_path.is_file():
+            raise ReleaseAbort(f"TeX entry file does not exist: {tex_path}")
+        tex_dir = tex_path.parent
+        tex_file_name = tex_path.name
+        tex_stem = tex_path.stem
+        pdf_path = tex_dir / f"{tex_stem}.pdf"
+        # delete to pdf if it exists
+        pdf_path.unlink(missing_ok=True)
+        # run latex
+        pdflatex = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex_file_name]
+        run_checked(pdflatex, cwd=tex_dir)
+        run_checked(["bibtex", tex_stem], cwd=tex_dir)
+        run_checked(pdflatex, cwd=tex_dir)
+        run_checked(pdflatex, cwd=tex_dir)
+        # check that we generated a pdf
+        if not pdf_path.is_file() or pdf_path.stat().st_size == 0:
+            raise ReleaseAbort(f"Expected PDF was not generated: {pdf_path}")
+        # build the release path; the first texmain entry is the main preprint
+        # and keeps the plain name, additional variants (e.g. a JAES excerpt)
+        # get a suffix so they don't collide.
+        if index == 0:
+            pdf_out_path = paper_dir / f"{last_name}_{title}_v{paper.version}.pdf"
+        else:
+            rel_parent = tex_dir.relative_to(paper_dir)
+            if str(rel_parent) != ".":
+                suffix = str(rel_parent).replace("\\", "_").replace("/", "_")
+            elif tex_stem.startswith(f"{main_stem}_"):
+                suffix = tex_stem[len(main_stem) + 1:]
+            else:
+                suffix = tex_stem
+            pdf_out_path = paper_dir / f"{last_name}_{title}_v{paper.version}_{suffix.upper()}.pdf"
+        pdf_path.copy(pdf_out_path)
+        pdf_out_paths.append(pdf_out_path)
+    return pdf_out_paths
 
 def write_citation_cff(code: CodeMetadata, released_at: datetime) -> Path:
     keywords_block = "\n".join(f'  - "{k}"' for k in code.keywords)
@@ -499,7 +532,7 @@ def write_citation_cff(code: CodeMetadata, released_at: datetime) -> Path:
 
 def write_abstract(paper: PaperMetadata) ->Path:
     paper_dir = REPO_ROOT / "papers" / paper.paper_id
-    tex_path = paper_dir / paper.texmain
+    tex_path = paper_dir / paper.texmain[0]
     bib_path = tex_path.with_name("refs.bib")
     if not tex_path.is_file():
         raise ReleaseAbort(f"TeX entry file does not exist: {tex_path}")
@@ -518,11 +551,14 @@ def write_provenance(
     paper_tag: str,
     commit: str,
     released_at: datetime,
-    pdf_path: Path,
+    pdf_paths: list[Path],
     command: list[str],
 ) -> Path:
     paper_dir = REPO_ROOT / "papers" / paper.paper_id
     path = paper_dir / "PROVENANCE.txt"
+    pdf_lines = "\n".join(
+        f"paper_pdf: {pdf_path.relative_to(REPO_ROOT)}" for pdf_path in pdf_paths
+    )
     body = (
         f"paper_id: {paper.paper_id}\n"
         f"title: {paper.title}\n"
@@ -533,7 +569,7 @@ def write_provenance(
         f"commit: {commit}\n"
         f"built_utc: {released_at.isoformat()}\n"
         f"build_command: {' '.join(command)}\n"
-        f"paper_pdf: {pdf_path.relative_to(REPO_ROOT)}\n"
+        f"{pdf_lines}\n"
         f"python: {platfrm.python_version}\n"
         f"uv: {platfrm.uv_version}\n"
         f"os: {platfrm.os_version}\n"
@@ -671,9 +707,10 @@ def main() -> None:
     run_tests()
     print("Tests complete.", flush=True)
     print("Building paper PDF...", flush=True)
-    pdf_path = build_paper_pdf(paper)
+    pdf_paths = build_paper_pdfs(paper)
     abs_path = write_abstract(paper)
-    print(f"Built PDF: {pdf_path}", flush=True)
+    for pdf_path in pdf_paths:
+        print(f"Built PDF: {pdf_path}", flush=True)
     print(f"Wrote abstract: {abs_path}", flush=True)
     print("Writing provenance and citation metadata...", flush=True)
     prov_path = write_provenance(
@@ -683,7 +720,7 @@ def main() -> None:
         paper_tag=paper_tag,
         commit=commit,
         released_at=released_at,
-        pdf_path=pdf_path,
+        pdf_paths=pdf_paths,
         command=command,
     )
     # Actually create and push tags and release
@@ -709,7 +746,8 @@ def main() -> None:
         )
         if actions.upload_assets:
             print("Uploading release assets...", flush=True)
-            upload_release_asset(release_data["upload_url"], pdf_path, token)
+            for pdf_path in pdf_paths:
+                upload_release_asset(release_data["upload_url"], pdf_path, token)
             upload_release_asset(release_data["upload_url"], prov_path, token)
             print("Release assets uploaded.", flush=True)
 

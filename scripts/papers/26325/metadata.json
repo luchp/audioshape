@@ -1,5 +1,8 @@
 {
-  "texmain": "sealed_driver_criteria.tex",
+  "texmain": [
+    "sealed_driver_criteria.tex",
+    "jaes/sealed_driver_criteria_jaes.tex"
+  ],
   "title": "Sealed-Box Loudspeaker Driver Selection Criteria",
   "version": "3.0",
   "summary": "Frequency- and Time-Domain Excursion and Power Headroom Limits for Sealed Direct-Radiator Loudspeakers",

@@ -4,7 +4,10 @@
 The invariants above rank drivers by \emph{output}. But a DSP-aligned system
 (\cref{sec:assumptions}) can move gain, phase, and group delay around almost for
 free, so the only distortion that should decide a ranking is the kind no
-filter can remove.
+filter can remove. Throughout this section, distortion estimates rank
+candidates under a common target and operating condition: per A10, they are
+leading-order, order-of-magnitude predictors, not $\pm1$\,dB absolute THD
+forecasts for an individual driver.
 
 \begin{proposition}[FIR correctability boundary]
 	\label{prop:LTI}
@@ -43,8 +46,6 @@ the sub. $D^\ast$ is a selection ceiling at the brief reference-level target
 (exposure-limited to about a minute), not a continuous operating point; the
 figures also plot the same total $20$~dB down as a normal-listening proxy,
 typically far under budget.
-(Per A10, this leading-order expansion sizes headroom correctly as a ranking law; 
-it is not a $\pm1$\,dB THD predictor.)
 
 \textbf{(2) Doppler (FM) distortion, the second use of area.} 
 A component at $f_2$ riding on a cone at position $x_1(t)$ acquires phase modulation 

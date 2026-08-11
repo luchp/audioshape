@@ -397,23 +397,23 @@ def table_ebp_census() -> None:
         r"\begin{table*}[htbp]",
         r"\centering",
         rf"\caption{{Lower-bound coil-mass fraction $\beta_{{\min}}=EBP/"
-        rf"K_{{\mathrm{{mat}}}}(B)$ (\cref{{thm:bound}} at $u{{=}}1$) over "
-        rf"$N{{=}}{n}$ bass-relevant drivers (Type S/W/WM) in the bundled "
-        r"VituixCAD database, vs.\ $\beta_{\max}\approx0.35$.}",
+        rf"K_{{\mathrm{{mat}}}}(B)$ (Thm.~\ref{{thm:bound}} at $u{{=}}1$, Cu "
+        rf"$B{{=}}1.0$\,T unless noted) over $N{{=}}{n}$ bass-relevant "
+        r"drivers (Type S/W/WM) in the bundled VituixCAD database, vs.\ "
+        r"$\beta_{\max}\approx0.35$.}",
         r"\label{tab:ebp-census}",
+        r"\small",
         r"\begin{tabular}{lc}",
         r"\toprule",
         r"quantity & value\\",
         r"\midrule",
         rf"$N$ & {n}\\",
-        rf"median $\beta_{{\min}}$ (Cu, $B{{=}}1.0$\,T) & {statistics.median(cu10):.2f}\\",
-        rf"$p_{{90}}$ / $p_{{99}}$ / $p_{{99.5}}$ (Cu, $B{{=}}1.0$\,T) & "
+        rf"median $\beta_{{\min}}$ & {statistics.median(cu10):.2f}\\",
+        rf"$p_{{90}}/p_{{99}}/p_{{99.5}}$ & "
         rf"{pct(cu10, 90):.2f} / {pct(cu10, 99):.2f} / {pct(cu10, 99.5):.2f}\\",
-        rf"max (Cu, $B{{=}}1.0$\,T) & {cu10[-1]:.2f} "
-        rf"({worst_label}, needs $B{{\approx}}{b_needed:.2f}$\,T for "
-        rf"$\beta_{{\min}}{{=}}0.35$)\\",
-        rf"pct.\ exceeding $\beta_{{\max}}$, material-agnostic "
-        rf"(Al, $B{{=}}1.0$\,T) & {frac_al_over:.1f}\%\\",
+        rf"max & {cu10[-1]:.2f} "
+        rf"({worst_label}, needs $B{{\approx}}{b_needed:.2f}$\,T)\\",
+        rf"material-agnostic (Al) excess & {frac_al_over:.1f}\%\\",
         r"\bottomrule",
         r"\end{tabular}",
         r"\end{table*}",

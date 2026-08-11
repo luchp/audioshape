@@ -250,6 +250,9 @@ FUNCTION {bbl.nr}
 FUNCTION {bbl.in}
 { "in" }
 
+FUNCTION {bbl.presented}
+{ "presented" }
+
 FUNCTION {bbl.presentedat}
 { "presented at the" }
 
@@ -443,12 +446,6 @@ INTEGERS { nameptr namesleft numnames }
 
 
 STRINGS  { bibinfo}
-
-FUNCTION {and}
-{ ’skip$
-    { pop$ #0 }
-    if$
-}
 
 FUNCTION {format.names}
 { 'bibinfo :=
