@@ -49,7 +49,7 @@ def relaxed_scenario() -> Scenario:
         amplifier_current_rms=1000.0,
         amplifier_power_continuous=1e6,
         amplifier_power_burst=1e6,
-        max_role_box_volume_m3=3.0,
+        max_box_volume_per_driver_m3=3.0,
     )
 
 
@@ -59,7 +59,7 @@ def test_xmax_is_hard_limit_and_80_percent_is_only_margin(driver_s):
         amplifier_current_rms=1000.0,
         amplifier_power_continuous=1e6,
         amplifier_power_burst=1e6,
-        max_role_box_volume_m3=3.0,
+        max_box_volume_per_driver_m3=3.0,
     )
     evaluation = evaluate(
         driver_s, scenario, n_units=3,
@@ -150,7 +150,7 @@ def test_default_doppler_reference_is_role_band_high(
     assert default.doppler_im == pytest.approx(explicit.doppler_im)
 
 
-def test_qtc_ceiling_and_large_box_fallback(driver_s, relaxed_scenario):
+def test_alignment_target_and_box_cap_fallback(driver_s, relaxed_scenario):
     high_corner_rate = Driver(
         manufacturer="Example", model="HighFsQts", size_in=18,
         fs=20.0, qes=0.2083, qms=5.0, re=4.0, mms=0.400,
@@ -159,7 +159,7 @@ def test_qtc_ceiling_and_large_box_fallback(driver_s, relaxed_scenario):
     evaluation = evaluate(
         high_corner_rate, relaxed_scenario, n_units=2, role="sub"
     )
-    assert evaluation.boxed.qtc < relaxed_scenario.qtc
+    assert evaluation.boxed.qtc < relaxed_scenario.alignment_qtc
     assert evaluation.boxed.fc <= relaxed_scenario.f_pz + 1e-6
 
     unreachable = Driver(
@@ -170,11 +170,11 @@ def test_qtc_ceiling_and_large_box_fallback(driver_s, relaxed_scenario):
     fallback = evaluate(
         unreachable, relaxed_scenario, n_units=2, role="sub"
     )
-    assert any("alignment limited" in note for note in fallback.notes)
+    assert any("preferred alignment not reached" in note for note in fallback.notes)
     assert fallback.boxed.fc > relaxed_scenario.f_pz
 
 
-def test_large_room_respects_total_box_volume_cap():
+def test_high_qts_driver_uses_ratio_cap_without_alignment_rejection():
     driver = Driver(
         manufacturer="Dayton Audio", model="UMII18-22", size_in=18,
         fs=22.0, qes=0.67, qms=23.06, re=0.124, mms=0.2482,
@@ -190,12 +190,14 @@ def test_large_room_respects_total_box_volume_cap():
     )
     one = evaluate(driver, scenario, n_units=1, role="sub")
     four = evaluate(driver, scenario, n_units=4, role="sub")
-    assert any("alignment limited" in note for note in one.notes)
-    assert not one.feasible
-    assert not four.feasible
+    assert any("preferred alignment not reached" in note for note in one.notes)
+    assert one.boxed.vb == pytest.approx(
+        scenario.max_box_vas_ratio * driver.vas
+    )
+    assert four.boxed.vb == pytest.approx(one.boxed.vb)
     assert four.xi_x == pytest.approx(one.xi_x / 4.0)
-    assert four.risk.box_volume_m3 == pytest.approx(1.0)
-    assert any("Qtc" in reason for reason in four.reasons)
+    assert four.risk.box_volume_m3 == pytest.approx(4.0 * one.boxed.vb)
+    assert not any("Qtc" in reason for reason in one.reasons + four.reasons)
 
 
 def test_risk_vector_pareto_dominance():
@@ -242,17 +244,21 @@ def test_load_recipe():
     assert recipe.scenario.attack_target_spl == 105.0
     assert recipe.scenario.room_model == "leaky_pressure_zone"
     assert recipe.scenario.leakage_corner_hz == 10.0
+    assert recipe.scenario.stereo_low_bass_summing_db == 6.0
+    assert recipe.scenario.manifold_crossover_ceiling_hz == 80.0
+    assert recipe.scenario.is_manifold_crossover_valid
     assert recipe.scenario.preferred_excursion == 0.8
     assert recipe.scenario.amplifier_voltage_rms == 90.0
-    assert recipe.scenario.max_box_vas_ratio == 10.0
-    assert recipe.scenario.max_role_box_volume_m3 == 1.0
-    assert recipe.sub_units == 4
+    assert recipe.scenario.alignment_qtc == 0.55
+    assert recipe.scenario.max_box_vas_ratio == 4.0
+    assert recipe.scenario.max_box_volume_per_driver_m3 is None
+    assert recipe.sub_units == 2
     assert recipe.attack_units == 1
     assert recipe.require_even_sub_units
     assert recipe.sub_size_min == 15
-    assert recipe.sub_size_max == 18
-    assert recipe.attack_size_min == 12
-    assert recipe.attack_size_max == 12
+    assert recipe.sub_size_max == 21
+    assert recipe.attack_size_min == 8
+    assert recipe.attack_size_max == 15
 
 
 def test_load_recipe_rejects_unknown_scenario_key(tmp_path):
@@ -269,4 +275,18 @@ def test_load_recipe_rejects_odd_force_cancelling_manifold(tmp_path):
         'require_even_sub_units = true\n'
     )
     with pytest.raises(ValueError, match="even unit count"):
+        load_recipe(bad)
+
+
+def test_pair_rank_rejects_split_above_manifold_ceiling(driver_s, driver_m):
+    scenario = Scenario(f_split=90.0)
+    assert not scenario.is_manifold_crossover_valid
+    with pytest.raises(ValueError, match="crossover ceiling"):
+        pair_rank([driver_s, driver_m], scenario)
+
+
+def test_load_recipe_rejects_split_above_manifold_ceiling(tmp_path):
+    bad = tmp_path / "high_split.toml"
+    bad.write_text('db = "x.txt"\n[scenario]\nf_split = 90\n')
+    with pytest.raises(ValueError, match="crossover ceiling"):
         load_recipe(bad)

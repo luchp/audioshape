@@ -8,10 +8,12 @@ DSP-Integrated Stereo System* (paper id `26325`). See
 
 The tool applies hard excursion and finite-amplifier feasibility gates,
 then ranks the surviving drivers with separate risk indicators, Pareto
-fronts, and role-specific policy keys. Excursion utilization, transient
-excursion, the first-order Doppler sideband ratio, box-spring nonlinearity,
-voltage, current, power, inductive risk, and box volume are never added into
-a synthetic "total distortion" value.
+fronts, and role-specific policy keys. A preferred `Qtc` and per-driver box
+cap guide the alignment; a higher realized `Qtc` is evaluated with its DSP
+and headroom cost rather than rejected geometrically. Complete split and
+stereo full-band systems can be compared on separate excursion, Doppler,
+amplifier, enclosure-volume, and driver-count objectives. These quantities
+are never added into a synthetic "total distortion" value.
 
 Published one-way `Xmax` is the clipping boundary. The default 80% value is
 only a preferred design margin and unit-count guide, leaving about 1.9 dB of
@@ -29,6 +31,7 @@ would be, but does not define the mechanical screening limit.
 - `src/audioshape/recipe.py` — `Recipe` dataclass + `load_recipe()`: TOML config
 - `src/audioshape/database.py` — VituixCAD TSV parser
 - `src/audioshape/ranking.py` — `evaluate`/`rank` and `PairEvaluation`/`pair_rank`
+- `src/audioshape/architecture.py` — repeated-unit scaling and split/full-band system Pareto comparison
 - `src/audioshape/plots.py` — matplotlib figure functions
 - `src/audioshape/vituixcad.py` — export a driver selection to a VituixCAD `.vxp` project + driver-database TSV
 - `src/audioshape/cli.py` — `rank`, `pair`, `plot`, `export-vituixcad` subcommands
@@ -54,7 +57,7 @@ uv run audioshape pair --recipe examples/example_recipe.toml --top 5
 uv run audioshape plot --recipe examples/example_recipe.toml --role sub \
     --driver "UMII18" --save dev/out
 uv run audioshape export-vituixcad --recipe examples/example_recipe.toml \
-    --sub-driver "UMII18" --attack-driver "TD15S" --save dev/out
+    --sub-driver "UMII18-22" --attack-driver "12HP1030" --save dev/out
 ```
 
 ## Development

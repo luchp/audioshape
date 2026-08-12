@@ -68,30 +68,32 @@ DSP-Integrated Stereo System}
 }
 
 \abstract{%
-This Engineering Report describes a reproducible pre-purchase procedure
-that ranks sealed-box bass drivers from public datasheet fields for one
-declared architecture: a compact prepared living-room listening area,
-half-space soffit mounting, a shared mono low-bass manifold, independent
-stereo upper-bass channels, and finite-band DSP alignment. Established
-relations---the sealed-box lumped model, the alignment line, the
-displacement-limited output ceiling set by displacement volume, and the
-dissipation-limited ceiling set by reference efficiency and rated
-power---are assembled into explicit feasibility gates that also include
-finite amplifier voltage, current, continuous and burst power, enclosure
-volume, and an inductive screening frequency. Low-frequency demand follows
-from a leaky pressure-zone room model whose leakage corner is treated as an
-uncertain input, and transient demand from numerical solution of the
-sealed-box equation for declared single-cycle bursts. Nonlinear risk is
-reported as separate indicators rather than as a scalar distortion total.
-Candidates are ordered by hard gates, role-specific Pareto fronts, and a
-declared lexicographic policy. A worked example built from public
-manufacturer datasheets verifies every gate, and rank robustness under
-datasheet and room uncertainty is reported.}
+This Engineering Report gives a parameterized, reproducible pre-purchase
+procedure for sealed-box bass-driver selection in a prepared couch or
+mastering area. Classical relations are assembled into room-specific
+displacement demand, displacement- and dissipation-limited ceilings, finite
+voltage/current/power requirements, inductance and Doppler indicators, and
+a numerical short-time excursion factor. A preferred alignment and
+per-driver box cap replace hard $Q_{\mathrm{tc}}$ rejection: equalization
+cost appears explicitly in excursion, electronics and burst response.
+Candidates pass hard gates, enter role-specific Pareto fronts, and are
+assembled into separate-radiator or stereo full-band systems compared on
+six non-compensatory objectives. Crossover and 108-scenario architecture
+sweeps test rather than assume role specialization. In the canonical
+data-complete case the split architecture has feasible Pareto members
+whereas the allowed full-band stereo search has none; permitting missing
+inductance yields one unresolved survivor. Across the wider sweep,
+full-band systems share fronts at lower targets but disappear at
+\SI{115}{dB}. Aggregate evidence is reported
+from a frozen private population, while a public Dayton/Faital pair supplies
+the reproducible example. The result is conditional on the stated
+population and inputs, not a universal motor bound; built systems still
+require large-signal, manifold and room measurement.}
 \maketitle
 
 \begin{keywords}
-loudspeaker driver selection, sealed enclosure, maximum acoustic output,
-datasheet screening, room gain, nonlinear headroom
+loudspeaker driver selection, sealed enclosure, Pareto ranking, room gain,
+stereo bass, nonlinear headroom
 \end{keywords}
 
 \input{../sections_jaes/sec_intro.tex}

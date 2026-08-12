@@ -45,7 +45,7 @@ def _room_gain_factor(f: float, ev: Evaluation) -> float:
     at the listening distance (>= 1 below f_pz, 1 above)."""
     sc = ev.scenario
     w = 2.0 * np.pi * f
-    v_radiation = (np.sqrt(2.0) * sc.target_pressure(ev.role) * 2.0 * np.pi
+    v_radiation = (np.sqrt(2.0) * sc.target_pressure(ev.role, f) * 2.0 * np.pi
                    * sc.r_listen / (physics.RHO0 * w * w))
     return v_radiation / sc.demand_volume(f, ev.role)
 
@@ -137,9 +137,10 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
     f = _freq_axis(ev, f_min=f_min)
 
     # Excursion ceiling: SPL at which V_dem(f) = Vd_total.
+    target_spl = np.array([sc.target_spl_at(x, ev.role) for x in f])
     spl_sine = np.array([
-        sc.target_spl_for(ev.role) + 20.0 * np.log10(boxed.vd_total / sc.demand_volume(x, ev.role))
-        for x in f])
+        target + 20.0 * np.log10(boxed.vd_total / sc.demand_volume(x, ev.role))
+        for x, target in zip(f, target_spl)])
 
     # Finite steady electrical envelope, computed from the per-driver target
     # displacement rather than from coherent acoustic-power bookkeeping.
@@ -168,9 +169,8 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
             math.sqrt(d.p_max / power),
             math.sqrt(sc.amplifier_power_continuous / power),
         ))
-    spl_electrical = (
-        sc.target_spl_for(ev.role)
-        + 20.0 * np.log10(np.asarray(electrical_gain))
+    spl_electrical = target_spl + 20.0 * np.log10(
+        np.asarray(electrical_gain)
     )
 
     transient_f = np.geomspace(f[0], f[-1], 60)
@@ -191,7 +191,8 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
         )
         utilization = burst.displacement_peak / d.xmax
         transient_ceiling.append(
-            sc.target_spl_for(ev.role) + 20.0 * np.log10(1.0 / utilization)
+            sc.target_spl_at(frequency, ev.role)
+            + 20.0 * np.log10(1.0 / utilization)
         )
 
     ax.plot(f, spl_sine, label="excursion ceiling, sine", lw=2)
@@ -212,13 +213,12 @@ def spl_figure(ev: Evaluation, fig: Figure | None = None,
         lw=2,
         ls="-.",
     )
-    ax.axhline(sc.target_spl_for(ev.role), color="k", lw=1,
-               label=f"target {sc.target_spl_for(ev.role):g} dB")
+    ax.plot(f, target_spl, color="k", lw=1, label="declared target")
     # Fix the y-limits before placing marker labels: annotate() below anchors
     # to ax.get_ylim()[0], which must reflect the *final* view (not a
     # provisional pre-set_ylim autoscale value) or the label can land outside
     # the eventually-visible range and silently disappear.
-    ax.set_ylim(sc.target_spl_for(ev.role) - 25, None)
+    ax.set_ylim(float(np.min(target_spl)) - 25, None)
 
     for x, name in ((sc.f_pz, "$f_{pz}$"), (boxed.fc, "$F_c$"), (ev.f_x, "$f_x$")):
         if np.isfinite(x) and f[0] <= x <= f[-1]:
@@ -397,7 +397,15 @@ def demand_figure(sc: Scenario, fig: Figure | None = None,
 
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(r"$V_{\mathrm{dem}}$ [L]")
-    ax.set_title(f"Required displaced volume at {sc.target_spl_for(role):g} dB, "
+    target_description = (
+        f"{sc.target_spl_for(role):g} dB"
+        if role != "full"
+        else (
+            f"{sc.sub_target_spl - sc.stereo_low_bass_summing_db:g} dB/channel "
+            f"below split, {sc.attack_target_spl:g} dB/channel above"
+        )
+    )
+    ax.set_title(f"Required displaced volume at {target_description}, "
                  f"{sc.r_listen:g} m  "
                  f"($V_{{\\mathrm{{room}}}}$={sc.v_room:g} m$^3$, "
                  f"$L_{{\\max}}$={sc.l_max:g} m)")
@@ -484,32 +492,22 @@ def vented_comparison_figure(driver: Driver, sc: Scenario, vb: float, fb: float,
 # aggregate-only private-database evidence).
 # ----------------------------------------------------------------------
 
-def architecture_figure(scenario: Scenario, sub_units: int = 4,
+def architecture_figure(scenario: Scenario, sub_units: int = 2,
                         fig: Figure | None = None) -> Figure:
-    """System topology and data flow: private-database screening feeding a
-    role-based ranking, the fixed mono-sub / independent-stereo-upper-bass
-    signal architecture, DSP crossover/EQ, and the prepared room/couch
-    listening area.  Purely schematic; box text quotes this report's own
-    canonical scenario numbers so the figure cannot silently drift from the
-    rest of the pipeline.  ``sub_units`` must be even: an odd count cannot
-    be arranged as symmetrically opposed pairs.  Such pairs permit
-    first-order reaction-force cancellation under matched drive and
-    mounting; mismatch leaves residual force.  The even count is a hard
-    mechanical-layout constraint, not a ranking-policy preference.
-    """
+    """User inputs, ranking pipeline, selection outputs, and worked example."""
     if sub_units < 2 or sub_units % 2:
         raise ValueError(
             "sub_units must be an even count >= 2 for opposed pairing"
         )
     if fig is None:
-        fig = Figure(figsize=(9.5, 6.5), constrained_layout=True)
+        fig = Figure(figsize=(10, 5.8), constrained_layout=True)
     ax = fig.add_subplot(111)
-    ax.set_xlim(0, 10.2)
-    ax.set_ylim(0, 7.2)
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 7)
     ax.axis("off")
 
     def box(x: float, y: float, w: float, h: float, text: str,
-            fc: str = "white", fontsize: float = 8.3) -> None:
+            fc: str = "white", fontsize: float = 8.0) -> None:
         ax.add_patch(Rectangle((x, y), w, h, facecolor=fc, edgecolor="black",
                                lw=1.2, zorder=2))
         ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
@@ -524,44 +522,78 @@ def architecture_figure(scenario: Scenario, sub_units: int = 4,
             ax.text((x0 + x1) / 2, (y0 + y1) / 2 + 0.12, text, ha="center",
                     va="bottom", fontsize=7.2, color="0.2")
 
-    box(0.2, 5.6, 2.3, 1.1,
-        "Private driver database\n(aggregate evidence only,\nnever redistributed)")
-    box(3.0, 5.6, 2.7, 1.1, "Datasheet screening +\nrole-based ranking\n(this report)")
-    arrow(2.5, 6.15, 3.0, 6.15)
+    box(
+        0.2,
+        4.8,
+        3.1,
+        1.6,
+        "USER SCENARIO\n"
+        "room + couch/mastering area\n"
+        "$f_1$, $f_{sp}$, $f_2$ and SPL targets\n"
+        "amplifier, transient, box and\nmanifold constraints",
+        fc="#eef5ff",
+    )
+    box(
+        0.2,
+        2.7,
+        3.1,
+        1.3,
+        "CANDIDATE RECORDS\n"
+        "public datasheet fields\n"
+        "size is filtered only by the\nuser's packaging range",
+        fc="#eef5ff",
+    )
 
-    box(0.2, 3.5, 2.3, 1.0, "Stereo program\n(L, R)")
-    box(3.0, 3.5, 2.7, 1.3,
-        f"DSP crossover + EQ\nsplit at $f_{{sp}}$={scenario.f_split:g} Hz\n"
-        f"band [{scenario.f_low:g}, {scenario.f_high:g}] Hz")
-    arrow(2.5, 4.0, 3.0, 4.15)
-    arrow(4.35, 5.6, 4.35, 4.8, "selection feeds\nrole targets")
+    box(
+        4.1,
+        3.4,
+        3.7,
+        2.3,
+        "SELECTION PROCEDURE\n"
+        "normalize records + choose alignment\n"
+        "room demand + steady/burst gates\n"
+        "separate risk indicators\n"
+        "role/system Pareto comparison",
+        fc="#fff7e6",
+        fontsize=8.3,
+    )
+    arrow(3.3, 5.5, 4.1, 4.9)
+    arrow(3.3, 3.35, 4.1, 4.15)
 
-    box(6.1, 4.3, 3.5, 1.7,
-        f"Mono sub manifold\n{sub_units}x identical drivers, {sub_units // 2}"
-        " opposed pairs\n(even count: hard constraint;\n"
-        "first-order force cancellation\nwhen matched)\none amplifier channel each\n"
-        f"aggregate target {scenario.sub_target_spl:g} dB total")
-    arrow(5.7, 4.35, 6.1, 5.0, "mono, coherent\nL+R sum")
+    box(
+        8.6,
+        4.4,
+        3.1,
+        2.0,
+        "SELECTION OUTPUTS\n"
+        "architecture and crossover status\n"
+        "driver model, diameter and count\n"
+        "box volume + amplifier demand\n"
+        "binding gates and Pareto status",
+        fc="#edf8ed",
+    )
+    arrow(7.8, 4.55, 8.6, 5.35)
 
-    box(6.1, 2.8, 1.7, 1.3,
-        "Left channel\n1x driver, own\namplifier channel\n"
-        f"target {scenario.attack_target_spl:g} dB")
-    box(7.95, 2.8, 1.7, 1.3,
-        "Right channel\n1x driver, own\namplifier channel\n"
-        f"target {scenario.attack_target_spl:g} dB")
-    arrow(5.7, 3.75, 6.1, 3.5, "L")
-    arrow(5.7, 4.1, 7.95, 4.05, "R (routed above L)")
-    ax.text(7.8, 2.55, "no stereo summing credit between L and R",
-           ha="center", va="top", fontsize=7.5, color="tab:red", style="italic")
+    box(
+        0.8,
+        0.45,
+        10.4,
+        1.45,
+        "ILLUSTRATIVE WORKED OUTPUT (not a fixed procedure input)\n"
+        f"{sub_units}x Dayton Audio UMII18-22 as "
+        f"{sub_units // 2} opposed mono pair"
+        f"{'s' if sub_units > 2 else ''}, "
+        "plus 1x FaitalPRO 12HP1030 per stereo channel\n"
+        f"canonical example: {scenario.f_low:g}--{scenario.f_split:g}--"
+        f"{scenario.f_high:g} Hz, {scenario.sub_target_spl:g} dB total low "
+        f"bass / {scenario.attack_target_spl:g} dB per upper channel",
+        fc="#f4f4f4",
+        fontsize=8.1,
+    )
+    arrow(10.15, 4.4, 9.4, 1.9, "worked example")
 
-    box(4.6, 0.5, 5.0, 1.7,
-        "Prepared room, half-space soffit mount\n"
-        f"$V_{{room}}$={scenario.v_room:g} m$^3$, $L_{{max}}$={scenario.l_max:g} m\n"
-        f"couch listening area, r={scenario.r_listen:g} m")
-    arrow(6.7, 4.5, 6.7, 2.2)
-    arrow(7.8, 2.8, 7.2, 2.2)
-
-    ax.set_title("System topology and data flow", fontsize=11)
+    ax.set_title("Parameterized selection workflow and illustrative output",
+                 fontsize=11)
     return fig
 
 
@@ -757,9 +789,11 @@ def rank_robustness_figure(
     top_k: int,
     fig: Figure | None = None,
 ) -> Figure:
-    """Top-k rank-stability overlap fraction under each declared scenario/
-    policy variant, for the sub-manifold and upper-bass candidate pools
-    reported separately (no combined score)."""
+    """Baseline-shortlist retention under each scenario/policy variant.
+
+    The shortlist contains at most ``top_k`` records, so a sparse role pool
+    is normalized by the records actually available in its baseline.
+    """
     if fig is None:
         fig = Figure(figsize=(9.5, 5.5), constrained_layout=True)
     ax = fig.add_subplot(111)
@@ -772,9 +806,11 @@ def rank_robustness_figure(
     ax.axhline(1.0, color="k", lw=1, ls=":")
     ax.set_xticks(x)
     ax.set_xticklabels(variant_labels, rotation=30, ha="right", fontsize=8)
-    ax.set_ylabel(f"top-{top_k} overlap fraction")
+    ax.set_ylabel("baseline shortlist retained")
     ax.set_ylim(0, 1.05)
-    ax.set_title(f"Rank stability under scenario/policy variants (top-{top_k} overlap)")
+    ax.set_title(
+        f"Rank stability under scenario/policy variants (up to top {top_k})"
+    )
     ax.grid(True, axis="y", alpha=0.3)
     ax.legend(fontsize=9)
     return fig
@@ -866,4 +902,165 @@ def worked_system_figure(ev_sub: Evaluation, ev_upper: Evaluation,
                 f"(upper) \u2014 worked selected pair")
     ax.grid(True, axis="x", alpha=0.3)
     ax.legend(fontsize=8, loc="lower right")
+    return fig
+
+
+def split_sensitivity_figure(
+    split_hz: Sequence[float],
+    sub_feasible: Sequence[int],
+    sub_preferred: Sequence[int],
+    upper_feasible: Sequence[int],
+    upper_preferred: Sequence[int],
+    worked_sub_excursion: Sequence[float],
+    worked_upper_excursion: Sequence[float],
+    *,
+    manifold_ceiling_hz: float,
+    preferred_excursion: float,
+    sub_population: int,
+    upper_population: int,
+    fig: Figure | None = None,
+) -> Figure:
+    """Candidate availability and worked-pair excursion versus crossover."""
+    if fig is None:
+        fig = Figure(figsize=(10, 7), constrained_layout=True)
+    ax_count, ax_excursion = fig.subplots(2, 1, sharex=True)
+    x = np.asarray(split_hz, dtype=float)
+
+    ax_count.plot(
+        x,
+        upper_feasible,
+        marker="s",
+        color="tab:orange",
+        label=f"upper-bass hard-feasible / {upper_population}",
+    )
+    ax_count.plot(
+        x,
+        upper_preferred,
+        marker="s",
+        ls="--",
+        color="tab:orange",
+        label="upper-bass also within preferred excursion",
+    )
+    ax_count.set_ylabel("database records")
+    ax_count.set_title("Crossover sensitivity: candidate availability")
+    ax_count.grid(True, alpha=0.3)
+    ax_count.legend(fontsize=8)
+    if len(set(sub_feasible)) == 1 and len(set(sub_preferred)) == 1:
+        ax_count.text(
+            0.01,
+            0.04,
+            f"low-bass pool: {sub_feasible[0]}/{sub_population} hard-feasible, "
+            f"{sub_preferred[0]} preferred at every split "
+            "(15-Hz demand remains binding)",
+            transform=ax_count.transAxes,
+            fontsize=8,
+            color="tab:blue",
+            va="bottom",
+        )
+
+    ax_excursion.plot(
+        x,
+        worked_sub_excursion,
+        marker="o",
+        color="tab:blue",
+        label="worked low-bass worst excursion",
+    )
+    ax_excursion.plot(
+        x,
+        worked_upper_excursion,
+        marker="s",
+        color="tab:orange",
+        label="worked upper-bass worst excursion",
+    )
+    ax_excursion.axhline(
+        1.0, color="tab:red", lw=1, label="$X_{max}$ hard boundary"
+    )
+    ax_excursion.axhline(
+        preferred_excursion,
+        color="tab:green",
+        lw=1,
+        ls="--",
+        label=f"preferred margin ({preferred_excursion:.0%})",
+    )
+    ax_excursion.set_xlabel("nominal crossover frequency [Hz]")
+    ax_excursion.set_ylabel("max(steady, transient) excursion utilization")
+    ax_excursion.set_title("Public worked pair")
+    ax_excursion.grid(True, alpha=0.3)
+    ax_excursion.legend(fontsize=8, ncol=2)
+
+    for ax in (ax_count, ax_excursion):
+        if manifold_ceiling_hz < float(np.max(x)):
+            ax.axvspan(
+                manifold_ceiling_hz,
+                float(np.max(x)),
+                color="0.8",
+                alpha=0.35,
+                lw=0,
+            )
+        ax.axvline(
+            manifold_ceiling_hz,
+            color="0.35",
+            lw=1,
+            ls=":",
+        )
+    ax_count.text(
+        manifold_ceiling_hz + 1.5,
+        0.97,
+        "driver-only counterfactual;\nexceeds declared manifold ceiling",
+        transform=ax_count.get_xaxis_transform(),
+        va="top",
+        fontsize=8,
+        color="0.3",
+    )
+    return fig
+
+
+def architecture_outcome_figure(
+    target_levels_db: Sequence[float],
+    driver_only_counts: Sequence[dict[str, int]],
+    manifold_counts: Sequence[dict[str, int]],
+    *,
+    cases_per_target: int,
+    fig: Figure | None = None,
+) -> Figure:
+    """Stacked outcome counts for the architecture-comparison factorial."""
+    if fig is None:
+        fig = Figure(figsize=(10, 5.5), constrained_layout=True)
+    axes = fig.subplots(1, 2, sharey=True)
+    categories = (
+        ("split_only", "split only", "tab:blue"),
+        ("mixed", "both on Pareto front", "tab:green"),
+        ("single_only", "full-band only", "tab:orange"),
+        ("none", "neither feasible", "0.65"),
+    )
+    x = np.arange(len(target_levels_db))
+
+    for ax, counts, title in (
+        (
+            axes[0],
+            driver_only_counts,
+            "Separate-radiator comparison\n(all tested crossovers)",
+        ),
+        (
+            axes[1],
+            manifold_counts,
+            "Canonical manifold constraint\n"
+            "($f_{sp}$ at or below declared ceiling)",
+        ),
+    ):
+        bottom = np.zeros(len(x))
+        for key, label, color in categories:
+            values = np.asarray([row[key] for row in counts], dtype=float)
+            ax.bar(x, values, bottom=bottom, label=label, color=color)
+            bottom += values
+        ax.set_xticks(x)
+        ax.set_xticklabels([f"{level:g}" for level in target_levels_db])
+        ax.set_xlabel("complete low-bass target [dB]\n"
+                      "(upper-bass target is 5 dB lower)")
+        ax.set_title(title)
+        ax.grid(True, axis="y", alpha=0.3)
+        ax.set_ylim(0, cases_per_target)
+
+    axes[0].set_ylabel(f"scenario cases (of {cases_per_target})")
+    axes[1].legend(fontsize=8, loc="upper right")
     return fig

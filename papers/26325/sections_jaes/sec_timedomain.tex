@@ -65,21 +65,24 @@ $\mathrm{SPL}_{\mathrm{L,burst}}(f)=\mathrm{SPL}_{\mathrm{L}}(f)
 	\label{eq:xitr}
 \end{equation}
 
-evaluated at the couch-area target. Both $\xi_x\le1$ and
+evaluated at the listening-area target. Both $\xi_x\le1$ and
 $\xi_x^{\mathrm{tr}}\le1$ are hard gates; the transient one is usually the
 binding excursion gate near the lower band edge of each role.
 
-\subsection{Settling and the alignment ceiling}
+\subsection{Settling and the alignment target}
 \label{sec:time-settling}
 
 The envelope decay rate $\sigma/2=\pi F_s/\Qts$ is a driver constant
 (\cref{eq:alignment}), so the enclosure selects only the damped frequency
 and the overshoot pattern. Step-response overshoot
 $M_p=\exp(-\pi\zeta/\sqrt{1-\zeta^2})$ with $\zeta=1/(2\Qtc)$ gives
-$M_p\le1\%$ for $\Qtc\le0.61$ and $M_p=0.11\%$ at the ceiling
-$\Qtc\le0.55$ used here. This is an alignment diagnostic and a declared
-design ceiling, not a perceptual transient-quality metric: audibility of
-low-frequency phase and group-delay error is bounded by separate evidence
+$M_p\le1\%$ for $\Qtc\le0.61$ and $M_p=0.11\%$ at the preferred
+$\Qtc^\ast=0.55$. The box cap may realize a higher value; the worked
+$\Qtc=0.592$ corresponds to approximately 0.7\% step overshoot. These are
+alignment diagnostics, not rejection criteria or perceptual
+transient-quality metrics: audibility of low-frequency phase and
+group-delay error is frequency-, bandwidth- and signal-dependent
 \cite{blauert1978}, and the ring-down of a sealed alignment is a linear,
 minimum-phase effect that finite-band correction can address at the drive
-cost of \cref{sec:freq-gates}.
+cost of \cref{sec:freq-gates}. Realized $\Qtc$, group delay and correction
+headroom must therefore be reported together.

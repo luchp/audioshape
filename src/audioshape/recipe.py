@@ -23,16 +23,17 @@ class Recipe:
 
     scenario: Scenario
     db: Path
-    sub_units: int = 4
+    sub_units: int = 2
     attack_units: int = 1
     require_even_sub_units: bool = True
     sub_size_min: float = 0.0
-    sub_size_max: float = 18.0
+    sub_size_max: float = 21.0
     attack_size_min: float = 0.0
     attack_size_max: float = float("inf")
     top_k_each: int = 15
 
     def __post_init__(self) -> None:
+        self.scenario.require_valid_manifold_crossover()
         if self.sub_units < 1 or self.attack_units < 1:
             raise ValueError("role unit counts must be positive")
         if self.require_even_sub_units and self.sub_units % 2:
@@ -55,13 +56,14 @@ def load_recipe(path: str | Path) -> Recipe:
         r_listen = 3.0
         sub_target_spl = 110.0
         attack_target_spl = 105.0
+        stereo_low_bass_summing_db = 6.0
         room_model = "leaky_pressure_zone"
         leakage_corner_hz = 10.0
-        qtc = 0.55
-        max_box_vas_ratio = 10.0
-        max_role_box_volume_m3 = 1.0
+        alignment_qtc = 0.55
+        max_box_vas_ratio = 4.0
         f_low = 15.0
         f_split = 80.0
+        manifold_crossover_ceiling_hz = 80.0
         f_high = 250.0
         preferred_excursion = 0.80
         amplifier_voltage_rms = 90.0
@@ -70,12 +72,13 @@ def load_recipe(path: str | Path) -> Recipe:
         amplifier_power_burst = 1000.0
 
         [pair]
-        sub_units = 4
+        sub_units = 2
         attack_units = 1
         require_even_sub_units = true
         sub_size_min = 15
-        sub_size_max = 18
-        attack_size_max = 10
+        sub_size_max = 21
+        attack_size_min = 8
+        attack_size_max = 15
         top_k_each = 15
     """
     path = Path(path)

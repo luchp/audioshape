@@ -1,12 +1,12 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-For the architecture declared in \cref{sec:intro-arch}---a compact prepared
-listening area, half-space soffit mounting, a mono low-bass manifold of
-mechanically opposed pairs, independent stereo upper-bass channels, and
-finite-band DSP alignment---this report assembles established sealed-box
-relations into a reproducible pre-purchase ranking procedure that operates
-on public datasheet fields.
+For a compact prepared couch or mastering area, this report assembles
+established sealed-box relations into a parameterized, reproducible
+pre-purchase procedure operating on public datasheet fields. Room,
+frequencies, levels, electronics, enclosure, allowed sizes/counts and any
+manifold ceiling are inputs; driver model, diameter, count, alignment,
+architecture status and margins are outputs.
 
 \textbf{What is exact within the model.} The sealed-box equation, the
 alignment line \cref{eq:alignment}, the displacement- and
@@ -14,37 +14,53 @@ dissipation-limited ceilings \cref{eq:SPLL,eq:SPLT}, their crossover
 \cref{eq:fx}, and the steady electrical requirements
 \cref{eq:Ereq,eq:Ireq,eq:Preq} follow from the stated lumped model. The
 transient factor \cref{eq:ctr} is obtained numerically from the same model
-for a declared waveform family, which removes the invalid constant burst
-factor near $F_c$.
+for a declared waveform family. The overhung-motor relation
+\cref{eq:motor-scaling} is exact only under its explicitly idealized flux,
+gap, conductor and coil-mass assumptions; it is motivation for a
+comparison, never a gate or universal bound.
 
-\textbf{What is empirical.} In the frozen candidate population analysed
-here, and under the canonical scenario, the well-ranked low-bass and
-upper-bass candidates occupy different regions of the descriptor plane
-(\cref{fig:database-pareto,tab:database-summary}). This is an observation
-about an available population, not a proof that one driver cannot serve
-both roles.
+\textbf{What is empirical.} In the frozen candidate population and
+canonical data-complete comparison, 119 unique low-bass records and 301
+upper-bass records are feasible at one or more allowed counts, whereas no
+stereo full-band record is feasible. The split architecture therefore
+occupies the canonical system Pareto frontier. Permitting missing
+inductance produces one unresolved full-band survivor. The public
+Dayton/Faital worked pair is feasible from 70 to \SI{80}{\hertz};
+\SI{80}{\hertz} is selected only as the highest nominal point inside the
+declared manifold band. Across the wider factorial, full-band systems share
+fronts at the lower targets but disappear at \SI{115}{dB}; the manifold
+ceiling can also make the full-band architecture the only admissible option
+at higher crossovers. These are observations about the stated population,
+scenario envelope and packaging limits, not proof that one driver model can
+never serve both roles.
 
-\textbf{What is policy.} The hard gates, the choice of core Pareto
-objectives, the $0.80$ preferred excursion margin, the Doppler sideband
-budget, the $\Qtc$ ceiling, the enclosure limit, and the role-specific
-lexicographic orders are declared engineering choices. Their influence is
-measured, not assumed, by the robustness analysis of
-\cref{sec:procedure-robustness}.
+\textbf{What is policy.} The hard gates, Pareto objectives, 0.80 preferred
+excursion margin, Doppler budget, preferred $\Qtc^\ast$, $4\Vas$
+per-driver cap, manifold ceiling, allowed size/count ranges and
+lexicographic driver orders are declared engineering choices. Enclosure
+volume and driver count remain separate system objectives rather than
+being hidden in a weighted score.
 
-\textbf{What is application-specific.} The worked system of
-\cref{app:example} meets its declared targets within every gate, including
-the finite per-driver amplifier limits, for the stated room, targets, and
-bands. It is a result for that scenario, not a general recommendation.
+\textbf{What is application-specific.} The worked system meets the
+declared maximum-output targets within every gate for the stated room,
+electronics and bands. Its aim is frontal recorded-scene precision over a
+small area. Listener envelopment is a separate attribute; an ambience
+layer may be added conditionally, but its imaging effect depends on level,
+spectrum, delay, direction and correlation.
 
-\textbf{Limitations.} The model is small-signal and LTI; nonlinear
-indicators are proxies, not predicted distortion; $\Xmax$, $\Pmax$, and
-$\Le$ conventions differ between manufacturers; the room model is a
-low-order description of a prepared room over one band and one small area;
-DSP correction is finite-band and does not address nonlinear residuals; and
-no controlled subjective evaluation is reported. Most importantly, the
-robustness analysis validates the \emph{stability} of the decision under
-uncertain inputs, not the physical correctness of the nonlinear indicators.
-The natural next steps are a public large-signal measurement subset for
-proxy validation, a measured room transfer over the couch area in place of
-the analytical model, and measurement of a built system against the
-predicted gates.
+\textbf{Limitations.} The driver model is small-signal and LTI; nonlinear
+indicators are proxies, not predicted distortion; $\Xmax$, $\Pmax$ and
+$\Le$ conventions differ between manufacturers; the pressure-zone model
+is a low-order description over one band and one small area; and the
+Thiele/Small model does not predict manifold cavity modes, unequal paths or
+compression. DSP correction is finite-band, cannot remove nonlinear
+residuals or replace source geometry and room treatment, and no controlled
+subjective evaluation is reported. Robustness analysis validates decision
+stability, not the physical correctness of the proxies.
+
+The next useful experiment is a controlled system comparison: build
+representative split and full-band candidates from adjacent Pareto fronts,
+measure $Bl(x)$, $K_{\mathrm{ms}}(x)$, burst headroom, modulation
+residuals, compression, manifold transfer, off-axis behaviour and spatial
+crossover integration, and test whether the indicator vector predicts the
+measured ordering.

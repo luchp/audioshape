@@ -74,30 +74,29 @@
 
 \section*{Abstract}
 
-This document is the extended explanatory companion to the stabilized JAES
-Engineering Report.  It presents a reproducible pre-purchase procedure for
-screening and ranking sealed-box bass drivers for one declared system: a
-compact prepared living-room couch area, half-space soffit mounting, a shared
-mono low-bass manifold, independent stereo upper-bass channels, and
-finite-band DSP alignment.  Classical sealed-box relations are derived in
-detail and placed on explicit reference bases.  Feasibility is checked across
-each complete role band against excursion, enclosure volume, voice-coil
-dissipation, amplifier voltage, amplifier current, continuous power, burst
-power, and a rough inductive screen.  Low-frequency demand is obtained from a
-leaky pressure-zone limiting model and tested for sensitivity to room leakage.
-Transient demand is obtained by numerical integration of the sealed ODE for a
-declared one-cycle waveform family, including ring-down.  Excursion, Doppler
-sideband ratio, box-spring asymmetry, electrical utilization, and inductive
-uncertainty remain separately reported indicators.  Surviving candidates
-receive role-specific Pareto fronts and lexicographic orders.  Aggregate
-evidence comes from a hash-identified private database without redistributing
-its rows; the worked system uses public manufacturer records.  The result is
-an application-specific shortlist, not a new physical limit or a claim about
-all loudspeaker architectures.
+This document is the extended explanatory companion to the JAES Engineering
+Report.  It presents a parameterized, reproducible pre-purchase procedure
+for screening sealed-box bass drivers for a prepared couch or mastering
+area.  Classical sealed-box relations are derived in detail and placed on
+explicit reference bases.  Feasibility is checked over complete bands
+against excursion, voice-coil dissipation, amplifier voltage/current/power,
+finite-burst response, inductive confidence, Doppler ratio and declared
+packaging limits.  A preferred alignment and per-driver box cap replace
+hard $Q_{\mathrm{tc}}$ rejection, so correction cost remains visible.
+Surviving records enter role-specific Pareto fronts and are assembled into
+separate-radiator or stereo full-band systems compared on six separate
+objectives.  Crossover and 108-scenario factorial sweeps test rather than
+assume role specialization.  In the canonical data-complete case the
+full-band search has no feasible record; across the wider sweep it shares
+fronts at lower targets but disappears at \SI{115}{dB}.  Aggregate evidence comes from a hash-identified
+private database without redistributing its rows; the public worked system
+uses Dayton Audio UMII18-22 and FaitalPRO 12HP1030 records.  The result is an
+input-conditional shortlist, not a new motor bound or a claim about all
+loudspeaker architectures.
 
 \vspace{1em}
 \noindent\textbf{Keywords:} loudspeaker driver selection; sealed enclosure;\\
-maximum acoustic output; datasheet screening; room gain; nonlinear headroom
+Pareto ranking; stereo bass; room gain; nonlinear headroom
 
 \ifnum\ELSVIERBUILD=1
 	\input{frontmatter/journal_header.tex}
@@ -117,7 +116,7 @@ This is a detailed explanatory companion, not the submitted JAES manuscript.
 The condensed Engineering Report is the publication document; this companion
 retains intermediate algebra, implementation details, and additional
 interpretation that would be too long for the journal format.  Both documents
-use the same canonical scenario, generated figures, generated tables,
+use the same parameter definitions, canonical example, generated evidence,
 public-driver records, and ranking policy.  The equations below distinguish
 three kinds of statements:
 
@@ -135,64 +134,92 @@ ratings.  It narrows a population to defensible candidates.  It does not
 replace impedance, near-field, large-signal, thermal, or in-room measurement
 of the purchased units.
 
-\subsection{Fixed application}
+\subsection{Parameterized application}
 \label{sec:intro-arch}
 
-\Cref{fig:architecture} fixes the system to which every result applies:
+\Cref{fig:architecture} shows the input--procedure--output relation.  The
+intended application family is:
 
 \begin{itemize}
-	\item a compact primary listening area centred on a prepared living-room
-	couch and represented by a declared reference response or an aggregate
-	over a small declared measurement set;
+	\item a compact primary listening area, such as a prepared living-room
+	couch or mastering desk, represented by a declared reference response or
+	an aggregate over a small declared measurement set;
 	\item half-space soffit-wall mounting for the bass sources;
-	\item a common mono low-bass manifold covering
-	\SIrange{15}{80}{\hertz};
-	\item independent left and right upper-bass channels covering
-	\SIrange{80}{250}{\hertz};
+	\item user-selected lower edge, nominal crossover, upper edge,
+	maximum-output targets, electronics, size/count ranges, preferred
+	alignment and per-driver box cap;
+	\item a primary split candidate with a common mono low-bass source and
+	independent left and right upper-bass sources;
+	\item a comparison baseline using the same full-band woofer model and
+	count in each stereo channel;
+	\item when the low-bass source is a manifold, an even driver count in
+	opposed pairs and a declared highest nominal crossover;
 	\item finite-band crossover, magnitude correction, phase alignment, and
 	delay alignment;
 	\item one amplifier channel per physical driver.
 \end{itemize}
 
-The low-bass target is \SI{110}{dB} for the complete four-driver manifold.
-Its drivers share one signal, so each supplies one quarter of the required
-peak displaced volume.  The upper-bass target is \SI{105}{dB} for each
-stereo channel independently.  The opposite channel contributes no sizing
-credit because ordinary stereo programme is not guaranteed to be correlated.
-Electrical demand is always calculated for each physical driver.
+The canonical figures instantiate those inputs with
+\SIrange{15}{250}{\hertz}, an \SI{80}{\hertz} crossover,
+\SI{110}{dB} total mono low bass and \SI{105}{dB} per independent upper
+channel at \SI{3}{\meter}.  Those levels are occasional maximum-output
+tests, not continuous listening levels.  Split-manifold drivers share the
+mono displaced-volume demand.  The upper stereo channels receive no
+summing credit.  In the full-band baseline, each channel carries the same
+mono bass below the split and receives a favourable \SI{6}{dB} coherent
+summation credit at the reference position; a \SI{3}{dB} sensitivity case
+is also reported.  Electrical demand is always calculated per physical
+driver.
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.92\textwidth]{figures/fig_architecture}
-	\caption{Canonical architecture and data flow.  The procedure accepts
-	public datasheet fields, a declared room and couch-area basis, separate
-	role targets, enclosure constraints, amplifier limits, and a transient
-	test specification.  It returns separate low-bass and upper-bass orders;
-	the role indicators are not collapsed into one cross-role score.}
+	\caption{Parameterized architecture and data flow.  The procedure
+	accepts public datasheet fields plus room/listening area, frequencies,
+	targets, electronics, packaging and manifold limits.  It returns
+	architecture status, driver models, diameters, counts, enclosures and
+	separate margins.  The illustrated Dayton/Faital system is one output,
+	not a fixed input.}
 	\label{fig:architecture}
 \end{figure}
 
 \subsection{Scene fidelity and its boundary}
 \label{sec:intro-fidelity}
 
-The architectural aim is high fidelity to the recorded two-channel scene
-over the primary couch area: stable localization and image focus, accurate
-direct- and early-field timbre, controlled low-frequency summation, and
-coherent integration across the crossover.  In a small room these attributes
-depend on the direct sound and early reflections \cite{toole2006,bech1998},
-on the relative phase and delay of noncoincident sources
-\cite{linkwitz1976}, and on group-delay error \cite{blauert1978}.  Soffit
-mounting, room preparation, compact source geometry, and finite-band DSP make
-those variables more controllable over a small area than an objective based
-only on diffuse-field level.
+The architectural aim is \emph{frontal recorded-scene precision}: stable
+source location, width and image focus; accurate direct- and early-field
+timbre; controlled low-frequency summation; and coherent crossover timing.
+The term is operational, not a claim to reconstruct a unique original sound
+field.  These attributes depend on direct sound and early reflections
+\cite{toole2006,bech1998}, the relative phase and delay of noncoincident
+sources \cite{linkwitz1976}, and frequency-, bandwidth- and
+signal-dependent group-delay audibility \cite{blauert1978}.  With added
+latency, finite-band DSP can bring measured minimum-phase low-frequency
+components toward a common linear-phase target over the chosen small area.
+Nonminimum-phase errors, deep spatial nulls, finite filter length and
+position dependence prevent exact room inversion
+\cite{neely1979,cecchi2018}.
 
-That rationale is not a listening-test result.  It also concerns scene
-fidelity rather than listener envelopment.  Envelopment depends strongly on
-late lateral energy \cite{bradley1995,rumsey2002} and may be better served by
-multichannel or deliberately diffuse reproduction \cite{francombe2017}.
-Likewise, multi-seat low-frequency uniformity is a different optimization
-problem \cite{welti2006}.  The present architecture accepts reduced off-area
-robustness in exchange for tighter control of one prepared couch area.
+Listener envelopment is separate and depends strongly on the level,
+direction and timing of later energy
+\cite{bradley1995,rumsey2002,soulodre2003}.  A separately adjustable,
+band-limited and delayed low-correlation ambience layer may therefore be
+added after the front system is aligned, but preservation of frontal
+imaging depends on its level, spectrum, delay, direction and correlation
+\cite{kendall1995,litovsky1999}.  Equalization cannot perform the exact
+reverse operation: it can change drive and delay, but cannot move acoustic
+centres, change directivity, remove a reflection at its physical origin, or
+make distinct seat transfers identical
+\cite{neely1979,elliott1989,welti2006,cecchi2018}.  This is a practical
+asymmetry, not an impossibility theorem or a claim that diffuse and
+multichannel systems cannot image accurately.
+
+A coherent coaxial main system above the selected upper edge is compatible
+with the architecture.  Relieving its low-frequency cone reduces cone
+excursion and therefore excitation of displacement-dependent motor and
+suspension nonlinearities.  If that cone also forms the high-frequency
+waveguide, reduced motion may reduce a topology-specific modulation path,
+but this remains a hypothesis requiring multitone and off-axis measurement.
 
 \subsection{Contribution}
 \label{sec:intro-contribution}
@@ -204,7 +231,7 @@ integration of established relations into a complete decision path:
 	\item normalize public records and preserve uncertainty about rating
 	conventions;
 	\item choose a realizable sealed alignment under a finite box cap;
-	\item convert a declared couch-area target and room transfer into required
+	\item convert a declared listening-area target and room transfer into required
 	displaced volume over each complete role band;
 	\item compute steady and finite-burst displacement, voltage, current, and
 	coil dissipation per driver;
@@ -212,6 +239,9 @@ integration of established relations into a complete decision path:
 	\item report separate nonlinear-risk and implementation indicators;
 	\item construct role-specific Pareto fronts and then apply a declared
 	lexicographic order;
+	\item assemble split and stereo full-band candidates, then compare
+	complete systems on separate excursion, Doppler, amplifier, enclosure
+	and driver-count objectives;
 	\item test whether the resulting shortlist is stable under plausible
 	datasheet, room, and policy perturbations.
 \end{enumerate}
@@ -264,7 +294,7 @@ Welti and Devantier \cite{welti2006} optimize low-frequency response over a
 defined seating region; modal equalization and multi-position correction are
 bounded by measurement geometry and regularization
 \cite{makivirta2003,cecchi2018}.  Those results motivate the explicit
-couch-area reference and the refusal to treat DSP as exact inversion.
+listening-area reference and the refusal to treat DSP as exact inversion.
 
 Finally, vented loading is established fourth-order practice
 \cite{small1973vented}.  Port compression and turbulence are design
@@ -301,22 +331,29 @@ $F_c,\Qtc$ & in-box resonance and Q & $f_L$ & inductive screen\\
 \end{tabular}
 \end{center}
 
-Four pressure bases must remain distinct:
+Five pressure bases must remain distinct:
 
 \begin{enumerate}
 	\item[B1.] \textbf{Intrinsic ceiling}: one driver, half space,
 	$r=\SI{1}{\meter}$.  This characterizes a driver only.
-	\item[B2.] \textbf{Couch-area demand}: required pressure at the declared
+	\item[B2.] \textbf{Listening-area demand}: required pressure at the declared
 	listening distance and response aggregation.
 	\item[B3.] \textbf{Mono-manifold total}: aggregate low-bass pressure at
 	B2.  The common displaced-volume demand is divided among the manifold
 	drivers.
 	\item[B4.] \textbf{One stereo channel}: the pressure required from one
 	upper-bass channel at B2.
+	\item[B5.] \textbf{One full-band stereo channel}: below the nominal
+	split, each channel carries the same mono bass and receives the declared
+	summing credit at B2; above it, each channel independently meets B4.
 \end{enumerate}
 
 \subsection{Canonical numerical scenario}
 \label{sec:scope-scenario}
+
+The following table defines the canonical worked example.  These are
+serializable inputs, not constants of the method; driver model, diameter,
+count, realized alignment and total enclosure are outputs.
 
 \begin{center}
 \small
@@ -324,17 +361,18 @@ Four pressure bases must remain distinct:
 \toprule
 room & $V_{\mathrm{room}}=\SI{60}{\cubic\meter}$,
 $L_{\max}=\SI{6}{\meter}$; prepared for the stated source/listening area\\
-couch-area distance & $r_{\mathrm{listen}}=\SI{3}{\meter}$\\
+listening-area distance & $r_{\mathrm{listen}}=\SI{3}{\meter}$\\
 room limiting model & leaky pressure zone, $f_\ell=\SI{10}{\hertz}$\\
 role bands & mono low bass \SIrange{15}{80}{\hertz};
 upper bass \SIrange{80}{250}{\hertz}\\
+manifold integration & maximum nominal crossover \SI{80}{\hertz};
+finite-slope attenuation required above\\
 targets & \SI{110}{dB} complete mono manifold;
 \SI{105}{dB} independently per stereo channel\\
 mounting and correction & half space; finite-band DSP\\
-alignment & $\Qtc\le0.55$\\
-box cap per driver &
-$\Vb\le\min(10\Vas,\ \SI{1.0}{\cubic\meter}/N)$;
-\SI{1.0}{\cubic\meter} total per role\\
+alignment & preferred $\Qtc^\ast=0.55$; not a hard gate\\
+box cap per driver & $\Vb\le4\Vas$; total volume is a Pareto objective\\
+full-band bass summing & \SI{6}{dB} primary; \SI{3}{dB} sensitivity\\
 amplifier per driver & \SI{90}{\volt} rms, \SI{15}{\ampere} rms,
 \SI{500}{\watt} continuous, \SI{1}{\kilo\watt} burst\\
 excursion & $\Xmax$ hard boundary; $0.80\Xmax$ preferred marker\\
@@ -377,7 +415,7 @@ continuous exposure levels.  For this room
 	\item[A8.] Free-field ceilings and room-specific demand are kept
 	separate until feasibility is evaluated.
 	\item[A9.] Drivers in the compact mono manifold carry the same signal,
-	and their volume velocities are assumed coherent at the couch-area
+	and their volume velocities are assumed coherent at the listening-area
 	reference.  Only displaced volume is shared by the unit count.  Mutual
 	radiation impedance and total radiated-power scaling are not inferred;
 	each driver's electrical demand is evaluated directly.
@@ -386,6 +424,12 @@ continuous exposure levels.  For this room
 	\item[A11.] DSP is finite-band and regularized.  Correction consumes
 	displacement and electrical headroom, cannot remove nonlinear residuals,
 	and must be verified over the listening area.
+	\item[A12.] A manifold's highest nominal crossover is an external
+	integration constraint.  The implemented low-pass must adequately
+	suppress output above its validated band.  Thiele/Small data do not
+	predict cavity modes, unequal paths, compression, or the manifold
+	transfer; the ceiling must come from geometry, simulation, or
+	measurement.
 \end{enumerate}
 
 Records missing a required field are skipped and counted.  A missing $\Bl$
@@ -476,6 +520,51 @@ is
 \end{equation}
 The implementation uses $F_s/\Qts$, not its $EBP$ approximation.
 
+\subsection*{Idealized overhung-motor scaling}
+
+The role split is worth testing because a limited scaling tendency follows
+from the same standard identities.  Let $h_c$ be winding height, $h_g$ an
+effective uniform-flux gap height, and
+\begin{equation}
+	u=\frac{h_c}{h_g}>1
+\end{equation}
+the overhang ratio.  Let $\ell$ be total conductor length and $A_w$ its
+cross-sectional area.  Under uniform winding density, approximately
+$\ell/u$ lies in the effective gap, so
+\begin{equation}
+	\Bl\simeq\frac{B\ell}{u}.
+	\label{eq:Bl-overhang}
+\end{equation}
+For conductor conductivity $\sigma_c$, density $\rho_c$, and coil mass
+$m_c$,
+\begin{equation}
+	\Re=\frac{\ell}{\sigma_cA_w},
+	\qquad
+	m_c=\rho_c\ell A_w.
+	\label{eq:coil-material}
+\end{equation}
+Substitution into
+$F_s/\Qes=\Bl^2/(2\pi\Re\Mms)$ gives
+\begin{equation}
+	\boxed{
+	\left(\frac{F_s}{\Qes}\right)u^2
+	=\frac{B^2\sigma_c}{2\pi\rho_c}\frac{m_c}{\Mms}} .
+	\label{eq:motor-scaling}
+\end{equation}
+At fixed flux, material and coil-mass allocation, increasing geometric
+overhang therefore tends to reduce electrical damping per moving mass.
+This provides a reason to compare a high-stroke low-bass motor with a
+lower-excursion upper-bass motor.
+
+The scope is essential.  The effective $B$, gap height, overhang ratio,
+fringing field, winding fill, coil-mass fraction and motor topology are
+normally unavailable in public records.  Geometric one-way overhang is only
+approximately $(h_c-h_g)/2$, and high-flux or differential-drive motors can
+move the trade.  \Cref{eq:motor-scaling} is therefore neither a theorem that
+one driver cannot cover both bands nor a feasibility gate.  The
+architecture study in \cref{sec:architecture-comparison} tests the practical
+question using the same complete-system constraints for both alternatives.
+
 The homogeneous response has envelope $\exp(-\sigma t/2)$.  Thus box volume
 changes damped frequency and overshoot but not the exponential decay rate of
 a given driver.  For an underdamped second-order step response,
@@ -485,8 +574,11 @@ a given driver.  For an underdamped second-order step response,
 	\right],\qquad \zeta=\frac{1}{2\Qtc}.
 	\label{eq:overshoot}
 \end{equation}
-At $\Qtc=0.55$, $M_p$ is approximately $0.11\%$.  This is an alignment
-diagnostic, not a perceptual quality score.
+At the preferred $\Qtc^\ast=0.55$, $M_p$ is approximately $0.11\%$;
+$M_p$ remains below $1\%$ through approximately $\Qtc=0.61$.  A box-cap
+limited candidate may realize a higher value and is evaluated rather than
+rejected.  Overshoot, group delay and equalization headroom are reported
+together; none is by itself a perceptual quality score.
 
 \subsection{Steady-sine transfer relations}
 \label{sec:model-steady}
@@ -673,7 +765,7 @@ headroom, not a costless operation.
 	\includegraphics[width=0.96\textwidth]{figures/fig_output_electrical}
 	\caption{Output margin and finite electrical utilization across both
 	complete role bands.  The upper row compares the combined ceiling with
-	the couch-area target.  The lower row shows per-driver voltage, current,
+	the listening-area target.  The lower row shows per-driver voltage, current,
 	and coil-power utilization against the declared limits.  The left
 	column is the complete mono low-bass role; the right column is one
 	independent upper-bass channel.}
@@ -686,7 +778,7 @@ headroom, not a costless operation.
 \subsection{General room-transfer statement}
 
 Let $H_{\mathrm{room}}(f)$ map source peak displaced volume to peak pressure
-under a declared spatial reduction of the couch-area responses.  Then
+under a declared spatial reduction of the listening-area responses.  Then
 \begin{equation}
 	V_{\mathrm{dem}}(f)=
 	\frac{\sqrt2\,p_t}{|H_{\mathrm{room}}(f)|},
@@ -775,10 +867,13 @@ Combining \cref{eq:alignment} with the pressure-zone transition suggests
 	\label{eq:Fsrule}
 \end{equation}
 This is a placement target, not a rejection rule by itself.  If the chosen
-box cap forces $F_c$ above the target, the resulting correction boost is
-evaluated by \cref{eq:Ereq,eq:Ireq,eq:Preq}.  If $F_c$ falls below it, a
-response shelf can be reduced with a cut, at the cost of extra enclosure
-volume.
+per-driver box cap forces $F_c$ above the target, the resulting correction
+boost is evaluated by \cref{eq:Ereq,eq:Ireq,eq:Preq} and the transient
+solver.  If $F_c$ falls below it, a response shelf can be reduced with a
+cut, at the cost of extra enclosure volume.  In particular,
+$F_s>f_{\mathrm{pz}}$ is not an automatic rejection: a modest corner
+mismatch can be corrected if the explicit displacement and electronics
+budgets allow it.
 
 \begin{figure}[htbp]
 	\centering
@@ -1024,16 +1119,26 @@ The implementation chooses
 	\label{eq:qdesired}
 \end{equation}
 where $f_{\mathrm target}=f_{\mathrm{pz}}$ for low bass and
-$f_{\mathrm target}=f_{\mathrm{sp}}$ for upper bass.  It computes the
-required \cref{eq:boxvolume}; if that volume exceeds
+$f_{\mathrm target}=f_{\mathrm{sp}}$ for upper bass; the full-band role
+uses $f_{\mathrm{pz}}$.  It computes the requested
+\cref{eq:boxvolume}; if that volume is nonphysical or exceeds
 \begin{equation}
-	\Vb^{\mathrm cap}=
-	\min\left\{10\Vas,
-	\frac{\SI{1.0}{\cubic\meter}}{N}\right\},
+	\Vb^{\mathrm cap}=4\Vas,
 	\label{eq:boxcap}
 \end{equation}
-the cap is used and the realized $\Qtc$ is recalculated.  A realized
-$\Qtc>0.55$ fails.
+the cap is used and the realized
+\begin{equation}
+	\Qtc=\Qts\sqrt{1+\frac{\Vas}{\Vb}},
+	\qquad
+	F_c=F_s\frac{\Qtc}{\Qts}
+	\label{eq:realized-alignment}
+\end{equation}
+is retained.  A realized $\Qtc>\Qtc^\ast$ is reported but does not fail.
+At exactly the canonical cap,
+$\Qtc=\sqrt{5/4}\,\Qts\simeq1.118\Qts$.
+Its response correction is charged to all steady and transient budgets.
+Because the cap is per physical driver, repeating identical units leaves
+their individual alignment unchanged; total volume grows as $N\Vb$.
 
 \subsection{Band evaluation}
 
@@ -1047,23 +1152,40 @@ frequency.  This is a declared numerical approximation over a finite band,
 not an assertion that an unsampled narrow anomaly cannot exist in a physical
 driver.
 
+For a full-band stereo channel, the target is frequency dependent:
+\begin{equation}
+	L_{\mathrm{full}}(f)=
+	\begin{cases}
+	L_{\mathrm{sub}}-G_{\mathrm{sum}}, & f<f_{\mathrm{sp}},\\
+	L_{\mathrm{upper}}, & f\ge f_{\mathrm{sp}},
+	\end{cases}
+	\label{eq:full-target}
+\end{equation}
+where $G_{\mathrm{sum}}=\SI{6}{dB}$ in the primary comparison and
+\SI{3}{dB} in the summation sensitivity.  Each physical driver in one
+channel carries its share of that channel demand.
+
 \subsection{Hard gates}
 \label{sec:hard-gates}
 
 A candidate is rejected if any of the following occurs:
 
 \begin{itemize}
-	\item realized $\Qtc$ exceeds its ceiling;
 	\item steady or transient displacement exceeds $\Xmax$;
 	\item steady voltage, current, driver dissipation, or amplifier
 	continuous power exceeds its limit;
 	\item burst voltage, current, or amplifier burst power exceeds its limit;
 	\item reported $f_L$ is below the role upper edge;
-	\item the upper-bass Doppler first-sideband ratio exceeds $0.02$.
+	\item the upper-bass or full-band Doppler first-sideband ratio exceeds
+	$0.02$;
+	\item a split system uses an odd manifold count or a nominal crossover
+	above its declared manifold ceiling.
 \end{itemize}
 
-The preferred $0.80$ excursion marker is not in this list.  Every rejection
-stores its reason; every missing or derived field stores a note.
+The preferred $0.80$ excursion marker and preferred $\Qtc^\ast$ are not in
+this list.  The box cap is enforced during construction rather than tested
+afterward.  Every rejection stores its reason; every missing or derived
+field stores a note.
 
 \subsection{Role-specific Pareto fronts}
 
@@ -1115,10 +1237,11 @@ The upper-bass order is:
 	\item apply a stable label tie-break.
 \end{enumerate}
 
-A system pair is feasible only if both role evaluations are feasible.  Pairs
-are compared first by low-bass front, then upper-bass front, then the two
-role policy keys, physical driver count, and total enclosure volume.  Role
-risks remain separate.
+A split system is feasible only if both role evaluations and the manifold
+integration constraint are feasible.  Driver-level orders select practical
+shortlists; complete split and full-band systems are compared separately in
+\cref{sec:architecture-comparison}.  Role risks remain separate in the
+reported detail even when their maxima form system Pareto coordinates.
 
 \subsection{Candidate population and privacy boundary}
 \label{sec:database}
@@ -1150,11 +1273,124 @@ counts, canonical scenario, and the exact public selected-driver records.
 
 \input{tables/table_database_summary}
 
-The size-unrestricted aggregate includes candidates feasible in both bands.
-The selected roles nevertheless occupy different parts of the observed
-population under the role size filters, targets, packaging limits, and
-policy.  This is an empirical scenario result, not a prohibition on a
-single-driver design.
+The size-unrestricted aggregate includes records feasible when each role is
+tested separately.  That overlap does not establish that one allowed
+stereo system meets the piecewise target, electronics, count, enclosure and
+inductance requirements simultaneously.  The complete-system comparison
+below addresses that question.
+
+\subsection{Crossover sweep and architecture comparison}
+\label{sec:architecture-comparison}
+
+\subsubsection*{Scaling repeated identical units}
+
+For $N$ identical drivers sharing one channel demand, displaced volume per
+driver scales as $1/N$.  With the per-driver box alignment unchanged,
+required displacement, voltage, current and the Doppler indicator scale as
+$1/N$, while mean coil power scales as $1/N^2$.  Total enclosure volume
+scales as $N\Vb$, and physical driver count as $N$.  The implementation
+applies these exact componentwise scalings to a one-driver evaluation
+rather than recomputing a fictitious combined driver.
+
+\subsubsection*{Worked-pair crossover sweep}
+
+The public Dayton/Faital pair is re-evaluated at every
+\SI{5}{\hertz} nominal crossover from 60 to \SI{120}{\hertz}.  At
+\SI{60}{\hertz} the upper driver fails both excursion and Doppler gates;
+at \SI{65}{\hertz} excursion is acceptable but Doppler remains outside
+budget.  The pair is hard-feasible from 70 to \SI{80}{\hertz}.  Above
+\SI{80}{\hertz} the upper driver gains margin, but those points are
+driver-only counterfactuals because the illustrative manifold declares
+\SI{80}{\hertz} as its highest nominal crossover.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.9\textwidth]{figures/fig_split_sensitivity}
+	\caption{Crossover sensitivity of the public worked pair.  Rejected
+	points, feasible points within the manifold limit, and driver-only
+	counterfactuals above it are distinguished.  The selected
+	\SI{80}{\hertz} point maximizes upper-driver margin only inside the
+	declared valid interval.}
+	\label{fig:split-sensitivity}
+\end{figure}
+
+\input{tables/table_split_sensitivity}
+
+\subsubsection*{Architecture definitions and factorial}
+
+The split search uses 15--21-inch low-bass records in even totals of 2, 4
+or 6 and 8--15-inch upper-bass records at one or two per stereo channel.
+The full-band search uses the same model in left and right, 10--18 inches,
+at one or two per channel.  Below $f_{\mathrm{sp}}$ those channels carry
+the common mono bass under \cref{eq:full-target}; above it they reproduce
+independent programme.  Thus the comparison grants the single architecture
+its most favourable reference-position \SI{6}{dB} coherent bass sum before
+also testing \SI{3}{dB}.
+
+The study spans room $(V,L_{\max})$ pairs
+$(40\,\si{\cubic\meter},5\,\si{\meter})$,
+$(60\,\si{\cubic\meter},6\,\si{\meter})$, and
+$(90\,\si{\cubic\meter},9\,\si{\meter})$; crossovers 60, 80, 100 and
+\SI{120}{\hertz}; upper edges 200, 250 and \SI{350}{\hertz}; and low-bass
+targets 105, 110 and \SI{115}{dB}, with the upper target \SI{5}{dB}
+lower.  The Cartesian product contains 108 scenarios.
+
+Each feasible complete system is assigned
+\begin{equation}
+	\mathbf r_{\mathrm{sys}}=
+	\left(
+	\xi_x,\ \xi_x^{\mathrm{tr}},\ d_{\mathrm D},\
+	\xi_{\mathrm{amp}},\ V_{\mathrm b}^{\mathrm{tot}},\
+	N_{\mathrm{phys}}
+	\right),
+	\label{eq:system-risk}
+\end{equation}
+where the first four entries are the worst applicable values within that
+system.  Pareto dominance is applied directly to this six-component vector;
+no cost, volume, count or nonlinear indicator is allowed to compensate
+arithmetically for another.
+
+Reported $\Le$ is required in the primary study because a missing
+inductance makes a 200--\SI{350}{\hertz} role unevaluable.  The
+size/type pools contain 246 low-bass, 592 upper-bass and 509 full-band
+records before data-completeness and physical gating.  In the canonical case, 119 unique
+low-bass records and 301 upper-bass records are feasible at one or more
+allowed counts, whereas no full-band record is feasible.  The split
+architecture therefore occupies the data-complete canonical Pareto
+frontier alone.  Permitting missing $\Le$ yields one full-band record, but
+its upper-band validity remains unresolved; reducing the assumed stereo
+bass summing credit from 6 to \SI{3}{dB} removes even that survivor.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.9\textwidth]{figures/fig_architecture_comparison}
+	\caption{Architecture outcome over the 108 input scenarios.  The same
+	physical and electrical gates are used for both architectures before
+	system Pareto comparison.  Empty and single-architecture fronts are
+	reported directly rather than replaced by a weighted score.}
+	\label{fig:architecture-comparison}
+\end{figure}
+
+\input{tables/table_architecture_comparison}
+
+With separate radiators admitted at every tested crossover, split systems
+are feasible in all 36 cases at each target.  Full-band systems share the
+Pareto front in 24 of 36 cases at \SI{105}{dB} and 16 of 36 at
+\SI{110}{dB}, but in none at \SI{115}{dB}.  Enforcing the illustrative
+\SI{80}{\hertz} manifold ceiling removes split systems from the
+100- and \SI{120}{\hertz} cases by definition, producing full-band-only and
+neither-feasible outcomes.  This distinction is important: the right panel
+contains an acoustic-integration constraint that is not a motor-ranking
+result.
+
+The idealized motor scaling of \cref{eq:motor-scaling} is therefore useful
+as motivation, but the empirical architecture outcome is the evidence.
+Changing room, SPL, package, amplifier, summing assumption or candidate
+population can restore a full-band frontier member, and the implementation
+will retain it.  Current price is intentionally considered only after this
+technical shortlist because it is regional and time varying.  No symmetric
+price comparison is possible in the canonical strict case because it has
+no data-complete full-band finalist.
 
 \subsection{Robustness as decision stability}
 \label{sec:robustness}
@@ -1163,9 +1399,12 @@ The pipeline reruns rankings with $\Xmax$ shifted by $\pm25\%$, $\Pmax$
 shifted by $\pm\SI{3}{dB}$, alternative leakage corners, and alternative
 reasonable ordering priorities.  It reports top-$k$ shortlist overlap:
 \begin{equation}
-	R_k=\frac{|S_k^{(0)}\cap S_k^{(v)}|}{k}.
+		R_k=\frac{|S_k^{(0)}\cap S_k^{(v)}|}{|S_k^{(0)}|},
 	\label{eq:robustness}
 \end{equation}
+	where $S_k^{(0)}$ contains at most $k$ records.  Normalizing by the
+	available baseline shortlist avoids reporting 0.1 for a perfectly stable
+	role that has only one feasible record.
 
 \begin{figure}[htbp]
 	\centering
@@ -1176,6 +1415,13 @@ reasonable ordering priorities.  It reports top-$k$ shortlist overlap:
 	\label{fig:rank-robustness}
 \end{figure}
 
+Power-rating and leakage variants retain every available baseline record.
+Reducing $\Xmax$ by 25\% removes the sole feasible two-driver low-bass
+record and changes one member of the upper top ten.  An amplifier-first
+policy retains the sole low-bass record but only one upper-bass record.
+The low-bass outcome is therefore binary rather than evidence of a broad
+stable shortlist.
+
 This analysis tests decision stability only.  It does not validate physical
 large-signal behaviour, audibility, or the room model.
 
@@ -1184,44 +1430,46 @@ large-signal behaviour, audibility, or the room model.
 
 \subsection{Low-bass manifold}
 
-The selected low-bass system uses four BMS 18N862 drivers in two
-mechanically opposed pairs.  The opposed layout permits first-order
+The selected low-bass system uses two Dayton Audio UMII18-22 drivers as one
+mechanically opposed pair.  The opposed layout permits first-order
 reaction-force cancellation only when drive, drivers, and mounting are
-matched.  Unit variation, gain/phase mismatch, and mounting tolerance leave
-residual force.  Each physical driver has its own amplifier channel.
+matched; unit variation, gain/phase mismatch, and mounting tolerance leave
+residual force.  Each physical driver has its own amplifier channel.  The
+model suffix ``22'' denotes dual \SI{2}{\ohm} voice coils, not excursion;
+the official one-way $\Xmax$ is \SI{28}{\milli\meter}.
 
 The \SI{110}{dB} target is the total manifold target from
-\SIrange{15}{80}{\hertz}.  The box cap binds at
-\SI{250}{\liter} per driver, filling the \SI{1.0}{\cubic\meter} low-bass
-role allowance.  The resulting alignment is approximately
-$\Qtc=0.512$ and $F_c=\SI{37.6}{\hertz}$.  Because $F_c$ is above
-$f_{\mathrm{pz}}$, the finite-band correction cost is included in every
-electrical and displacement result.
+\SIrange{15}{80}{\hertz}.  The $4\Vas$ cap binds at approximately
+\SI{993}{\liter} per driver.  The resulting alignment is
+$\Qtc=0.592$ and $F_c=\SI{24.6}{\hertz}$, with
+\SI{1.99}{\cubic\meter} total enclosure retained as an explicit packaging
+cost.  All finite-band correction is included in every electrical,
+displacement and transient result.
 
 \subsection{Independent upper-bass channels}
 
-Each stereo channel uses one Eighteen Sound 12NTLW3500-8.  The public
-manufacturer one-way $\Xmax=\SI{8.3}{\milli\meter}$ is used.  A
-\SI{35.2}{\liter} enclosure gives approximately
-$\Qtc=0.506$ and $F_c=\SI{80}{\hertz}$.  Each channel must independently
-meet \SI{105}{dB} from \SIrange{80}{250}{\hertz}.
+Each stereo channel uses one FaitalPRO 12HP1030.  The calculation uses the
+current official record, including
+$\Sd=\SI{518}{\centi\meter\squared}$,
+$\Vas=\SI{35.9}{\liter}$ and
+$\Xmax=\SI{12.45}{\milli\meter}$.  A \SI{16.6}{\liter} enclosure gives
+$\Qtc=0.539$ and $F_c=\SI{80}{\hertz}$.  Each channel independently meets
+\SI{105}{dB} from \SIrange{80}{250}{\hertz}.
 
 \subsection{Gate results}
 
 Under the \SI{10}{\hertz} leakage model, the low-bass displaced-volume
 demand is largest at \SI{15}{\hertz}.  The generated room-sensitivity table
 gives \SI{4.57}{\liter} peak for the complete manifold, or about
-\SI{1.14}{\liter} per driver before division by piston area.
+\SI{2.29}{\liter} per driver before division by piston area.
 
 The generated worked table is the authoritative rounded summary.  The
-low-bass role reaches approximately $0.49$ steady and $0.51$ transient
-excursion utilization.  Its worst steady requirements are approximately
-\SI{31.7}{\volt} rms, \SI{3.3}{\ampere} rms, and \SI{59}{\watt} per
-driver.  The upper-bass role reaches approximately $0.71$ steady and
-$0.83$ transient excursion utilization, with approximately
-\SI{43.5}{\volt} rms, \SI{3.8}{\ampere} rms, and \SI{75}{\watt} at the
-respective worst frequencies.  The latter transient utilization crosses the
-preferred marker but remains below the hard boundary.
+low-bass role reaches 0.689 steady and 0.795 transient excursion
+utilization; its largest amplifier-budget utilization is 0.642.  The
+upper-bass role reaches 0.485 steady and 0.557 transient excursion
+utilization, a Doppler first-sideband ratio of 0.0138, and amplifier
+utilization 0.597.  Both roles remain inside the hard gates and the 0.80
+preferred excursion marker.
 
 \begin{figure}[htbp]
 	\centering
@@ -1235,12 +1483,20 @@ preferred marker but remains below the hard boundary.
 
 \input{tables/table_worked_pair}
 
-Three conclusions follow within this scenario.  First, box volume fixes the
-low-bass alignment and correction demand, whereas transient excursion is the
-tighter upper-bass concern.  Second, all finite per-driver amplifier gates
-remain satisfied across both complete bands.  Third, the recommendation is
-conditional on the room leakage model; the available low-bass margin absorbs
-the declared sensitivity range but remains finite.
+Four conclusions follow within this scenario.  First, the low-bass
+$4\Vas$ cap exposes a large enclosure trade, whereas the upper driver's
+excursion and Doppler margins depend strongly on crossover.  Second, all
+finite per-driver amplifier gates remain satisfied across both complete
+bands.  Third, both records are Pareto-front members under their role
+policies.  Fourth, the result is conditional on the room leakage and
+manifold-band assumptions.
+
+The previous hard-$\Qtc$/one-cubic-metre formulation selected a BMS
+18N862-class professional motor largely because it geometrically excluded
+high-$\Qts$, high-stroke alternatives.  Under the revised policy the
+UMII18-22 pays explicitly for its enclosure and equalization yet remains
+Pareto-optimal.  This explains the changed selection without asserting that
+the Dayton motor is universally superior.
 
 \section{Scoped sealed-versus-vented comparison}
 \label{sec:vented}
@@ -1318,13 +1574,19 @@ present ranking equations would then need to be rederived for that plant.
 	\item The room model is a limiting compliance-plus-leakage description
 	below the first axial mode.  Above that range, measured transfers or
 	fitted modal sections are required.
-	\item The couch-area objective must be implemented as a declared
+	\item The listening-area objective must be implemented as a declared
 	reference or spatial aggregation.  The current analytical example does
 	not establish uniformity throughout the area.
 	\item DSP correction is constrained by noise, latency, finite filter
 	length, spatial variation, headroom, and model error.
 	\item Reaction-force cancellation is first order and depends on matched
 	drive and mounting.
+	\item The Thiele/Small model does not establish manifold bandwidth,
+	cavity resonances, path equality, acoustic compression, or the
+	attenuation required above the nominal crossover.
+	\item Reduced high-frequency modulation from relieving a coaxial cone
+	that also acts as a waveguide is a topology-dependent hypothesis, not a
+	result of the present model.
 	\item Aggregate database results inherit mixed manufacturer conventions,
 	unknown age, and unknown current availability.  They describe the frozen
 	snapshot, not the current market.
@@ -1341,11 +1603,12 @@ levels:
 	\item public large-signal measurements on a comparable subset of drivers,
 	testing whether proxy-based pairwise ordering agrees with measured
 	headroom;
-	\item a measured transfer over the prepared couch area replacing the
+	\item a measured transfer over the prepared listening area replacing the
 	analytical room model;
-	\item a built-system test of frequency response, phase/delay integration,
-	maximum output, voltage/current, compression, distortion spectra,
-	reaction force, and spatial variation.
+	\item built split and full-band tests of frequency response,
+	phase/group-delay integration, maximum output, voltage/current,
+	compression, distortion spectra, manifold transfer, reaction force,
+	coaxial multitone/off-axis modulation, and spatial variation.
 \end{enumerate}
 
 \section{Reproducibility and data boundary}
@@ -1356,8 +1619,9 @@ in \path{scenario.py}, physical relations in \path{physics.py}, ranking in
 \path{ranking.py}, and serializable recipe loading in \path{recipe.py}.
 The canonical manifest is
 \path{papers/26325/data/driver_database_manifest.json}.  It records the
-private source hash and metadata, aggregate counts, and exact public SI
-records for the selected BMS and Eighteen Sound drivers.  The source URLs are
+private source hash and metadata, aggregate counts, architecture-study
+outcomes, and exact public SI records for the selected Dayton Audio and
+FaitalPRO drivers.  The source URLs are
 manufacturer URLs in that manifest.
 
 The private VituixCAD export is neither included nor reconstructable from the
@@ -1374,27 +1638,31 @@ companion are available from the project repository
 \section{Conclusion}
 \label{sec:conclusion}
 
-For the declared prepared-room, soffit-mounted, small-area stereo
-architecture, the method provides a reproducible path from public datasheet
-records to separate low-bass and upper-bass shortlists.  It retains the
-classical sealed ODE, alignment line, displacement and dissipation ceilings,
-$f_x$ equivalence, room-demand derivation, and full-band electrical
-requirements; it adds a declared numerical finite-burst test and a
-non-compensatory decision policy.
+For a declared prepared-room, soffit-mounted, small listening area, the
+method provides a reproducible path from public datasheet records to driver,
+count, alignment and architecture candidates.  It retains the classical
+sealed ODE, alignment line, displacement and dissipation ceilings, $f_x$
+equivalence, room-demand derivation and finite electrical requirements; it
+adds a numerical finite-burst test and a non-compensatory system policy.
 
-The canonical worked system uses four BMS 18N862 drivers in two opposed pairs
-for the mono manifold and one Eighteen Sound 12NTLW3500-8 per upper-bass
-stereo channel.  Under the stated room model, box limits, targets, and
-per-driver electronics, both roles satisfy their hard gates.  The selected
-records occupy different empirical regions and have different binding
-constraints, but that observation is specific to the frozen population and
-scenario.
+The canonical worked system uses one opposed pair of Dayton Audio
+UMII18-22 drivers for the mono manifold and one FaitalPRO 12HP1030 per
+upper-bass stereo channel.  Its feasible crossover interval is
+\SIrange{70}{80}{\hertz}; the upper endpoint is selected only because the
+illustrative manifold declares it valid.  In the strict canonical
+architecture study the allowed full-band stereo population has no feasible
+record, while split systems do.  Across the wider factorial, full-band
+systems share Pareto fronts at the lower targets but disappear at
+\SI{115}{dB}; the manifold ceiling can also leave full-band as the only
+admissible architecture at higher crossovers.  This supports conditional
+role specialization, not a universal motor theorem.
 
-The procedure's strongest claim is practical: it makes assumptions,
-reference bases, correction cost, electrical limits, uncertainty, and
-ranking priorities inspectable before purchase.  Physical confidence still
-requires large-signal driver measurement, a measured prepared-room transfer,
-and verification of the built system.
+The procedure's strongest claim is practical: it makes reference bases,
+alignment and equalization cost, electrical limits, enclosure volume,
+driver count, manifold bandwidth, uncertainty and ranking priorities
+inspectable before purchase.  Physical confidence still requires
+large-signal driver measurement, a measured prepared-room and manifold
+transfer, and verification of built split and full-band systems.
 
 \appendix
 

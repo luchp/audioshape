@@ -122,6 +122,7 @@ class Evaluation:
 
     spl_sine_floor: float
     spl_transient_floor: float
+    steady_excursion_frequency: float
     f_x: float
     n_units_preferred: int
     pareto_rank: int = -1
@@ -215,8 +216,9 @@ def evaluate(
 
     ``n_units`` identical drivers share that role/channel's acoustic target.
     Each physical driver is checked against the full per-driver amplifier
-    envelope.  A second stereo channel receives no acoustic or electrical
-    credit because it must reproduce independent program material.
+    envelope. The attack role receives no opposite-channel credit. The full
+    role uses the scenario's configured coherent mono-bass credit below the
+    split and the independent-channel target above it.
     """
     if n_units < 1:
         raise ValueError("n_units must be at least one")
@@ -233,9 +235,9 @@ def evaluate(
 
     f_target = sc.target_corner_hz(role)
     desired_qtc = physics.qtc_for_target_corner(
-        driver.corner_rate, f_target, sc.qtc
+        driver.corner_rate, f_target, sc.alignment_qtc
     )
-    box_cap = sc.max_box_volume_per_driver(driver.vas, n_units)
+    box_cap = sc.box_volume_cap_per_driver(driver.vas, n_units)
     desired_box = math.inf
     if desired_qtc > driver.qts:
         desired_box = physics.box_volume_for_qtc(
@@ -243,19 +245,20 @@ def evaluate(
         )
     if desired_box > box_cap:
         qtc = physics.qtc_for_box_volume(driver.vas, driver.qts, box_cap)
+        cap_description = f"{sc.max_box_vas_ratio:g}x Vas"
+        if sc.max_box_volume_per_driver_m3 is not None:
+            cap_description += (
+                f", capped at {sc.max_box_volume_per_driver_m3*1e3:.0f} L"
+            )
         notes.append(
-            f"alignment limited to {box_cap*1e3:.0f} L per driver "
-            f"(min of {sc.max_box_vas_ratio:g}x Vas and "
-            f"{sc.max_role_box_volume_m3*1e3:.0f} L per role)"
+            f"preferred alignment not reached within {cap_description}; "
+            f"using {box_cap*1e3:.0f} L per driver gives "
+            f"Qtc={qtc:.2f}, Fc={physics.fc_for_qtc(driver.fs, driver.qts, qtc):.1f} Hz"
         )
     else:
         qtc = desired_qtc
 
     boxed = BoxedDriver(driver, qtc=qtc, n_units=n_units)
-    if boxed.qtc > sc.qtc:
-        reasons.append(
-            f"box cap gives Qtc={boxed.qtc:.2f} > ceiling {sc.qtc:.2f}"
-        )
     if not driver.has_force_factor:
         notes.append("Bl missing; derived from Fs, Qes, Mms, and Re")
     if not driver.has_inductance:
@@ -272,7 +275,7 @@ def evaluate(
         extras=(boxed.fc, sc.f_pz, sc.leakage_corner_hz),
     )
     steady_excursion = 0.0
-    maximum_displacement = 0.0
+    maximum_displacement = (0.0, band_low)
     maximum_volume_per_driver = 0.0
     voltage = (0.0, band_low)
     current = (0.0, band_low)
@@ -284,7 +287,9 @@ def evaluate(
         displacement = volume_total / (n_units * driver.sd)
         excursion = displacement / driver.xmax
         steady_excursion = max(steady_excursion, excursion)
-        maximum_displacement = max(maximum_displacement, displacement)
+        maximum_displacement = _larger_extreme(
+            maximum_displacement, displacement, frequency
+        )
         maximum_volume_per_driver = max(
             maximum_volume_per_driver, volume_total / n_units
         )
@@ -387,7 +392,7 @@ def evaluate(
     )
 
     transient_excursion = transient.displacement_peak / driver.xmax
-    doppler = physics.doppler_im(doppler_ref, maximum_displacement)
+    doppler = physics.doppler_im(doppler_ref, maximum_displacement[0])
     box_spring = physics.box_spring_nonlinearity(
         maximum_volume_per_driver, boxed.vb, driver.qts, boxed.qtc
     )
@@ -419,12 +424,14 @@ def evaluate(
     if risk.steady_excursion > 1.0:
         reasons.append(
             f"steady excursion clip xi_x={risk.steady_excursion:.2f} "
-            f"at {sc.target_spl_for(role):.0f} dB"
+            f"at {maximum_displacement[1]:.1f} Hz / "
+            f"{sc.target_spl_at(maximum_displacement[1], role):.0f} dB"
         )
     if risk.transient_excursion > 1.0:
         reasons.append(
             f"transient excursion clip xi_x={risk.transient_excursion:.2f} "
-            f"at {transient.displacement_frequency:.1f} Hz"
+            f"at {transient.displacement_frequency:.1f} Hz / "
+            f"{sc.target_spl_at(transient.displacement_frequency, role):.0f} dB"
         )
     if role in ("attack", "full") and doppler > sc.doppler_budget:
         reasons.append(
@@ -467,10 +474,14 @@ def evaluate(
             f"{sc.amplifier_power_burst:.0f} W"
         )
 
-    sine_floor = sc.target_spl_for(role) + 20.0 * math.log10(
+    sine_floor = sc.target_spl_at(
+        maximum_displacement[1], role
+    ) + 20.0 * math.log10(
         1.0 / steady_excursion
     )
-    transient_floor = sc.target_spl_for(role) + 20.0 * math.log10(
+    transient_floor = sc.target_spl_at(
+        transient.displacement_frequency, role
+    ) + 20.0 * math.log10(
         1.0 / transient_excursion
     )
     preferred_units = max(
@@ -496,6 +507,7 @@ def evaluate(
         transient=transient,
         spl_sine_floor=sine_floor,
         spl_transient_floor=transient_floor,
+        steady_excursion_frequency=maximum_displacement[1],
         f_x=physics.regime_boundary_fx(
             driver.fs,
             driver.p_max,
@@ -588,6 +600,7 @@ def pair_rank(
     require_even_sub_units: bool = False,
 ) -> list[PairEvaluation]:
     """Combine independently ranked role candidates without summing risks."""
+    scenario.require_valid_manifold_crossover()
     if require_even_sub_units and sub_units % 2:
         raise ValueError(
             "force-cancelling sub manifolds require an even unit count"

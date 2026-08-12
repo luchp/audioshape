@@ -21,9 +21,10 @@ TransientWindow = Literal["rectangular", "hann"]
 class Scenario:
     """Serializable system requirements; SI units and rms SPL in dB.
 
-    The mono sub target applies to the complete manifold.  The upper-bass
-    target applies independently to each stereo channel; no stereo summing
-    credit is used.  ``Xmax`` is the clipping boundary.  The lower
+    The mono sub target applies to the complete manifold. The upper-bass
+    target applies independently to each stereo channel. A full-band stereo
+    channel receives the configured mono-bass summing credit only below the
+    split. ``Xmax`` is the clipping boundary. The lower
     ``preferred_excursion`` value is a design-margin marker, not a gate and
     not an inferred distortion threshold.
     """
@@ -33,15 +34,17 @@ class Scenario:
     r_listen: float = 3.0
     sub_target_spl: float = 110.0
     attack_target_spl: float = 105.0
+    stereo_low_bass_summing_db: float = 6.0
 
     room_model: RoomModel = "leaky_pressure_zone"
     leakage_corner_hz: float = 10.0
 
-    qtc: float = 0.55
-    max_box_vas_ratio: float = 10.0
-    max_role_box_volume_m3: float = 1.0
+    alignment_qtc: float = 0.55
+    max_box_vas_ratio: float = 4.0
+    max_box_volume_per_driver_m3: float | None = None
     f_low: float = 15.0
     f_split: float = 80.0
+    manifold_crossover_ceiling_hz: float = 80.0
     f_high: float = 250.0
 
     preferred_excursion: float = 0.80
@@ -63,16 +66,27 @@ class Scenario:
             raise ValueError(f"unknown room model {self.room_model!r}")
         if self.leakage_corner_hz < 0:
             raise ValueError("leakage corner must be non-negative")
+        if not 0 <= self.stereo_low_bass_summing_db <= 6.1:
+            raise ValueError("stereo low-bass summing must lie between 0 and 6.1 dB")
         if not 0 < self.preferred_excursion <= 1:
             raise ValueError("preferred excursion must be a fraction in (0, 1]")
         if self.doppler_budget <= 0:
             raise ValueError("doppler budget must be positive")
-        if self.qtc <= 0:
-            raise ValueError("Qtc ceiling must be positive")
-        if self.max_box_vas_ratio <= 0 or self.max_role_box_volume_m3 <= 0:
-            raise ValueError("box-volume limits must be positive")
+        if self.alignment_qtc <= 0:
+            raise ValueError("alignment Qtc target must be positive")
+        if self.max_box_vas_ratio <= 0:
+            raise ValueError("maximum box/Vas ratio must be positive")
+        if (
+            self.max_box_volume_per_driver_m3 is not None
+            and self.max_box_volume_per_driver_m3 <= 0
+        ):
+            raise ValueError("per-driver box-volume limit must be positive")
         if not 0 < self.f_low < self.f_split < self.f_high:
             raise ValueError("frequencies must satisfy 0 < f_low < f_split < f_high")
+        if not self.f_low < self.manifold_crossover_ceiling_hz < self.f_high:
+            raise ValueError(
+                "manifold crossover ceiling must lie between f_low and f_high"
+            )
         amplifier_limits = (
             self.amplifier_voltage_rms,
             self.amplifier_current_rms,
@@ -95,16 +109,65 @@ class Scenario:
 
     @property
     def max_corner_rate(self) -> float:
-        """Admissible Fs/Qts (eq:Fsrule)."""
-        return physics.max_corner_rate(self.f_pz, self.qtc)
+        """Fs/Qts that places Fc at f_pz at the preferred alignment Qtc."""
+        return physics.max_corner_rate(self.f_pz, self.alignment_qtc)
+
+    @property
+    def is_manifold_crossover_valid(self) -> bool:
+        """Whether the nominal role split respects the manifold ceiling.
+
+        The ceiling is a declared acoustic-integration constraint, not a
+        prediction of the T/S driver model. Role-only evaluations may inspect
+        counterfactual splits above it; pair/recipe APIs call
+        :meth:`require_valid_manifold_crossover`.
+        """
+        return self.f_split <= self.manifold_crossover_ceiling_hz
+
+    def require_valid_manifold_crossover(self) -> None:
+        """Reject a pair architecture whose nominal split exceeds the
+        declared manifold ceiling.
+
+        A real crossover must also provide enough attenuation above the
+        manifold's validated operating band; finite-slope filter design is
+        outside this scenario model.
+        """
+        if not self.is_manifold_crossover_valid:
+            raise ValueError(
+                f"f_split={self.f_split:g} Hz exceeds the nominal manifold "
+                f"crossover ceiling of "
+                f"{self.manifold_crossover_ceiling_hz:g} Hz"
+            )
 
     def target_spl_for(self, role: Role) -> float:
-        """Couch-area target for the mono manifold or one stereo channel."""
-        if role in ("sub", "full"):
+        """Representative target for role summaries.
+
+        Full-band stereo calculations use :meth:`target_spl_at`, because the
+        two channels share the mono low-bass demand below ``f_split`` but
+        independently meet the upper-bass target above it.
+        """
+        if role == "sub":
             return self.sub_target_spl
         if role == "attack":
             return self.attack_target_spl
+        if role == "full":
+            return max(
+                self.sub_target_spl - self.stereo_low_bass_summing_db,
+                self.attack_target_spl,
+            )
         raise ValueError(f"unknown role {role!r}")
+
+    def target_spl_at(self, f: float, role: Role) -> float:
+        """Target SPL carried by one evaluated source/channel at frequency."""
+        if f <= 0:
+            raise ValueError("frequency must be positive")
+        if role == "full":
+            if f < self.f_split:
+                return (
+                    self.sub_target_spl
+                    - self.stereo_low_bass_summing_db
+                )
+            return self.attack_target_spl
+        return self.target_spl_for(role)
 
     def target_corner_hz(self, role: Role) -> float:
         """This role's own box-corner target (eq:Fsrule): the room's
@@ -117,18 +180,24 @@ class Scenario:
             return self.f_pz
         raise ValueError(f"unknown role {role!r}")
 
-    def max_box_volume_per_driver(self, vas: float, n_units: int) -> float:
-        """Per-driver box cap: min(ratio*Vas, role-volume/N)."""
+    def box_volume_cap_per_driver(self, vas: float, n_units: int) -> float:
+        """Configured per-driver box cap.
+
+        The default is ``max_box_vas_ratio * Vas``. An optional absolute
+        per-driver limit can further constrain it. Unit count is validated
+        here but does not silently shrink each enclosure as more drivers are
+        selected; total volume is an explicit ranking output.
+        """
         if vas <= 0 or n_units < 1:
             raise ValueError("Vas and unit count must be positive")
-        return min(
-            self.max_box_vas_ratio * vas,
-            self.max_role_box_volume_m3 / n_units,
-        )
+        cap = self.max_box_vas_ratio * vas
+        if self.max_box_volume_per_driver_m3 is not None:
+            cap = min(cap, self.max_box_volume_per_driver_m3)
+        return cap
 
     def demand_volume(self, f: float, role: Role = "sub") -> float:
         """Peak displaced volume [m^3] needed for the target SPL at f."""
-        return physics.demand_volume(f, self.target_spl_for(role), self.r_listen,
+        return physics.demand_volume(f, self.target_spl_at(f, role), self.r_listen,
                                      self.v_room, self.l_max,
                                      room_model=self.room_model,
                                      leakage_corner_hz=self.leakage_corner_hz)
@@ -138,8 +207,13 @@ class Scenario:
         band_low = self.f_split if role == "attack" else self.f_low
         return self.demand_volume(band_low, role)
 
-    def target_pressure(self, role: Role = "sub") -> float:
-        return physics.pressure_from_spl(self.target_spl_for(role))
+    def target_pressure(self, role: Role = "sub", f: float | None = None) -> float:
+        target = (
+            self.target_spl_for(role)
+            if f is None
+            else self.target_spl_at(f, role)
+        )
+        return physics.pressure_from_spl(target)
 
     def required_vd(self, band_low: float | None = None,
                     role: Role = "sub",

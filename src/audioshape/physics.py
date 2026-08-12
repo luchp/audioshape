@@ -485,11 +485,13 @@ def max_corner_rate(f_pz: float, qtc_target: float) -> float:
 
 
 def qtc_for_target_corner(corner_rate: float, f_target: float,
-                          qtc_ceiling: float) -> float:
-    """Qtc to actually use: the smaller of a configured ceiling and the Qtc
-    that would land Fc exactly at f_target (box invariance Fc/Qtc =
-    corner_rate, eq:Fsrule). A corner below the target needs no correction
-    boost but costs enclosure volume; a corner above it costs boost and
-    headroom. A driver that would overshoot at the ceiling is therefore
-    assigned a lower Qtc (larger box) when the box cap permits."""
-    return min(qtc_ceiling, f_target / corner_rate)
+                          qtc_target: float) -> float:
+    """Preferred Qtc before the physical box-volume cap is applied.
+
+    The smaller of the configured alignment target and the Qtc that places
+    Fc exactly at ``f_target`` avoids requesting a corner above the role
+    target when a larger box can prevent it. If this Qtc is nonphysical or
+    needs too much volume, the caller uses the box cap and evaluates the
+    resulting correction cost.
+    """
+    return min(qtc_target, f_target / corner_rate)

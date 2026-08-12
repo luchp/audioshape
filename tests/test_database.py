@@ -58,14 +58,9 @@ def test_more_units_reduce_separate_risks(db):
     assert not hasattr(e2, "total_distortion")
 
 
-def test_infeasible_high_qts_driver_flagged(db):
-    sc = Scenario(qtc=0.55)
+def test_high_qts_driver_is_not_rejected_for_alignment_alone(db):
+    sc = Scenario(alignment_qtc=0.55)
     high_qts = next(d for d in db.drivers if d.qts >= 0.55)
     ev = evaluate(high_qts, sc)
-    assert not ev.feasible
-    # Unreachable alignment is no longer a hard rejection by itself (see
-    # test_qtc_ceiling_rescues_overshooting_driver / MAX_VB_VAS_RATIO
-    # fallback): this driver is genuinely infeasible on excursion/thermal
-    # clipping even in the large-box + EQ fallback.
-    assert any("clip" in r for r in ev.reasons)
-    assert any("alignment limited" in n for n in ev.notes)
+    assert not any("Qtc" in reason for reason in ev.reasons)
+    assert any("preferred alignment not reached" in note for note in ev.notes)

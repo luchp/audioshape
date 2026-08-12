@@ -37,6 +37,16 @@ def _band_for_role(sc: Scenario, role: str) -> tuple[float, float, float]:
     return getattr(sc, lo_name), getattr(sc, hi_name), getattr(sc, ref_name)
 
 
+def _target_description(sc: Scenario, role: str) -> str:
+    if role == "full":
+        low_target = sc.sub_target_spl - sc.stereo_low_bass_summing_db
+        return (
+            f"{low_target:g} dB/channel below {sc.f_split:g} Hz and "
+            f"{sc.attack_target_spl:g} dB/channel above"
+        )
+    return f"{sc.target_spl_for(role):g} dB"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="audioshape",
@@ -110,12 +120,12 @@ def cmd_rank(args: argparse.Namespace) -> int:
     print(f"Parsed {len(result.drivers)} drivers "
           f"({len(result.skipped)} skipped for missing data).")
     print(f"Role '{args.role}': band [{band_low:g}, {band_high:g}] Hz, "
-          f"{n_units} unit(s), target {sc.target_spl_for(args.role):g} dB "
+          f"{n_units} unit(s), target {_target_description(sc, args.role)} "
           f"@ {sc.r_listen:g} m")
     print(f"Room {sc.v_room:g} m^3 (f_pz={sc.f_pz:.1f} Hz), "
           f"leakage corner={sc.leakage_corner_hz:g} Hz, "
           f"preferred excursion<={sc.preferred_excursion:.0%}, "
-          f"Qtc<={sc.qtc:g}\n")
+    f"alignment Qtc target={sc.alignment_qtc:g}\n")
 
     _print_rank_table(evals[:args.top])
     return 0
@@ -163,7 +173,8 @@ def cmd_pair(args: argparse.Namespace) -> int:
     print(f"Target sub={sc.sub_target_spl:g} dB / attack={sc.attack_target_spl:g} dB "
           f"@ {sc.r_listen:g} m, room {sc.v_room:g} m^3 "
           f"(f_pz={sc.f_pz:.1f} Hz), preferred excursion "
-          f"{sc.preferred_excursion:.0%}, Qtc<={sc.qtc:g}, "
+          f"{sc.preferred_excursion:.0%}, alignment Qtc target "
+          f"{sc.alignment_qtc:g}, "
           f"split {sc.f_split:g} Hz\n")
 
     for i, pe in enumerate(pairs[:args.top], 1):

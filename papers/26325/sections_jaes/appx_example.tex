@@ -10,24 +10,27 @@ authoritative source where a number below is rounded.
 
 \subsection*{Selected system}
 
-\textbf{Low-bass manifold.} Four BMS 18N862 units, the largest class that
-fits the declared \SI{18}{inch} packaging constraint, arranged as two
-mechanically opposed pairs to permit first-order reaction-force
-cancellation within the manifold under matched drive and mounting. Driver mismatch
-and mounting tolerances leave residual force. The four drivers carry one
-common mono signal and share the
+\textbf{Low-bass manifold.} Two Dayton Audio UMII18-22 units arranged as
+one mechanically opposed pair, permitting first-order reaction-force
+cancellation under matched drive and mounting. Driver mismatch and
+mounting tolerances leave residual force. The suffix ``22'' denotes dual
+\SI{2}{\ohm} voice coils; the manufacturer's one-way linear excursion is
+\SI{28}{\milli\meter}. The two drivers carry one common mono signal and share the
 manifold target of \SI{110}{dB} \emph{in total} at
 $r_{\mathrm{listen}}=\SI{3}{\meter}$ (basis B3); each has its own amplifier
-channel. The enclosure limit binds: at \SI{250}{\liter} per driver the
-manifold occupies the full \SI{1.0}{\cubic\meter} role budget and the
-realizable alignment is $\Qtc\simeq0.51$, $F_c\simeq\SI{37.6}{\hertz}$.
+channel. The $4\Vas$ cap binds at \SI{993}{\liter} per driver, giving
+$\Qtc\simeq0.592$ and $F_c\simeq\SI{24.6}{\hertz}$. The resulting
+\SI{1.99}{\cubic\meter} total enclosure is retained as a visible packaging
+cost rather than hidden by a role-wide cap.
 
-\textbf{Upper bass.} One Eighteen Sound 12NTLW3500-8 per independent stereo
-channel in \SI{35.2}{\liter}, giving $\Qtc\simeq0.506$ and
+\textbf{Upper bass.} One FaitalPRO 12HP1030 per independent stereo
+channel in \SI{16.6}{\liter}, giving $\Qtc\simeq0.539$ and
 $F_c\simeq\SI{80}{\hertz}$, exactly at the split. Each channel meets its
 own \SI{105}{dB} target at \SI{3}{\meter} (basis B4) with no credit from
-the opposite channel. The evaluation uses the manufacturer's official
-$\Xmax=\SI{8.3}{\milli\meter}$.
+the opposite channel. Publication calculations use the current official
+manufacturer record, including $\Sd=\SI{518}{\centi\meter\squared}$,
+$\Vas=\SI{35.9}{\liter}$ and
+$\Xmax=\SI{12.45}{\milli\meter}$.
 
 \subsection*{Demand and gates}
 
@@ -36,28 +39,25 @@ $L_{\max}=\SI{6}{\meter}$, $f_{\mathrm{pz}}\simeq\SI{28.6}{\hertz}$. Under
 the declared \SI{10}{\hertz} leakage corner the worst low-bass demand
 occurs at the bottom of the band, \SI{15}{\hertz}, and equals
 \SI{4.57}{\liter} of peak displaced volume for the manifold as a whole
-(\cref{tab:room-sensitivity}), hence about \SI{1.14}{\liter} per driver.
+(\cref{tab:room-sensitivity}), hence about \SI{2.29}{\liter} per driver.
 
-Because the enclosure cap places $F_c$ above $f_{\mathrm{pz}}$, the flat
-target requires a correction boost below $F_c$. That boost is not assumed
-free: it is charged to \cref{eq:Preq,eq:Ereq,eq:Ireq} and to excursion, and
-the resulting worst-case values are the ones checked against the gates.
+The realized alignment differs from the preferred $\Qtc^\ast=0.55$ because
+the box cap binds. Its finite-band correction is not assumed free: any
+boost is charged to \cref{eq:Preq,eq:Ereq,eq:Ireq}, excursion and burst
+response, and the resulting worst-case values are checked against the
+gates.
 Across the complete \SIrange{15}{80}{\hertz} band the low-bass units run at
-approximately $\xi_x\simeq0.49$ steady and $\xi_x^{\mathrm{tr}}\simeq0.51$
-for the declared one-cycle burst family, requiring about
-\SI{31.7}{\volt} rms, \SI{3.3}{\ampere} rms, and \SI{59}{\watt} per driver
-at the worst frequency---well inside the \SI{90}{\volt},
-\SI{15}{\ampere}, \SI{500}{\watt} continuous, and \SI{1}{\kilo\watt} burst
-limits, and inside the driver's own rating.
+approximately $\xi_x\simeq0.689$ steady and
+$\xi_x^{\mathrm{tr}}\simeq0.795$ for the declared one-cycle burst family.
+The largest amplifier-budget utilization is about 0.642, inside the
+\SI{90}{\volt}, \SI{15}{\ampere}, \SI{500}{\watt} continuous and
+\SI{1}{\kilo\watt} burst limits and the driver's own rating.
 
-The upper-bass channel is the more heavily loaded role:
-$\xi_x\simeq0.71$ steady and $\xi_x^{\mathrm{tr}}\simeq0.83$, requiring
-about \SI{43.5}{\volt} rms, \SI{3.8}{\ampere} rms, and \SI{75}{\watt} at
-its worst frequencies. Both excursion figures are inside the hard
-$\Xmax$ boundary, and the transient figure exceeds the $0.80$ preferred
-margin, which the policy of \cref{sec:risk-policy} records as a preference
-violation rather than a rejection. The Doppler sideband indicator at the
-top of each role's band remains within the declared budget.
+The upper-bass channel uses $\xi_x\simeq0.485$ steady and
+$\xi_x^{\mathrm{tr}}\simeq0.557$; its Doppler first-sideband ratio is
+0.0138 and its largest amplifier-budget utilization is about 0.597.
+Both roles are inside the hard $\Xmax$ boundary and the 0.80 preferred
+excursion margin.
 \Cref{fig:worked-system}
 collects the separately reported indicators for both roles, and
 \cref{fig:output-electrical} shows the corresponding output margin and
@@ -80,10 +80,10 @@ electrical utilization across each role's band.
 
 Three points matter more than the specific models.
 
-First, the binding constraint differs by role. For the low-bass manifold it
-is enclosure volume, which fixes the alignment and therefore the correction
-demand; for the upper-bass channel it is transient excursion near the
-split. Neither is visible from an output-ceiling comparison alone.
+First, the binding trade differs by role. For the low-bass manifold the
+$4\Vas$ cap fixes a very large enclosure and its correction demand; for the
+upper-bass channel the crossover controls excursion and Doppler margin.
+Neither is visible from an output-ceiling comparison alone.
 
 Second, the two roles are served by candidates from different regions of
 the descriptor plane (\cref{fig:database-pareto}). Within this candidate
@@ -92,6 +92,14 @@ do so for role-specific reasons---greater $\Vd$ at higher electrical demand
 for the low-bass role, greater $\eta_0\Pmax$ at lower $f_L$ for the
 upper-bass role---and their Pareto and policy statuses are reported in
 \cref{tab:worked-pair} rather than reduced to a single score.
+
+The earlier hard-$\Qtc$/role-volume formulation selected a costly
+high-flux professional 18-inch driver largely because it excluded
+high-$\Qts$, high-stroke alternatives geometrically. Under the revised
+policy the UMII18-22 pays explicitly for its box and equalization, yet
+remains Pareto-optimal. The selected model is therefore a consequence of
+the declared physical and electronics tradeoffs, not of treating
+$F_s< f_{\mathrm{pz}}$ or $\Qtc\le0.55$ as mandatory.
 
 Third, the result is conditional on the room. \Cref{tab:room-sensitivity}
 shows how the required displaced volume, and hence the driver count, moves

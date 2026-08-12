@@ -18,7 +18,7 @@ volume to pressure over the primary listening area,
 
 with $p_t$ the rms target pressure and the $\sqrt2$ converting to the peak
 convention of \cref{sec:scope-bases}. Three inputs are admissible: a
-measured transfer over the couch area reduced by a declared rule (centre,
+measured transfer over the listening area reduced by a declared rule (centre,
 spatial average, or worst case); a parameterized room-gain model with
 declared slope and leakage corner; or the analytical limiting model below.
 The worked example of this report uses the analytical model and reports
@@ -89,13 +89,17 @@ at which the sealed roll-off and the room's flat pressure-zone branch
 approximately complement one another. Two caveats apply. First, this is an
 idealization: real designs require measured verification and correction,
 because the complementarity holds only to the accuracy of
-\cref{eq:pzdyn}. Second, the enclosure limit
-$\Vb\le\min(10\Vas,V_{\mathrm{role}}/N)$ frequently prevents an exact
-match. A corner below $f_{\mathrm{pz}}$ costs only enclosure volume and
-leaves a shelf that a correction \emph{cut} removes; a corner above
-$f_{\mathrm{pz}}$ leaves a sag whose correction \emph{boost} is charged to
-\cref{eq:Preq} and to excursion, and is therefore checked against the gates
-rather than assumed acceptable.
+\cref{eq:pzdyn}. Second, the preferred $\Qtc^\ast=0.55$ and corner target may require more
+than the declared per-driver cap, canonically $4\Vas$. In that case the cap
+is used and the realized
+$\Qtc=\Qts\sqrt{1+\Vas/\Vb}$ and
+$F_c=F_s\Qtc/\Qts$ are retained; at exactly $4\Vas$,
+$\Qtc=\sqrt{5/4}\,\Qts\simeq1.118\Qts$. A corner below
+$f_{\mathrm{pz}}$ costs enclosure volume and leaves a shelf that a
+correction \emph{cut} removes; a corner above $f_{\mathrm{pz}}$ leaves a
+sag whose correction \emph{boost} is charged to \cref{eq:Preq}, excursion,
+and the burst calculation. Alignment mismatch is therefore evaluated, not
+used as a geometric rejection.
 
 \subsection{Sensitivity and what it means for extension}
 \label{sec:room-sensitivity}
@@ -108,7 +112,7 @@ consequences for driver count and extension are reported
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\columnwidth]{../figures/fig_room_sensitivity}
-	\caption{Required displaced volume at the couch-area target for the
+	\caption{Required displaced volume at the listening-area target for the
 	declared room models: ideal pressure zone, and leaky pressure zone with
 	several leakage corners. Above $f_{\mathrm{pz}}$ the models coincide on
 	the half-space radiation branch; below it the assumed leakage corner

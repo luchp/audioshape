@@ -122,11 +122,13 @@ The policy is deliberately non-compensatory and is declared in advance:
 
 \begin{enumerate}
 \item \textbf{Hard gates.} $\xi_x\le1$, $\xi_x^{\mathrm{tr}}\le1$,
-	\cref{eq:ampgates}, $\Qtc\le\Qtc^\ast$ achievable within the enclosure
-	limit, $d_{\mathrm D}$ within budget for the upper role, and
-	$f_L>f_{\mathcal B,\mathrm h}$ when $\Le$ is reported. Failure at any
-	band frequency rejects the candidate, with the
-	binding gate reported.
+	\cref{eq:ampgates}, $d_{\mathrm D}$ within budget for the upper or full
+	role, and $f_L>f_{\mathcal B,\mathrm h}$ when $\Le$ is reported.
+	The per-driver box cap is enforced when constructing the alignment;
+	realized $\Qtc$ above the preference is reported rather than rejected.
+	Split systems additionally require an even manifold count and a nominal
+	crossover no higher than the declared manifold ceiling. Failure at any
+	band frequency rejects the candidate, with the binding gate reported.
 \item \textbf{Pareto front.} Within a role, surviving candidates are sorted
 	into non-dominated fronts on the role's core objectives:
 	$\max(\xi_x,\xi_x^{\mathrm{tr}})$, $\xi_{\mathrm{amp}}$, and box volume

@@ -23,6 +23,8 @@ src/audioshape/
     database.py    VituixCAD TSV parser -> list[Driver] + skipped-row report
     ranking.py     evaluate/rank (single driver, role-restricted band) and
                    PairEvaluation/pair_rank (independent sub+attack ranking)
+    architecture.py architecture-level unit scaling, split/single system
+                   assembly, and non-compensatory system Pareto comparison
     plots.py       matplotlib layer (only module besides cli importing it)
     vituixcad.py   export a driver selection to a VituixCAD .vxp project +
                    driver-database TSV (string/XML building, no file I/O)
@@ -68,6 +70,17 @@ table, or `plots.*_figure` -> PNG/show. All user-tunable parameters live in
 the recipe file, not CLI flags (`--recipe path.toml` is the only required
 input besides `--role`/`--driver`).
 
+Publication sensitivity studies may additionally pass one-driver
+`Evaluation` objects to `architecture.scale_role_evaluation()`. Because the
+box cap is per physical driver, repeated identical units leave the alignment
+unchanged: displacement, voltage, current, and Doppler scale as `1/N`, while
+power scales as `1/N^2`. `split_system()` and `single_system()` then compare
+complete architectures on separate steady excursion, transient excursion,
+Doppler, amplifier, enclosure-volume, and physical-driver-count objectives.
+`split_system()` enforces one mono source with an even manifold count plus
+two upper-bass sources; `single_system()` enforces two full-band stereo
+sources.
+
 ## Two-role architecture (sub + attack)
 
 The tool assumes the physical layout from the paper's Part II: a mono bass
@@ -80,8 +93,8 @@ single driver spanning the whole range:
   role=...)` restricts the demand curve, inductance gate and Doppler
   sideband reference tone to a role's own band, and aligns the box to that role's own
   corner target (`Scenario.target_corner_hz(role)`: `f_pz` for sub/full,
-  `f_split` for attack) rather than a single fixed Qtc -- see "Qtc is a
-  ceiling, not a fixed target" below. When omitted, `doppler_ref` defaults
+  `f_split` for attack) rather than a single fixed Qtc -- see "Qtc is an
+  alignment target, not a hard gate" below. When omitted, `doppler_ref` defaults
   to the evaluated role's upper band edge.
 - `cli._ROLE_BANDS` maps `--role {sub,attack,full}` to
   `(band_low, band_high, doppler_ref)` Scenario attribute names. `role` is
@@ -93,30 +106,43 @@ single driver spanning the whole range:
   the sub band and attack band **separately** (own excursion/Doppler
   reference, own feasibility gates), takes each side's top-K, and returns
   the cross product without adding unlike role risks.
-  The canonical recipe uses four sub drivers and requires an even count so
+  `Scenario.manifold_crossover_ceiling_hz` is the highest nominal crossover
+  accepted for this manifold architecture. `Recipe` and `pair_rank` reject a
+  higher `f_split`; role-only `evaluate`/`rank` calls may still inspect such
+  points as explicitly labelled driver-only counterfactuals. The ceiling is
+  not a brick-wall crossover edge: the implemented low-pass must adequately
+  suppress manifold output above its validated acoustic band.
+  The canonical recipe uses two sub drivers and requires an even count so
   the manifold can be built as opposed pairs. Such pairs cancel reaction
   force only to first order under matched drive and mounting.
   There is **no cross-driver coupling term**: sub and attack are physically
   separate enclosures sharing only the baffle plane, so each Doppler
   sideband indicator is intrinsic to its own band (see
   `papers/26325/sealed_driver_criteria.tex` "Scope of the tool" note).
+  The T/S model does not predict manifold cavity modes, path-length
+  interference, or compression; its user-supplied crossover ceiling is
+  therefore an architectural constraint that must ultimately come from
+  geometry, simulation, or measurement.
 
-### Qtc is a ceiling, not a fixed target
+### Qtc is an alignment target, not a hard gate
 
-`Scenario.qtc` is a **ceiling**: `ranking.evaluate()` never boxes a driver
-above it, but a driver whose corner rate `Fs/Qts` would overshoot its own
-role's corner target at that ceiling gets a *lower* Qtc (bigger box)
-instead of being rejected outright --
-`physics.qtc_for_target_corner(driver.corner_rate, f_target, sc.qtc) =
-min(sc.qtc, f_target / driver.corner_rate)`, where `f_target =
-sc.target_corner_hz(role)`. This mirrors the paper's own undershoot/
-overshoot asymmetry after `eq:Fsrule` (undershoot is a free EQ cut,
-overshoot is a taxed boost that costs excursion) applied to *both* roles'
-corners, not just the sub's `f_pz`. If the target is unreachable in any
-finite box (`qtc <= Qts`), evaluation uses an explicit `10 * Vas` fallback
-and reports the EQ caveat; excursion and electrical demand, rather than the
-geometry alone, decide feasibility. `boxed.qtc` (not `sc.qtc`) is therefore
-the value to read/print/plot for a specific driver.
+`Scenario.alignment_qtc` is the preferred alignment used when it is
+physically reachable inside the configured box cap. The implementation first
+targets
+`min(alignment_qtc, f_target / driver.corner_rate)`, where `f_target` is
+`f_pz` for sub/full and `f_split` for attack. If that target would require an
+impossible or oversized box, the driver receives the maximum allowed
+per-driver volume (default `4 * Vas`) and its actual `Qtc`/`Fc` are retained.
+An actual `Qtc` above the preference is **not** an automatic rejection:
+equalizing a physical corner above `f_pz` consumes excursion, voltage,
+current, power, and transient margin, and those explicit gates decide
+feasibility. This permits high-Qts, high-stroke specialists to compete while
+making their enclosure volume and correction cost visible.
+
+The optional absolute cap is per physical driver; adding drivers no longer
+silently shrinks each enclosure. Total system volume is a Pareto objective
+and selection output. `boxed.qtc` is the realized physical alignment;
+`scenario.alignment_qtc` is only the preferred target.
 
 ### Excursion clipping and preferred margin
 
@@ -131,20 +157,23 @@ listening conditions, but they do not establish a mechanical threshold.
 ## Scope assumptions (locked in; see `docs/plans/pair_ranking.md`)
 
 1. Half-space (2 pi, soffit-wall) radiation for every driver/role.
-2. A compact couch area represented by a declared reference position or
+2. A compact couch or mastering area represented by a declared reference position or
    small measurement set. The intended optimization preserves independent
    stereo-channel timing and direct/early-field information; it is not a
    diffuse-field or multi-seat SPL optimization.
 3. Below `f_pz`, the prepared room is represented by an acoustic compliance
    plus a declared leakage corner. This is a low-frequency limiting model,
    not a claim that the complete room is one second-order system.
-4. The system is stereo, but `Scenario.sub_target_spl`/`attack_target_spl`
-   are each defined as the level required from **one mono source/channel**
-   of that role, with no automatic stereo summing credit applied:
+4. The system is stereo. `Scenario.sub_target_spl`/`attack_target_spl`
+   use explicit reference bases:
    - The sub is a single shared mono manifold -> must hit `sub_target_spl`
      directly (no summing ambiguity at all).
    - The attack/tower is genuinely stereo (L/R can carry independent
      content) -> each channel must hit `attack_target_spl` **on its own**.
+   - In the full-band architecture baseline, each stereo channel receives
+     `sub_target_spl - stereo_low_bass_summing_db` below `f_split` and the
+     independent `attack_target_spl` above it. The primary study uses a
+     favorable 6 dB mono-bass credit and reports a 3 dB sensitivity.
    - A design using two separate mono subs instead would gain +3 to +6 dB
      from correlated/decorrelated summing, but that architecture is out of
      scope here (see `scenario.py`'s `sub_target_spl`/`attack_target_spl`
@@ -199,9 +228,9 @@ listening conditions, but they do not establish a mechanical threshold.
 ## Paper figure/table generation
 
 `scripts/papers/26325/make_figures.py` is the **single source of truth** for
-every number, figure, and table in `sealed_driver_criteria.tex`. All
-system-feasibility assets use one canonical 3 m couch-area scenario; a 1 m
-value may appear only as a clearly labelled intrinsic descriptor. The script
+every generated number, figure, and table in both manuscripts. Worked
+system-feasibility assets use one canonical 3 m listening-area scenario; a
+1 m value may appear only as a clearly labelled intrinsic descriptor. The script
 calls `plots.spl_figure`/`risk_figure`/`demand_figure`/
 `vented_comparison_figure` and writes plain-LaTeX `tabular` fragments into
 `papers/26325/figures/` and `papers/26325/tables/` respectively, and

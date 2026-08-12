@@ -37,6 +37,34 @@ The approximation $F_s/\Qts\approx EBP$ is not used numerically: it differs
 by $(1+\Qes/\Qms)$, which reaches several per cent to over ten per cent for
 typical bass drivers.
 
+\textbf{Why role specialization is worth testing.} A limited overhung-motor
+scaling follows from the same standard identities. Let $u=h_c/h_g>1$ be
+the winding-height/effective-gap-height ratio, let total conductor length
+be $\ell$ and area $A_w$, and assume uniform gap flux $B$, conductor
+conductivity $\sigma_c$, density $\rho_c$, and coil mass
+$m_c=\rho_c\ell A_w$. With only the fraction $1/u$ of the winding in the
+effective gap,
+\begin{equation}
+	\begin{gathered}
+		\Bl\simeq\frac{B\ell}{u},\qquad
+		\Re=\frac{\ell}{\sigma_cA_w},\qquad
+		m_c=\rho_c\ell A_w,\\
+		\boxed{\ \frac{F_s}{\Qes}u^2
+		=\frac{B^2\sigma_c}{2\pi\rho_c}\frac{m_c}{\Mms}\ } .
+	\end{gathered}
+	\label{eq:motor-scaling}
+\end{equation}
+Thus, at fixed flux, material and coil-mass allocation, obtaining more
+geometric overhang tends to trade against electrical damping per moving
+mass. This is motivation to \emph{compare} a high-stroke low-bass role
+with a lower-excursion upper-bass role. It is not a motor bound: $B$,
+effective gap, $u$, coil-mass fraction, fringing and topology are normally
+absent from datasheets, and expensive high-flux motors can move the
+tradeoff. The relation is therefore never a feasibility gate or ranking
+key. The architecture comparison of \cref{sec:procedure-architecture}
+tests the practical consequence directly and retains any full-band
+candidate that passes the same system gates.
+
 \textbf{Large-signal behaviour and nonlinear risk.} Motor and suspension
 nonlinearity, and the parameters used to characterize it, are surveyed by
 Klippel \cite{klippel2006}; $\Xmax$ definitions and their measurement are

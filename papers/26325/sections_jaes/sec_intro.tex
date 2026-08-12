@@ -10,80 +10,104 @@ undocumented in the sense that they do not state the operating point, the
 enclosure, the room, the target level, or the amplifier at which they are
 supposed to hold.
 
-This Engineering Report replaces that step, for one deliberately narrow
-architecture, with an explicit procedure assembled from established
+This Engineering Report replaces that step, for a deliberately narrow
+application family, with an explicit procedure assembled from established
 first-principles relations. The procedure is a \emph{pre-purchase}
-screening and ranking method operating on public datasheet fields alone. It
-is not a substitute for post-purchase measurement of a physical driver.
+screening and ranking method operating on public datasheet fields alone.
+Room, frequencies, targets, amplifier and packaging limits are user inputs;
+driver model, diameter, unit count, enclosure and architecture status are
+outputs. The numerical system used in the figures is an illustrative
+scenario, not an immutable prescription. The method is not a substitute for
+post-purchase measurement of a physical driver.
 
 \subsection{Application and architecture}
 \label{sec:intro-arch}
 
-The target system, sketched in \cref{fig:architecture}, is fixed
-throughout:
+The target application and selectable architecture, sketched in
+\cref{fig:architecture}, are:
 
 \begin{itemize}
-\item a compact primary listening area---a prepared living-room couch
-	area---represented by a declared reference position or a small declared
-	set of measurement positions, not by a mathematical point;
+\item a compact primary listening area---for example a prepared living-room
+	couch or mastering-desk area---represented by a declared reference
+	position or a small declared set of measurement positions, not by a
+	mathematical point;
 \item half-space (soffit-wall) mounting of all bass sources;
-\item one shared \emph{mono} low-bass manifold covering
-	$f_1=\SI{15}{\hertz}$ to $f_{\mathrm{sp}}=\SI{80}{\hertz}$, built from
-	an even number of nominally identical drivers arranged as mechanically
-	opposed pairs, permitting first-order reaction-force cancellation under
-	matched drive and mounting;
-\item \emph{independent} left and right upper-bass channels covering
-	$f_{\mathrm{sp}}$ to $f_2=\SI{250}{\hertz}$, each carrying its own
-	program material;
+\item user-selected $f_1$, crossover $f_{\mathrm{sp}}$, upper edge $f_2$,
+	and maximum-output targets;
+\item a primary two-role candidate: one shared \emph{mono} low-bass source
+	below $f_{\mathrm{sp}}$ and \emph{independent} left and right upper-bass
+	channels above it, each carrying its own programme material;
+\item an explicitly tested baseline in which the same full-band woofer
+	array in each stereo channel carries the shared mono bass below
+	$f_{\mathrm{sp}}$ and independent programme above it;
+\item when the mono source is a compact manifold, an even number of
+	nominally identical drivers in mechanically opposed pairs and a declared
+	maximum nominal crossover; manifold cavity and path-length behaviour are
+	not inferred from Thiele/Small data;
 \item one dedicated amplifier channel per physical driver, with declared
 	voltage, current, continuous-power, and burst-power limits;
 \item finite-band DSP crossover, delay, and magnitude/phase correction
 	across the design band.
 \end{itemize}
 
-Target levels are maximum-output design tests---short, occasional
-peaks---not continuous exposure levels. The mono target is the
-\emph{total} level produced by the complete manifold at the listening
-distance; the upper-bass target applies to \emph{each} stereo channel
-separately. Because the two stereo channels reproduce independent program
-material, no summing credit is taken between them.
+The canonical evidence uses \SIrange{15}{250}{\hertz}, an
+\SI{80}{\hertz} nominal crossover, \SI{110}{dB} total low bass and
+\SI{105}{dB} per upper channel. These are maximum-output tests---short,
+occasional peaks---not continuous exposure levels. Because the upper stereo
+channels reproduce independent programme, no summing credit is taken
+between them. The full-band baseline receives a favourable \SI{6}{dB}
+coherent mono-bass summation credit at the reference position, with a
+\SI{3}{dB} sensitivity check.
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\columnwidth]{../figures/fig_architecture}
-	\caption{Reference architecture and data flow. A mono low-bass manifold
-	of mechanically opposed driver pairs and two independent stereo
-	upper-bass channels share one prepared room, one couch-area reference
-	basis, and one finite-band DSP layer. Public datasheet fields and a
-	frozen candidate population enter the ranking procedure of
-	\cref{sec:procedure}, which returns separate role orders; the roles are
-	never combined into a single summed score.}
+	\caption{Parameterized data flow. Room/listening area, frequencies,
+	targets, electronics, enclosure and manifold limits enter with public
+	datasheet fields. The procedure returns architecture status, driver
+	model, diameter, count, enclosure and margins. The Dayton/Faital system
+	is the illustrative worked output, not a fixed input.}
 	\label{fig:architecture}
 \end{figure}
 
-\subsection{What the architecture is intended to buy}
+\subsection{Frontal recorded-scene precision and its boundary}
 \label{sec:intro-fidelity}
 
-The objective is high fidelity to the recorded two-channel scene over the
-primary listening area: stable localization and image focus, accurate
-direct- and early-field timbre, controlled low-frequency summation, and
-coherent temporal integration across the crossover. In small rooms these
-attributes depend strongly on the direct sound and the early reflection
-pattern \cite{toole2006,bech1998}, on the relative phase and delay of
-noncoincident sources \cite{linkwitz1976}, and on group-delay error
-remaining below audibility bounds \cite{blauert1978}---all of which a
-compact, prepared, soffit-mounted, DSP-aligned system can control over a
-small area.
+The objective is \emph{frontal recorded-scene precision}: stable source
+location, width and image focus; accurate direct- and early-field timbre;
+controlled low-frequency summation; and coherent crossover timing over the
+primary area. It is an operational design term for cues encoded in the
+two-channel programme under a stated loudspeaker geometry, not a claim to
+reconstruct one unique original sound field. These attributes depend on
+direct sound and early reflections \cite{toole2006,bech1998}, relative
+phase and delay of noncoincident sources \cite{linkwitz1976}, and
+frequency- and programme-dependent group-delay audibility
+\cite{blauert1978}. With added latency, finite-band DSP can bring measured
+minimum-phase low-frequency components toward a common linear-phase target
+over the chosen small area. Nonminimum-phase errors, deep spatial nulls,
+filter length and position dependence prevent exact room inversion
+\cite{neely1979,cecchi2018}.
 
-This is deliberately \emph{not} a claim of greater listener envelopment, nor
-of superiority over multi-seat or diffuse-field designs. Envelopment is a
-separate attribute governed largely by late lateral energy
-\cite{bradley1995,rumsey2002} and is commonly better served by multichannel
-or deliberately diffuse reproduction \cite{francombe2017}. The present
-architecture trades room-wide coverage and off-area robustness---the
-problem addressed by distributed multiple-subwoofer optimization
-\cite{welti2006}---for control over one small area. This report evaluates
-that trade objectively; it contains no controlled subjective comparison.
+Listener envelopment is a separate attribute governed mainly by the level,
+direction and timing of later-arriving energy
+\cite{bradley1995,rumsey2002,soulodre2003}. A separately adjustable, band-limited and
+delayed low-correlation ambience layer may therefore be added after the
+front system is aligned, but preservation of frontal imaging remains
+conditional on its level, spectrum, delay, direction and correlation
+\cite{kendall1995,litovsky1999}. The
+reverse design sequence is less direct: equalization can change drive and
+delay, but cannot by itself move acoustic centres, change directivity,
+remove a reflection at its physical origin, or make different seat
+transfers identical \cite{neely1979,elliott1989,welti2006,cecchi2018}. This is an engineering
+asymmetry, not an impossibility theorem or a claim that diffuse or
+multichannel systems cannot image accurately.
+
+A coherent coaxial main system above $f_2$ is a compatible extension.
+Relieving its low-frequency cone of bass and midbass reduces that cone's
+excursion and hence excitation of displacement-dependent nonlinearities.
+Any additional reduction of high-frequency modulation when the cone also
+forms a coaxial waveguide is topology dependent and requires multitone and
+off-axis verification; it is not assumed by the present ranking.
 
 \subsection{Contribution}
 \label{sec:intro-contribution}
@@ -95,7 +119,7 @@ integration into a decision procedure with a declared policy:
 \begin{enumerate}
 \item exact displacement- and dissipation-limited output ceilings, and the
 	sealed alignment line, assembled into role-specific feasibility gates
-	under one declared couch-area reference basis
+	under one declared listening-area reference basis
 	(\cref{sec:model,sec:freq});
 \item explicit finite-amplifier gates on voltage, current, continuous power,
 	and burst power for every physical driver, evaluated across the complete
@@ -109,6 +133,10 @@ integration into a decision procedure with a declared policy:
 	non-compensatory ranking policy---hard gates, role-specific Pareto
 	fronts, then a role-specific lexicographic order
 	(\cref{sec:risk,sec:procedure});
+\item crossover sensitivity and a Pareto comparison of separate-radiator
+	and stereo full-band architectures over user-variable room,
+	$f_{\mathrm{sp}}$, $f_2$, and SPL inputs, without converting architecture tradeoffs
+	into one weighted score;
 \item a reproducible implementation, aggregate evidence from a frozen
 	candidate population under a documented private-data boundary, and a
 	worked example built from public manufacturer datasheets

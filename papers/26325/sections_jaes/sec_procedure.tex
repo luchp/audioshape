@@ -4,15 +4,15 @@
 \subsection{Inputs}
 \label{sec:procedure-inputs}
 
-A candidate population of datasheet records; the role bands and channel
-layout of \cref{sec:intro-arch}; the per-role targets on bases B3 and B4;
-the room model of \cref{sec:room}; the per-driver amplifier limits; the
-enclosure limit and the alignment ceiling $\Qtc^\ast$; the hard $\Xmax$
-boundary with the preferred excursion margin; the Doppler sideband-ratio
-budget; and
-the declared transient waveform family. All of these are fields of one
-serializable scenario object, and the canonical values are those of
-\cref{sec:scope-scenario}.
+A candidate population of datasheet records; room volume, distance and
+leakage model; $f_1$, $f_{\mathrm{sp}}$, $f_2$, target levels and channel
+layout; the per-driver amplifier limits; preferred $\Qtc^\ast$ and
+per-driver box-volume cap; allowed diameter and unit-count ranges; any
+manifold crossover ceiling; the hard $\Xmax$ boundary with preferred
+excursion margin; the Doppler sideband-ratio budget; mono-bass stereo
+summing credit; and the declared transient waveform family. All are fields
+of one serializable scenario or study definition. The canonical values of
+\cref{sec:scope-scenario} merely instantiate those inputs.
 
 \subsection{Algorithm}
 \label{sec:procedure-algorithm}
@@ -25,12 +25,16 @@ serializable scenario object, and the canonical values are those of
 \item \textbf{Compute descriptors}: $\Vd$, $\eta_0\Pmax$ \cref{eq:eta0},
 	the corner rate $F_s/\Qts$ \cref{eq:cornerrate}, $f_L$, and the regime
 	boundary $f_x$ \cref{eq:fx}.
-\item \textbf{Select a realizable alignment}: target the role's corner
+\item \textbf{Select a physical alignment}: target the role's corner
 	($f_{\mathrm{pz}}$ for low bass, $f_{\mathrm{sp}}$ for upper bass) under
-	\cref{eq:Fsrule}, cap $\Qtc$ at $\Qtc^\ast$, and cap $\Vb$ at the
-	enclosure limit, recording which cap binds.
+	\cref{eq:Fsrule} and the preferred $\Qtc^\ast$. If that box is
+	nonphysical or exceeds the per-driver volume cap, use the cap and retain
+	the resulting $\Qtc$ and $F_c$. Alignment mismatch is recorded, not
+	rejected.
 \item \textbf{Evaluate room demand} \cref{eq:Vdem} across the complete role
-	band, dividing by the number of manifold drivers (A9).
+	band, dividing by physical units under A9. For a full-band stereo
+	channel, use the low-bass target minus the declared summing credit below
+	$f_{\mathrm{sp}}$ and the independent-channel target above it.
 \item \textbf{Evaluate steady requirements} \cref{eq:Ereq,eq:Ireq,eq:Preq}
 	and \textbf{transient requirements} \cref{eq:ctr} over the band and the
 	declared start phases, retaining the worst value and the frequency at
@@ -42,10 +46,21 @@ serializable scenario object, and the canonical values are those of
 \item \textbf{Assign Pareto fronts} on the role's core objectives.
 \item \textbf{Apply the declared lexicographic order} within each front to
 	obtain a reproducible total order.
-\item \textbf{Form role pairs} without summing role indicators, and
-	\textbf{re-run} the ranking under the declared uncertainty and policy
-	variants (\cref{sec:procedure-robustness}), flagging candidates whose
-	position is unstable.
+\item \textbf{Scale repeated identical units}: displacement, voltage,
+	current and Doppler indicators scale as $1/N$, electrical power as
+	$1/N^2$, and total enclosure volume as $N\Vb$. The individual driver
+	alignment is unchanged because the box cap is per unit.
+\item \textbf{Assemble architectures}: form split-role systems without
+	summing unlike role indicators, and full-band stereo systems from one
+	model and count per channel. Reject a split whose nominal crossover
+	exceeds the declared manifold ceiling.
+\item \textbf{Compare complete systems} by Pareto fronts in steady and
+	transient excursion, Doppler ratio, amplifier utilization, total
+	enclosure volume, and physical driver count. No weighted architecture
+	score is formed.
+\item \textbf{Re-run} the ranking under the declared uncertainty, summing
+	and policy variants (\cref{sec:procedure-robustness}), flagging
+	candidates whose position is unstable.
 \end{enumerate}
 
 Every candidate ends in exactly one of four statuses: \emph{rejected} (with
@@ -85,11 +100,86 @@ example is reproducible without access to the private file.
 The observation this evidence supports is deliberately narrow: in this
 frozen population, under this scenario, the candidates selected for the two
 roles occupy different regions of the $(\Vd,\eta_0\Pmax)$ plane, differing
-chiefly in displacement volume at comparable thermal output capacity. The
-same table reports a non-zero count of size-unrestricted candidates that
-are feasible in both role bands, so the separation is a consequence of the
-role targets, the packaging constraint, and the ranking policy---not a
-physical prohibition on a single-driver architecture.
+chiefly in displacement volume at comparable thermal output capacity.
+Overlap between driver-level role populations does not establish that one
+stereo full-band system meets both channel reference bases within the
+allowed sizes and counts; that system question is evaluated next.
+
+\subsection{Crossover and architecture sensitivity}
+\label{sec:procedure-architecture}
+
+The crossover is swept in \SI{5}{\hertz} increments before selecting the
+worked system. For the public Dayton/Faital pair of
+\cref{app:example}, \SI{60}{\hertz} fails upper-driver excursion and
+Doppler gates, \SI{65}{\hertz} remains Doppler-limited, and
+\SIrange{70}{80}{\hertz} is feasible. The upper role continues to gain
+margin above \SI{80}{\hertz}, but those points are driver-only
+counterfactuals because the illustrative manifold declares
+\SI{80}{\hertz} as its highest nominal crossover. The implemented
+low-pass must still suppress manifold output above its validated acoustic
+band.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_split_sensitivity}
+	\caption{Worked-pair crossover sensitivity. Hard-feasible points at or
+	below the declared manifold ceiling are distinguished from rejected
+	points and driver-only counterfactuals above the ceiling. The selected
+	\SI{80}{\hertz} point maximizes upper-driver margin only within the
+	declared feasible interval; it is not a universal optimum.}
+	\label{fig:split-sensitivity}
+\end{figure}
+
+\input{../tables/table_split_sensitivity}
+
+To test whether the two-role result is merely assumed, a factorial study
+compares it with the favourable full-band stereo baseline B5. The inputs
+span room volumes of 40, 60 and \SI{90}{\cubic\meter}; nominal crossovers
+of 60, 80, 100 and \SI{120}{\hertz}; upper edges of 200, 250 and
+\SI{350}{\hertz}; and low-bass targets of 105, 110 and \SI{115}{dB}, with
+the independent upper target \SI{5}{dB} lower. Packaging searches use
+15--21-inch low-bass drivers in even totals of 2, 4 or 6;
+8--15-inch upper drivers at one or two per channel; and 10--18-inch
+full-band drivers at one or two per channel.
+
+Because unreported voice-coil inductance makes a 200--\SI{350}{\hertz}
+role unevaluable, the primary comparison requires reported $\Le$. In the
+canonical 60-\si{\cubic\meter}, 80/250-\si{\hertz},
+110/105-\si{dB} case, 119 unique low-bass records and 301 upper-bass
+records are feasible at one or more allowed counts, whereas no full-band
+record is feasible. The split architecture therefore occupies the
+data-complete system Pareto frontier alone in that case. If missing
+inductance is permitted, one full-band record survives, but its
+upper-band validity remains unresolved; reducing the assumed stereo bass
+summing credit from 6 to \SI{3}{dB} removes even that survivor.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../figures/fig_architecture_comparison}
+	\caption{Outcome of the 108-scenario architecture study. Each scenario
+	is evaluated with the same physical and electronics gates and then
+	compared on six separate system objectives. Empty or single-architecture
+	fronts are reported rather than converted into a success-shaped score.}
+	\label{fig:architecture-comparison}
+\end{figure}
+
+\input{../tables/table_architecture_comparison}
+
+Across all tested crossovers, split systems are feasible in all 36 cases at
+each target. Full-band systems share the Pareto front in 24 of 36 cases at
+\SI{105}{dB} and 16 of 36 at \SI{110}{dB}, but none at
+\SI{115}{dB}. Enforcing the illustrative \SI{80}{\hertz} manifold ceiling
+removes the split architecture from the 100- and
+\SI{120}{\hertz} cases by definition; this creates full-band-only and
+neither-feasible outcomes. The two panels therefore separate a
+driver/system tradeoff from an external manifold-integration limit.
+
+This supports role specialization for the stated population and envelope,
+not a universal motor theorem. Different amplifier, package, room, target
+or candidate inputs can restore a full-band frontier member, and the tool
+is designed to report it when they do. Current regional price is considered
+only after the technical shortlist; the canonical strict case has no
+data-complete full-band finalist for a symmetric price comparison.
 
 \subsection{Rank robustness}
 \label{sec:procedure-robustness}
@@ -99,7 +189,9 @@ ranking is therefore recomputed under declared perturbations---$\Xmax$
 scaled by $\pm25\%$, $\Pmax$ shifted by $\pm\SI{3}{dB}$, alternative room
 leakage corners, and alternative reasonable lexicographic
 orders---and the overlap of the top-$k$ shortlist with the baseline is
-reported (\cref{fig:rank-robustness}).
+reported (\cref{fig:rank-robustness}). If fewer than $k$ baseline records
+are feasible, retention is normalized by the records actually available,
+not by $k$.
 
 \begin{figure}[htbp]
 	\centering
@@ -112,15 +204,13 @@ reported (\cref{fig:rank-robustness}).
 	\label{fig:rank-robustness}
 \end{figure}
 
-The result is informative in both directions. The shortlists are
-insensitive to the power-rating uncertainty, which is reassuring given the
-standard-dependence noted in A5, and moderately sensitive to the assumed
-leakage corner. They are clearly sensitive to the $\Xmax$ perturbation and,
-for the upper-bass role, to the choice of lexicographic tie-break. The
-practical consequence is that an $\Xmax$ value on an unknown basis, and the
-policy order itself, matter more to the outcome than the power rating; both
-are therefore reported alongside every recommendation rather than being
-treated as settled.
+Power-rating and leakage variants retain every baseline record in both
+roles. Reducing $\Xmax$ by 25\% removes the sole feasible two-driver
+low-bass record and changes one member of the upper top ten. Reordering by
+amplifier headroom retains the sole low-bass record but only one of the
+upper ten. The low-bass result is therefore binary rather than evidence of
+a broad stable shortlist; $\Xmax$ convention and upper-role policy remain
+material and are reported with the recommendation.
 
 This is a sensitivity analysis of the decision procedure. It is
 \emph{not} physical validation: it does not test the nonlinear indicators

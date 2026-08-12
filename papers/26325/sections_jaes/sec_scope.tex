@@ -25,14 +25,14 @@ radiation, on axis.
 \subsection{Reference bases}
 \label{sec:scope-bases}
 
-Four distinct pressure references are used, and no figure or table mixes
+Five distinct pressure references are used, and no figure or table mixes
 them:
 
 \begin{enumerate}
 \item[B1.] \emph{Intrinsic ceiling}: one driver, half space,
 	$r=\SI{1}{\meter}$. Used only to characterize a driver, never to assess
 	a system.
-\item[B2.] \emph{Couch-area reference demand}: the level required at the
+\item[B2.] \emph{Listening-area reference demand}: the level required at the
 	declared listening distance $r_{\mathrm{listen}}$ over the primary
 	listening area. All feasibility checks use this basis.
 \item[B3.] \emph{Mono manifold total}: the aggregate level of the complete
@@ -40,6 +40,12 @@ them:
 	volume is the total divided by the number of manifold drivers.
 \item[B4.] \emph{One independent stereo channel}: the level of one
 	upper-bass channel at B2, with no credit from the opposite channel.
+\item[B5.] \emph{One full-band stereo channel}: below $f_{\mathrm{sp}}$
+	the two channels carry the same mono bass and the architecture study
+	credits their equal-pressure sum at B2; above $f_{\mathrm{sp}}$ each
+	channel independently meets B4. The primary comparison uses the
+	favourable \SI{6}{dB} reference-position credit and repeats the
+	canonical case at \SI{3}{dB}.
 \end{enumerate}
 
 Electrical quantities are per \emph{physical} driver, since each has its
@@ -51,7 +57,9 @@ waveform.
 \subsection{Canonical scenario}
 \label{sec:scope-scenario}
 
-The worked scenario used for every figure and table is:
+The canonical scenario used for the worked figures and tables is shown
+below. These values instantiate the serializable inputs; they are not fixed
+constants of the procedure, and driver size and count are outputs.
 
 \begin{center}
 	\small
@@ -64,13 +72,15 @@ The worked scenario used for every figure and table is:
 		listening distance & $r_{\mathrm{listen}}=\SI{3}{\meter}$\\
 		bands & sub $15$--$\SI{80}{\hertz}$;
 			upper bass $80$--$\SI{250}{\hertz}$\\
+		manifold integration & maximum nominal crossover
+			$\SI{80}{\hertz}$; low-pass attenuation required above\\
 		targets & \SI{110}{dB} manifold total (B3);\\
 		 & \SI{105}{dB} per stereo channel (B4)\\
 		amplifier, per driver & $\SI{90}{\volt}$ rms, $\SI{15}{\ampere}$ rms,\\
 		 & \SI{500}{\watt} continuous, \SI{1}{\kilo\watt} burst\\
-		alignment ceiling & $\Qtc\le0.55$\\
-		enclosure limit & $\Vb\le\min(10\Vas,\ \SI{1.0}{\cubic\meter}/N)$
-			per driver; \SI{1.0}{\cubic\meter} total per role\\
+		alignment target & preferred $\Qtc^\ast=0.55$; not a hard gate\\
+		enclosure limit & $\Vb\le4\Vas$ per physical driver;
+			total volume reported as an objective\\
 		excursion & $\Xmax$ hard limit;
 			$0.80$ preferred margin\\
 		Doppler screen & first-sideband ratio $\le0.02$\\
@@ -131,7 +141,7 @@ this room is $f_{\mathrm{pz}}=c/2L_{\max}\simeq\SI{28.6}{\hertz}$.
 \item[A9.] \emph{Summation is restricted to the mono manifold.} The
 	manifold's drivers carry one common signal in a compact arrangement
 	(spacing $\ll$ wavelength, consistent with A3), so their volume
-	velocities are taken as coherent at the couch-area reference: each
+	velocities are taken as coherent at the listening-area reference: each
 	driver supplies $1/N$ of the required displaced volume. Independent
 	stereo channels receive no summing credit. Total radiated power is
 	\emph{not} inferred from on-axis pressure summation, mutual radiation
@@ -149,6 +159,14 @@ this room is $f_{\mathrm{pz}}=c/2L_{\max}\simeq\SI{28.6}{\hertz}$.
 	thermal load, noise, and model error; it does not reduce nonlinear
 	residuals, and its practical limits over an area are those reported in
 	\cite{makivirta2003,cecchi2018}.
+
+\item[A12.] \emph{Manifold bandwidth is an external integration
+	constraint.} The nominal crossover must not exceed the declared
+	manifold ceiling, and the implemented finite-slope low-pass must
+	adequately suppress output above the manifold's validated band. The
+	Thiele/Small model does not predict manifold cavity modes, unequal path
+	lengths, compression or acoustic loading; the ceiling must come from
+	geometry, simulation or measurement.
 \end{enumerate}
 
 \subsection{Limitations of public data}

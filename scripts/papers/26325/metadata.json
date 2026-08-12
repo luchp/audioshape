@@ -5,12 +5,12 @@
   ],
   "title": "Datasheet-Based Ranking of Sealed-Box Bass Drivers for a Small-Area DSP-Integrated Stereo System",
   "version": "3.0",
-  "summary": "A Reproducible, Datasheet-Based Screening and Role-Ranking Procedure for a Small-Area DSP-Integrated Stereo Bass System",
+  "summary": "A Parameterized Datasheet-Based Screening and Architecture-Comparison Procedure for a Small-Area DSP-Integrated Stereo Bass System",
   "keywords": [
     "loudspeaker driver selection",
     "sealed enclosure",
-    "maximum acoustic output",
-    "datasheet screening",
+    "Pareto ranking",
+    "stereo bass",
     "room gain",
     "nonlinear headroom"
   ],

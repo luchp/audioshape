@@ -95,6 +95,27 @@ def test_ideal_and_leaky_pressure_zone_models():
     ) == pytest.approx(math.sqrt(2.0))
 
 
+def test_full_role_uses_stereo_bass_summing_and_independent_upper_target():
+    scenario = Scenario(
+        sub_target_spl=110.0,
+        attack_target_spl=105.0,
+        stereo_low_bass_summing_db=6.0,
+    )
+    assert scenario.target_spl_at(40.0, "full") == 104.0
+    assert scenario.target_spl_at(120.0, "full") == 105.0
+    assert scenario.demand_volume(40.0, "full") == pytest.approx(
+        physics.demand_volume(
+            40.0,
+            104.0,
+            scenario.r_listen,
+            scenario.v_room,
+            scenario.l_max,
+            room_model=scenario.room_model,
+            leakage_corner_hz=scenario.leakage_corner_hz,
+        )
+    )
+
+
 def test_power_current_and_voltage_are_consistent(driver_s):
     boxed = BoxedDriver(driver_s, qtc=0.61)
     displacement = 10e-3
@@ -180,3 +201,8 @@ def test_corner_rate_rule(driver_s):
     scenario = Scenario()
     assert scenario.max_corner_rate == pytest.approx(52.0, abs=0.5)
     assert driver_s.corner_rate < scenario.max_corner_rate
+
+
+def test_manifold_crossover_ceiling_must_be_inside_design_band():
+    with pytest.raises(ValueError, match="manifold crossover ceiling"):
+        Scenario(manifold_crossover_ceiling_hz=10.0)
